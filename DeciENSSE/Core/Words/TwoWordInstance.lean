@@ -19,26 +19,29 @@ word.
 
 ## Main declarations
 
-- `SS2`: two-word hole instances.
-- `SS2.J`, `SS2.Event`, `SS2.HeadEvent`, `SS2.IsHole`: the first rejected cut, events,
+- `TwoWordInstance`: two-word hole instances.
+- `TwoWordInstance.J`, `TwoWordInstance.Event`, `TwoWordInstance.HeadEvent`,
+  `TwoWordInstance.IsHole`: the first rejected cut, events,
   head events and holes.
-- `SS2.FH`: forced target heads.
-- `SS2.IsPreHole`: pre-holes, whose target ends at its first rejected cut.
-- `SS2.Viable`, `SS2.viable_iff`, `SS2.Mortal`, `SS2.mortal_iff`: infinite safe
+- `TwoWordInstance.ForcedHeads`: forced target heads.
+- `TwoWordInstance.IsPreHole`: pre-holes, whose target ends at its first rejected cut.
+- `TwoWordInstance.Viable`, `TwoWordInstance.viable_iff`, `TwoWordInstance.Mortal`,
+  `TwoWordInstance.mortal_iff`: infinite safe
   continuations and mortal states.
-- `SS2.Branching`, `SS2.Thin`, `SS2.IsMortalHole`, `SS2.NonMortalCase`: kinds of states,
+- `TwoWordInstance.Branching`, `TwoWordInstance.Thin`, `TwoWordInstance.IsMortalHole`,
+  `TwoWordInstance.NonMortalCase`: kinds of states,
   mortal holes, and the non-mortal cases.
-- `CoreExamples`: small instances with holes of each kind.
 
-The declarations are in the namespace `DeciENSSE.Core`.
+The declarations are in the namespace `DeciENSSE.Core.Words`.
 -/
 
-namespace DeciENSSE.Core
+namespace DeciENSSE.Core.Words
+open DeciNSSE.RejectedTail
 
 variable {α : Type*}
 
 /-- A two-word hole instance over the alphabet `α`. -/
-structure SS2 (α SA SB SA' SB' : Type*) [Fintype SA] [Fintype SB]
+structure TwoWordInstance (α SA SB SA' SB' : Type*) [Fintype SA] [Fintype SB]
     [Fintype SA'] [Fintype SB'] [DecidableEq SA] [DecidableEq SB]
     [DecidableEq SA'] [DecidableEq SB'] where
   /-- The spine automaton. -/
@@ -58,11 +61,11 @@ structure SS2 (α SA SB SA' SB' : Type*) [Fintype SA] [Fintype SB]
   /-- The head relation. -/
   Head : Finset (SA' × SB')
 
-namespace SS2
+namespace TwoWordInstance
 variable {SA SB SA' SB' : Type*} [Fintype SA] [Fintype SB]
   [Fintype SA'] [Fintype SB'] [DecidableEq SA] [DecidableEq SB]
   [DecidableEq SA'] [DecidableEq SB']
-variable (I : SS2 α SA SB SA' SB')
+variable (I : TwoWordInstance α SA SB SA' SB')
 
 /-- Reading `w` from `q`, the spine automaton visits only safe states, including both
 endpoints. -/
@@ -131,7 +134,7 @@ def HasHole : Prop := ∃ u t, I.IsHole u t
 
 /-- Forced target heads: for a head pair whose spine head is reachable, no word that leads
 the target head automaton to its target head has a rejected proper prefix. -/
-def FH : Prop := ∀ p q, (p, q) ∈ I.Head → I.A'.Reachable p →
+def ForcedHeads : Prop := ∀ p q, (p, q) ∈ I.Head → I.A'.Reachable p →
   ∀ γ, I.B'.run γ = q → ∀ i, i < γ.length → I.B.atCut γ i ∉ I.Rej
 
 /-- A pre-hole: a safe spine, a target whose first rejected cut is its end, a head event,
@@ -245,97 +248,6 @@ def NonMortalCase : Prop := ∃ u t, I.IsPreHole u t ∧
   (I.Branching (I.A.run u) ∨ (I.Thin (I.A.run u) ∧
     ∃ ξ, I.InfiniteSafe (I.A.run u) ξ ∧ I.SurvivorFree u t ξ))
 
-end SS2
+end TwoWordInstance
 
-/-! ## Small instances -/
-
-namespace CoreExamples
-
-/-- The one-state automaton. -/
-def oneDFA : LDFA α (Fin 1) := ⟨0, fun _ _ => 0⟩
-
-/-- The automaton that leaves its start state on every letter and never returns. -/
-def emptyHeadDFA : LDFA α (Fin 2) := ⟨0, fun _ _ => 1⟩
-
-/-- `emptyHeadDFA` is in its start state only after the empty word. -/
-theorem emptyHead_run_eq_zero (w : Word α) : emptyHeadDFA.run w = 0 ↔ w = [] := by
-  have sink (v : Word α) : emptyHeadDFA.runFrom 1 v = 1 := by
-    induction v with
-    | nil => rfl
-    | cons c v ih => exact ih
-  cases w with
-  | nil => simp [LDFA.run, LDFA.runFrom, emptyHeadDFA]
-  | cons c w =>
-    change emptyHeadDFA.runFrom 1 w = 0 ↔ c :: w = []
-    rw [sink]
-    simp
-
-/-- A given spine automaton with immediate rejection and a head pair only at the empty
-target. -/
-def smallInstance {S : Type} [Fintype S] [DecidableEq S]
-    (A : LDFA α S) (bad : Finset S) : SS2 α S (Fin 1) (Fin 1) (Fin 2) where
-  A := A
-  B := oneDFA
-  A' := oneDFA
-  B' := emptyHeadDFA
-  Bad := bad
-  Rej := {0}
-  Guard := ∅
-  Head := {(0, 0)}
-
-/-- The small instances have forced target heads. -/
-theorem smallInstance_fh {S : Type} [Fintype S] [DecidableEq S]
-    (A : LDFA α S) (bad : Finset S) : (smallInstance A bad).FH := by
-  intro p q hp _ γ hγ i hi
-  have hq : q = 0 := (Prod.mk.inj (Finset.mem_singleton.mp hp)).2
-  have hnil := (emptyHead_run_eq_zero γ).mp (hγ.trans hq)
-  simp [hnil] at hi
-
-/-- At state zero, letter zero is unsafe while letters one and two loop safely. -/
-def ternaryBranch : SS2 (Fin 3) (Fin 2) (Fin 1) (Fin 1) (Fin 2) :=
-  smallInstance ⟨0, fun q c => if c = 0 then 1 else q⟩ {1}
-
-/-- The start state of `ternaryBranch` is branching. -/
-theorem ternary_branching : ternaryBranch.Branching 0 := by
-  refine ⟨by decide +kernel, 0, ⟨[], by decide +kernel, rfl⟩,
-    ⟨[1], by decide +kernel, by decide +kernel, rfl⟩,
-    1, 2, by decide +kernel, by decide +kernel, by decide +kernel⟩
-
-/-- The empty pair is a hole of `ternaryBranch`. -/
-theorem ternary_hole : ternaryBranch.IsHole [] [] := by decide +kernel
-
-/-- The empty pair is a pre-hole of `ternaryBranch`. -/
-theorem ternary_preHole : ternaryBranch.IsPreHole [] [] := by decide +kernel
-
-/-- `ternaryBranch` has forced target heads and a hole. -/
-theorem short_hypotheses : ternaryBranch.FH ∧ ternaryBranch.HasHole :=
-  ⟨smallInstance_fh _ _, [], [], ternary_hole⟩
-
-/-- `ternaryBranch` has forced target heads and is in a non-mortal case. -/
-theorem nonmortal_hypotheses : ternaryBranch.FH ∧ ternaryBranch.NonMortalCase :=
-  ⟨smallInstance_fh _ _, [], [], ternary_preHole, Or.inl ternary_branching⟩
-
-/-- An instance whose spine start state is safe and mortal: every letter is unsafe. -/
-def ternaryMortal : SS2 (Fin 3) (Fin 2) (Fin 1) (Fin 1) (Fin 2) :=
-  smallInstance emptyHeadDFA {1}
-
-/-- The empty pair is a mortal hole of `ternaryMortal`. -/
-theorem ternary_mortal_hole : ternaryMortal.IsMortalHole [] [] := by decide +kernel
-
-/-- `ternaryMortal` has forced target heads and a mortal hole. -/
-theorem mortal_hypotheses : ternaryMortal.FH ∧ ternaryMortal.HasMortalHole :=
-  ⟨smallInstance_fh _ _, [], [], ternary_mortal_hole⟩
-
-/-- A unary alphabet cannot provide two distinct outgoing letters. -/
-theorem unary_not_branching (I : SS2 (Fin 1) (Fin 2) (Fin 1) (Fin 1) (Fin 2))
-    (q : Fin 2) : ¬ I.Branching q := by
-  rintro ⟨_, r, _, _, a, b, hab, _, _⟩
-  exact hab (Subsingleton.elim a b)
-
-/-- Over an empty alphabet every safe state is mortal; no inhabitant is assumed. -/
-theorem empty_mortal :
-    (smallInstance (oneDFA (α := Fin 0)) ∅).Mortal 0 := by decide +kernel
-
-end CoreExamples
-
-end DeciENSSE.Core
+end DeciENSSE.Core.Words

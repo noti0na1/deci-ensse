@@ -1,17 +1,28 @@
 import DeciENSSE.Core.Automata
 
-/-! # Effective tests for the first two Horn conditions
+/-! # Finite tests for forced atoms and liveness
 
-Finite searches decide satisfiability and the first two Horn conditions.
+The lower automata detect visible atoms forced by the consequent but not the
+antecedent. The upper automata detect a seed that is live in the antecedent
+but reaches a forbidden consequent root. A product of the two powerset state
+spaces bounds the length of either witness, so finite word searches decide
+(I0) and liveness preservation.
+
+This completes the first two tests in the covariant condition step. The
+remaining condition (II) is reduced to two-word instances in `Core/Reduction`.
+The liveness test assumes that both systems are satisfiable; satisfiability
+is decided separately by `Automata.decideSat`.
 
 ## Main declarations
 
-- `Bound.decideCondI`
-- `Bound.decideCondII`
+- `Automata.FailureI0`, `Automata.FailureLive`: automaton witnesses of failure.
+- `Automata.condI0_bounded`, `Automata.condLive_bounded`: bounded characterizations.
+- `Automata.decideCondI0`, `Automata.decideCondLive`: executable condition tests.
 -/
 
 namespace DeciENSSE.Core
-namespace Bound
+open DeciENSSE.Core.Words
+namespace Automata
 variable {n : ℕ} {X Z : Type*} [Fintype X] [DecidableEq X] [Fintype Z] [DecidableEq Z]
 
 /-- A uniform bound 2^(2ν), where ν counts all visible and hidden variables. -/
@@ -26,24 +37,24 @@ theorem product_card_le : Fintype.card (Finset X × Finset (X ⊕ Z)) ≤ witnes
   apply Nat.pow_le_pow_right (by omega)
   omega
 
-/-- A final-state witness to failure of the first Horn condition. -/
-def FailureI (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) (x : X) (w : List (Fin n)) : Prop :=
+/-- A final-state witness to failure of the forced-atom condition (I0). -/
+def FailureI0 (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) (x : X) (w : List (Fin n)) : Prop :=
   (Q ψ (.inl x) w ∩ LowF ψ).Nonempty ∧ Disjoint (Q φ x w) (LowF φ)
 
-/-- A safe-path witness to failure of the second Horn condition. -/
-def FailureII (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) (x : X) (w : List (Fin n)) : Prop :=
+/-- A safe-path witness to failure of the liveness condition. -/
+def FailureLive (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) (x : X) (w : List (Fin n)) : Prop :=
   Safe φ x w ∧ (P ψ (.inl x) w ∩ Bot ψ).Nonempty
 
 instance {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))} {x : X} {w : List (Fin n)} :
-    Decidable (FailureI φ ψ x w) := by unfold FailureI; infer_instance
+    Decidable (FailureI0 φ ψ x w) := by unfold FailureI0; infer_instance
 instance {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))} {x : X} {w : List (Fin n)} :
-    Decidable (FailureII φ ψ x w) := by unfold FailureII; infer_instance
+    Decidable (FailureLive φ ψ x w) := by unfold FailureLive; infer_instance
 
-/-- Failure of the first Horn condition has an automaton witness. -/
-theorem not_condI_iff (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) :
-    ¬ CondI φ ψ ↔ ∃ x w, FailureI φ ψ x w := by
+/-- Failure of the forced-atom condition (I0) has an automaton witness. -/
+theorem not_condI0_iff (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) :
+    ¬ CondI0 φ ψ ↔ ∃ x w, FailureI0 φ ψ x w := by
   classical
-  simp only [CondI, Set.subset_def, not_forall]
+  simp only [CondI0, Set.subset_def, not_forall]
   constructor
   · rintro ⟨⟨x, w⟩, hψ, hφ⟩
     exact ⟨x, w, mu_membership.mp hψ,
@@ -54,12 +65,12 @@ theorem not_condI_iff (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) :
       Finset.disjoint_left.mp hφ (Finset.mem_inter.mp (mu_membership.mp h).choose_spec).1
         (Finset.mem_inter.mp (mu_membership.mp h).choose_spec).2⟩
 
-/-- Witness failure of the second condition by cutting a dead word at a bottom hit. -/
-theorem not_condII_iff {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
+/-- Witness failure of the liveness condition by cutting a dead word at a bottom hit. -/
+theorem not_condLive_iff {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
     (hφ : ∃ ρ, Sat ρ φ) (hψ : ∃ ρ, Sat ρ ψ) :
-    ¬ CondII φ ψ ↔ ∃ x w, FailureII φ ψ x w := by
+    ¬ CondLive φ ψ ↔ ∃ x w, FailureLive φ ψ x w := by
   classical
-  simp only [CondII, Set.subset_def, not_forall]
+  simp only [CondLive, Set.subset_def, not_forall]
   constructor
   · rintro ⟨⟨x, w⟩, h, hn⟩
     have hs := (liveness hφ x w).mp h
@@ -76,11 +87,10 @@ theorem not_condII_iff {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
     simp only [List.take_length] at hsafe
     exact (Finset.not_disjoint_iff_nonempty_inter.mpr hb) hsafe
 
-
 /-- The lower product preserves both final tests under loop deletion. -/
-theorem failureI_short {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
-    {x : X} {w : List (Fin n)} (h : FailureI φ ψ x w) :
-    ∃ v, v.length < witnessBound X Z ∧ FailureI φ ψ x v := by
+theorem failureI0_short {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
+    {x : X} {w : List (Fin n)} (h : FailureI0 φ ψ x w) :
+    ∃ v, v.length < witnessBound X Z ∧ FailureI0 φ ψ x v := by
   let M := (lower φ x).prod (lower ψ (.inl x))
   have hs : M.PathSafe (fun _ => True) M.start w :=
     (LDFA.pathSafe_iff _ _ _ _).mpr (fun _ _ => trivial)
@@ -93,12 +103,12 @@ theorem failureI_short {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
   have h₂ := congrArg Prod.snd hp
   change Q φ x v = Q φ x w at h₁
   change Q ψ (.inl x) v = Q ψ (.inl x) w at h₂
-  simpa only [FailureI, h₁, h₂] using h
+  simpa only [FailureI0, h₁, h₂] using h
 
 /-- The upper product retains the safety restriction on its first component. -/
-theorem failureII_short {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
-    {x : X} {w : List (Fin n)} (h : FailureII φ ψ x w) :
-    ∃ v, v.length < witnessBound X Z ∧ FailureII φ ψ x v := by
+theorem failureLive_short {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
+    {x : X} {w : List (Fin n)} (h : FailureLive φ ψ x w) :
+    ∃ v, v.length < witnessBound X Z ∧ FailureLive φ ψ x v := by
   let M := (upper φ x).prod (upper ψ (.inl x))
   let G : Finset X × Finset (X ⊕ Z) → Prop := fun p => Disjoint p.1 (Bot φ)
   have safe_eq (v : List (Fin n)) : M.PathSafe G M.start v ↔ Safe φ x v := by
@@ -129,42 +139,42 @@ theorem boundedWitness_iff (B : ℕ) (F : List (Fin n) → Prop) :
   · rintro ⟨w, hw, h⟩
     exact ⟨⟨w.length, hw⟩, fun i => w[i], by simpa using h⟩
 
-/-- The proved finite witness bound for (i). -/
-theorem condI_bounded (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) :
-    CondI φ ψ ↔ ¬ ∃ x, BoundedWitness (witnessBound X Z) (FailureI φ ψ x) := by
+/-- The proved finite witness bound for `CondI0`. -/
+theorem condI0_bounded (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) :
+    CondI0 φ ψ ↔ ¬ ∃ x, BoundedWitness (witnessBound X Z) (FailureI0 φ ψ x) := by
   classical
-  rw [← not_iff_not, not_condI_iff, not_not]
+  rw [← not_iff_not, not_condI0_iff, not_not]
   constructor
   · rintro ⟨x, w, h⟩
-    exact ⟨x, (boundedWitness_iff _ _).mpr (failureI_short h)⟩
+    exact ⟨x, (boundedWitness_iff _ _).mpr (failureI0_short h)⟩
   · rintro ⟨x, h⟩
     obtain ⟨w, _, hw⟩ := (boundedWitness_iff _ _).mp h
     exact ⟨x, w, hw⟩
 
-/-- The proved finite witness bound for (ii), under the exact satisfiability premises. -/
-theorem condII_bounded {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
+/-- The finite witness bound for liveness preservation in two satisfiable systems. -/
+theorem condLive_bounded {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
     (hφ : ∃ ρ, Sat ρ φ) (hψ : ∃ ρ, Sat ρ ψ) :
-    CondII φ ψ ↔ ¬ ∃ x, BoundedWitness (witnessBound X Z) (FailureII φ ψ x) := by
+    CondLive φ ψ ↔ ¬ ∃ x, BoundedWitness (witnessBound X Z) (FailureLive φ ψ x) := by
   classical
-  rw [← not_iff_not, not_condII_iff hφ hψ, not_not]
+  rw [← not_iff_not, not_condLive_iff hφ hψ, not_not]
   constructor
   · rintro ⟨x, w, h⟩
-    exact ⟨x, (boundedWitness_iff _ _).mpr (failureII_short h)⟩
+    exact ⟨x, (boundedWitness_iff _ _).mpr (failureLive_short h)⟩
   · rintro ⟨x, h⟩
     obtain ⟨w, _, hw⟩ := (boundedWitness_iff _ _).mp h
     exact ⟨x, w, hw⟩
 
-/-- Executable decider for condition (i); no satisfiability proof is needed. -/
-def decideCondI (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) : Decidable (CondI φ ψ) :=
-  decidable_of_iff (¬ ∃ x, BoundedWitness (witnessBound X Z) (FailureI φ ψ x))
-    (condI_bounded φ ψ).symm
+/-- Executable decider for condition `CondI0`; no satisfiability proof is needed. -/
+def decideCondI0 (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) : Decidable (CondI0 φ ψ) :=
+  decidable_of_iff (¬ ∃ x, BoundedWitness (witnessBound X Z) (FailureI0 φ ψ x))
+    (condI0_bounded φ ψ).symm
 
-/-- Executable decider for condition (ii) for two satisfiable systems. -/
-def decideCondII (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z)))
-    (hφ : ∃ ρ, Sat ρ φ) (hψ : ∃ ρ, Sat ρ ψ) : Decidable (CondII φ ψ) :=
-  decidable_of_iff (¬ ∃ x, BoundedWitness (witnessBound X Z) (FailureII φ ψ x))
-    (condII_bounded hφ hψ).symm
+/-- Executable decider for condition `CondLive` for two satisfiable systems. -/
+def decideCondLive (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z)))
+    (hφ : ∃ ρ, Sat ρ φ) (hψ : ∃ ρ, Sat ρ ψ) : Decidable (CondLive φ ψ) :=
+  decidable_of_iff (¬ ∃ x, BoundedWitness (witnessBound X Z) (FailureLive φ ψ x))
+    (condLive_bounded hφ hψ).symm
 
-end Bound
+end Automata
 
 end DeciENSSE.Core

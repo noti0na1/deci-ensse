@@ -8,6 +8,7 @@ labels follow the orbit of the start core under `x`. Deleting a loop between two
 equal labels keeps a hole, and keeps a positive witness when no cut of the witness is
 deleted. Protecting the at most three cuts of one witness leaves at most three stretches of
 pairwise distinct labels, so a positive unary hole has one of length at most `3 |C|`.
+Without a channel, `DeciNSSE.LetteredHierarchy.exists_unary_hole_iff` gives the bound `|C|`.
 
 ## Main declarations
 

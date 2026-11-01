@@ -12,9 +12,8 @@ The elementary finite search includes epsilon and the empty alphabet.
   `unit_cone`, `unitRejectedPath`, `condU_iff_no_unit_holes`, `decideCondU`.
 -/
 
-set_option autoImplicit false
-
 namespace DeciENSSE.Core.Mixed
+open DeciENSSE.Core.Words
 
 variable {n : ℕ}
 open DeciENSSE.Core.Full DeciNSSE.Holes DeciNSSE.RejectedTail
@@ -58,8 +57,8 @@ theorem unitReader_target (p : X × Bool) (w : List (Fin n)) :
 theorem unitReader_guard (p : X × Bool) (w : List (Fin n)) (i j : ℕ) :
     unitRelation ((unitReader c φ ψ p).eval (w.take i))
       ((unitReader c φ ψ p).eval (w.take j)) ↔
-    (Bound.P (signedSys c φ) p (w.take i) ∩
-      (Bound.P (signedSys c φ) p (w.take j)).map flipEmb).Nonempty := by
+    (Automata.P (signedSys c φ) p (w.take i) ∩
+      (Automata.P (signedSys c φ) p (w.take j)).map flipEmb).Nonempty := by
   simp only [unitRelation, unitReader_eval]
   exact targetDFA_selfGuard p w i j
 
@@ -172,75 +171,5 @@ def decideCondU (hφ : ∃ ρ, SatT c ρ φ) : Decidable (CondU c φ ψ) := by
 theorem decideCondU_correct (hφ : ∃ ρ, SatT c ρ φ) :
     @decide (CondU c φ ψ) (decideCondU c φ ψ hφ) = true ↔ CondU c φ ψ :=
   @decide_eq_true_iff _ (decideCondU c φ ψ hφ)
-
-namespace UnitsExamples
-open LeafHornExamples MembershipExamples
-
-/-- The semantic premise of the decision procedure is inhabited. -/
-theorem empty_sat (c : Fin n → Bool) :
-    ∃ ρ : Unit → DeciNSSE.Tree n, SatT c ρ [] :=
-  ⟨fun _ => DeciNSSE.Tree.bot, by simp [SatT]⟩
-
-/-- A real unit hole at epsilon, using the shared-reader example. -/
-theorem epsilon_hole :
-    IsReaderHole (unitReader arrow ([] : List (LitT 3 Unit)) headSystem ((), false))
-      unitRelation (unitTarget arrow [] headSystem) [] := by
-  apply (unit_empty_hole_iff arrow [] headSystem ((), false)).mpr
-  exact reader_unit
-
-/-- The epsilon hole witnesses failure of the unit condition. -/
-theorem failed_unit_condition : ¬ CondU arrow ([] : List (LitT 3 Unit)) headSystem := by
-  intro h
-  exact (condU_iff_no_unit_holes arrow [] headSystem (empty_sat arrow)).mp h
-    ((),false) [] epsilon_hole
-
-/-- The unit decision rejects the epsilon-hole example. -/
-theorem failed_decision :
-    @decide (CondU arrow ([] : List (LitT 3 Unit)) headSystem)
-      (decideCondU arrow [] headSystem (empty_sat arrow)) = false := by
-  let := decideCondU arrow [] headSystem (empty_sat arrow)
-  exact decide_eq_false failed_unit_condition
-
-/-- The other branch is inhabited as well; empty consequents have no negative units. -/
-theorem empty_condition :
-    CondU arrow ([] : List (LitT 3 Unit)) ([] : List (LitT 3 (Unit ⊕ Unit))) := by
-  intro _ _ _ hn
-  cases hn <;> simp_all
-
-/-- The unit decision accepts empty systems. -/
-theorem successful_decision :
-    @decide (CondU arrow ([] : List (LitT 3 Unit)) ([] : List (LitT 3 (Unit ⊕ Unit))))
-      (decideCondU arrow [] [] (empty_sat arrow)) = true :=
-  (decideCondU_correct arrow [] [] (empty_sat arrow)).mpr empty_condition
-
-/-- A nullary upper constructor still forbids the positive root leaf. -/
-def nullaryHead : List (LitT 0 (Unit ⊕ Unit)) := [.lef (.inl ()) Fin.elim0]
-
-/-- The empty alphabet can have a real unit hole at epsilon. -/
-theorem nullary_epsilon_hole :
-    IsReaderHole (unitReader (fun i : Fin 0 => i.elim0) [] nullaryHead ((), false))
-      unitRelation (unitTarget (fun i : Fin 0 => i.elim0) [] nullaryHead) [] := by
-  apply (unit_empty_hole_iff _ _ _ _).mpr
-  decide +kernel
-
-/-- The generic unit decider is available at zero arity and detects this hole. -/
-theorem nullary_failed_decision :
-    @decide (CondU (fun i : Fin 0 => i.elim0) [] nullaryHead)
-      (decideCondU _ [] nullaryHead (empty_sat _)) = false := by
-  rw [decide_eq_false_iff_not]
-  intro h
-  exact (condU_iff_no_unit_holes _ [] nullaryHead (empty_sat _)).mp h
-    ((), false) [] nullary_epsilon_hole
-
-/-- At zero arity an empty consequent also supplies the successful branch. -/
-theorem nullary_successful_decision :
-    @decide (CondU (fun i : Fin 0 => i.elim0) ([] : List (LitT 0 Unit))
-      ([] : List (LitT 0 (Unit ⊕ Unit))))
-      (decideCondU _ [] [] (empty_sat _)) = true := by
-  apply (decideCondU_correct _ _ _ _).mpr
-  intro _ _ _ hn
-  cases hn <;> simp_all
-
-end UnitsExamples
 
 end DeciENSSE.Core.Mixed

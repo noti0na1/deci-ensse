@@ -1,33 +1,38 @@
 import DeciENSSE.Core.ClassesLanguage
 import DeciENSSE.Core.Final
 
-/-! # Regular and finite trees over {⊥, fₙ}
+/-! # Regular and finite covariant existential entailment
 
-Regular Horn hulls and finite least solutions transfer existential entailment
-to regular and finite trees. All three decisions cover arity zero.
+Regular seed assignments have regular Horn hulls, so regular-tree entailment
+agrees with arbitrary-tree entailment. For finite trees, the least forced-atom
+solution must also be finite. The lower automaton decides this by testing words
+at its state-count bound; finite seeds then generate finite Horn hulls.
+
+This is the tree-class transfer step of the covariant proof. `existsEntailsFin_iff`
+says that finite-tree entailment holds exactly when the antecedent has no finite
+solution, or the consequent has a finite solution and arbitrary-tree entailment
+holds. These transfers give executable decisions at every arity, including zero.
 
 ## Main declarations
 
-- `Sat_fin`
-- `finite_sat_iff`
-- `regular_extension`
-- `existsEntailsReg_iff`
-- `existsEntailsFin_iff`
-- `decideSatFin`
-- `decideExistsEntailsFin`
-- `decideExistsEntailsReg`
+- `SatFin`, `finite_sat_iff`, `decideSatFin`: finite satisfiability and its test.
+- `regular_extension`, `existsEntailsReg_iff`: regular extensions and transfer.
+- `existsEntailsFin_iff`: finite transfer with both satisfiability exceptions.
+- `decideExistsEntailsTopFreeReg`, `decideExistsEntailsTopFreeFin`:
+  entailment decisions for the restricted tree classes.
 -/
 
 namespace DeciENSSE.Core
+open DeciENSSE.Core.Words DeciENSSE.Core.Words.Mortal
 variable {n : ℕ}
 
 /-- Satisfiability with every variable assigned a finite tree. -/
-def Sat_fin {V : Type*} (χ : List (Lit n V)) : Prop :=
+def SatFin {V : Type*} (χ : List (Lit n V)) : Prop :=
   ∃ ρ, (∀ v, IsFiniteTree (ρ v)) ∧ Sat ρ χ
 
 /-- Finite satisfiability is consistency with finite least-solution components. -/
 theorem finite_sat_iff {V : Type*} (χ : List (Lit n V)) :
-    Sat_fin χ ↔ (∃ ρ, Sat ρ χ) ∧ ∀ y, {t | (y, t) ∈ Mu χ}.Finite := by
+    SatFin χ ↔ (∃ ρ, Sat ρ χ) ∧ ∀ y, {t | (y, t) ∈ Mu χ}.Finite := by
   constructor
   · rintro ⟨ρ, hf, hs⟩
     exact ⟨⟨ρ, hs⟩, fun y => (hf y).subset fun _ h =>
@@ -37,7 +42,7 @@ theorem finite_sat_iff {V : Type*} (χ : List (Lit n V)) :
       (sat_iff_sol _).mpr (mu_sol hs)⟩
 
 namespace Classes
-open DeciENSSE.Core.Bound
+open DeciENSSE.Core.Automata
 variable {V : Type*} [Fintype V] [DecidableEq V]
 
 /-- Finite languages have a uniform strict length bound. -/
@@ -146,8 +151,8 @@ end Classes
 
 /-- Executable finite satisfiability, using the lower automaton and root clashes. -/
 def decideSatFin {V : Type*} [Fintype V] [DecidableEq V] (χ : List (Lit n V)) :
-    Decidable (Sat_fin χ) := by
-  letI := Bound.decideSat χ
+    Decidable (SatFin χ) := by
+  letI := Automata.decideSat χ
   exact decidable_of_iff ((∃ ρ, Sat ρ χ) ∧ Classes.FiniteMuTest χ)
     (by rw [finite_sat_iff, Classes.finiteMuTest_iff])
 
@@ -156,11 +161,11 @@ variable {X Z : Type*}
 
 /-- Testing the least solution and singleton closures suffices for the reverse class transfer. No
 assumption on extensions is used here. -/
-theorem entails_of_class {C : BFTreeN n → Prop} {φ : List (Lit n X)}
+theorem entails_of_class {C : BFTree n → Prop} {φ : List (Lit n X)}
     {ψ : List (Lit n (X ⊕ Z))}
     (hmu : ∀ x, C (assignmentOf (Mu φ) mu_closed.prefixClosed x))
     (hcl : ∀ a x, C (assignmentOf (Cl φ a) (cl_closed a).prefixClosed x))
-    (he : ExistsEntailsIn C φ ψ) : ExistsEntails φ ψ := by
+    (he : ExistsEntailsIn C φ ψ) : ExistsEntailsTopFree φ ψ := by
   classical
   by_cases hφ : ∃ ρ, Sat ρ φ
   · have hmin := he _ hmu ((sat_iff_sol _).mpr (mu_sol hφ))
@@ -181,8 +186,8 @@ theorem entails_of_class {C : BFTreeN n → Prop} {φ : List (Lit n X)}
   · exact existsEntails_of_unsat hφ
 
 /-- The least extension below an existing extension. -/
-theorem hull_extension {C : BFTreeN n → Prop} {ψ : List (Lit n (X ⊕ Z))}
-    (ρ : X → BFTreeN n) (σ : Z → BFTreeN n) (hs : Sat (Sum.elim ρ σ) ψ)
+theorem hull_extension {C : BFTree n → Prop} {ψ : List (Lit n (X ⊕ Z))}
+    (ρ : X → BFTree n) (σ : Z → BFTree n) (hs : Sat (Sum.elim ρ σ) ψ)
     (hg : ∀ z, C (assignmentOf (Hull ψ (visible '' configSet ρ))
       (hull_closed _).prefixClosed (.inr z))) :
     ∃ τ, (∀ z, C (τ z)) ∧ Sat (Sum.elim ρ τ) ψ := by
@@ -198,7 +203,7 @@ theorem hull_extension {C : BFTreeN n → Prop} {ψ : List (Lit n (X ⊕ Z))}
   let τ := assignmentOf H (hull_closed _).prefixClosed
   have hv : ∀ x, τ (.inl x) = ρ x := by
     intro x
-    apply BFTreeN.ext
+    apply BFTree.ext
     apply Set.Subset.antisymm
     · intro w hw; exact hsub hw
     · intro w hw
@@ -215,7 +220,7 @@ variable [Fintype X] [DecidableEq X] [Fintype Z] [DecidableEq Z]
 
 omit [DecidableEq X] in
 /-- A finite family of finite trees has finitely many configurations. -/
-theorem finite_configSet (ρ : X → BFTreeN n) (hf : ∀ x, IsFiniteTree (ρ x)) :
+theorem finite_configSet (ρ : X → BFTree n) (hf : ∀ x, IsFiniteTree (ρ x)) :
     (configSet ρ).Finite := by
   have h := Set.finite_iUnion (fun x => (hf x).image (fun w => (x,w)))
   apply h.subset
@@ -239,11 +244,11 @@ theorem existsEntailsFin_iff {X Z : Type*}
     [Fintype X] [DecidableEq X] [Fintype Z] [DecidableEq Z]
     (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) :
     ExistsEntailsIn IsFiniteTree φ ψ ↔
-      ¬ Sat_fin φ ∨ (Sat_fin ψ ∧ ExistsEntails φ ψ) := by
+      ¬ SatFin φ ∨ (SatFin ψ ∧ ExistsEntailsTopFree φ ψ) := by
   classical
   constructor
   · intro he
-    by_cases hf : Sat_fin φ
+    by_cases hf : SatFin φ
     · right
       obtain ⟨ρ, hρ, hs⟩ := hf
       obtain ⟨σ, hσ, ht⟩ := he ρ hρ hs
@@ -259,36 +264,26 @@ theorem existsEntailsFin_iff {X Z : Type*}
       exact Classes.finite_hull ((finite_sat_iff ψ).mp hf).2
         ((Classes.finite_configSet ρ hρ).image visible) (.inr z)
 
-/-- Unconditional computable finite-tree existential entailment. -/
-def decideExistsEntailsFin {X Z : Type*}
+/-- Executable finite-tree existential entailment. -/
+def decideExistsEntailsTopFreeFin {X Z : Type*}
     [Fintype X] [DecidableEq X] [Fintype Z] [DecidableEq Z]
     (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) :
     Decidable (ExistsEntailsIn IsFiniteTree φ ψ) := by
-  letI := decideExistsEntails φ ψ
+  letI := decideExistsEntailsTopFree φ ψ
   letI := decideSatFin φ
   letI := decideSatFin ψ
-  exact decidable_of_iff (¬ Sat_fin φ ∨ (Sat_fin ψ ∧ ExistsEntails φ ψ))
+  exact decidable_of_iff (¬ SatFin φ ∨ (SatFin ψ ∧ ExistsEntailsTopFree φ ψ))
     (existsEntailsFin_iff φ ψ).symm
-
-/-- Satisfiability with regular witnesses is equivalent to satisfiability. -/
-theorem regular_sat_iff {V : Type*} [Fintype V] [DecidableEq V]
-    (χ : List (Lit n V)) :
-    (∃ ρ, (∀ v, IsRegularTree (ρ v)) ∧ Sat ρ χ) ↔ ∃ ρ, Sat ρ χ := by
-  constructor
-  · rintro ⟨ρ,_,hs⟩; exact ⟨ρ,hs⟩
-  · intro hs
-    exact ⟨assignmentOf (Mu χ) mu_closed.prefixClosed,
-      Classes.mu_regular χ, (sat_iff_sol _).mpr (mu_sol hs)⟩
 
 /-- A regular visible solution admitting an extension admits a regular one. -/
 theorem regular_extension {X Z : Type*}
     [Fintype X] [DecidableEq X] [Fintype Z] [DecidableEq Z]
-    {ψ : List (Lit n (X ⊕ Z))} (ρ : X → BFTreeN n)
-    (hr : ∀ x, IsRegularTree (ρ x)) (σ : Z → BFTreeN n)
+    {ψ : List (Lit n (X ⊕ Z))} (ρ : X → BFTree n)
+    (hr : ∀ x, IsRegularTree (ρ x)) (σ : Z → BFTree n)
     (hs : Sat (Sum.elim ρ σ) ψ) :
     ∃ τ, (∀ z, IsRegularTree (τ z)) ∧ Sat (Sum.elim ρ τ) ψ := by
   apply Classes.hull_extension ρ σ hs
-  let η : X ⊕ Z → BFTreeN n := Sum.elim ρ (fun _ => BFTreeN.bot)
+  let η : X ⊕ Z → BFTree n := Sum.elim ρ (fun _ => BFTree.bot)
   have he : configSet η = visible '' configSet ρ := by
     ext a
     rcases a with ⟨x,w⟩
@@ -310,36 +305,35 @@ theorem regular_extension {X Z : Type*}
 theorem existsEntailsReg_iff {X Z : Type*}
     [Fintype X] [DecidableEq X] [Fintype Z] [DecidableEq Z]
     (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) :
-    ExistsEntailsIn IsRegularTree φ ψ ↔ ExistsEntails φ ψ := by
+    ExistsEntailsIn IsRegularTree φ ψ ↔ ExistsEntailsTopFree φ ψ := by
   constructor
   · exact Classes.entails_of_class (Classes.mu_regular φ) (Classes.cl_regular φ)
   · intro he ρ hr hs
     obtain ⟨σ,_,ht⟩ := he ρ (fun _ => trivial) hs
     exact regular_extension ρ hr σ ht
 
-/-- Unconditional computable regular-tree existential entailment. -/
-def decideExistsEntailsReg {X Z : Type*}
+/-- Executable regular-tree existential entailment. -/
+def decideExistsEntailsTopFreeReg {X Z : Type*}
     [Fintype X] [DecidableEq X] [Fintype Z] [DecidableEq Z]
     (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) :
     Decidable (ExistsEntailsIn IsRegularTree φ ψ) := by
-  letI := decideExistsEntails φ ψ
-  exact decidable_of_iff (ExistsEntails φ ψ) (existsEntailsReg_iff φ ψ).symm
+  letI := decideExistsEntailsTopFree φ ψ
+  exact decidable_of_iff (ExistsEntailsTopFree φ ψ) (existsEntailsReg_iff φ ψ).symm
 
-/-- Boolean correctness of the unconditional finite-tree decision. -/
-theorem decideExistsEntailsFin_correct {X Z : Type*}
+/-- Boolean correctness of the finite-tree decision. -/
+theorem decideExistsEntailsTopFreeFin_correct {X Z : Type*}
     [Fintype X] [DecidableEq X] [Fintype Z] [DecidableEq Z]
     (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) :
-    @decide _ (decideExistsEntailsFin φ ψ) = true ↔
+    @decide _ (decideExistsEntailsTopFreeFin φ ψ) = true ↔
       ExistsEntailsIn IsFiniteTree φ ψ :=
-  @decide_eq_true_iff _ (decideExistsEntailsFin φ ψ)
+  @decide_eq_true_iff _ (decideExistsEntailsTopFreeFin φ ψ)
 
-/-- Boolean correctness of the unconditional regular-tree decision. -/
-theorem decideExistsEntailsReg_correct {X Z : Type*}
+/-- Boolean correctness of the regular-tree decision. -/
+theorem decideExistsEntailsTopFreeReg_correct {X Z : Type*}
     [Fintype X] [DecidableEq X] [Fintype Z] [DecidableEq Z]
     (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) :
-    @decide _ (decideExistsEntailsReg φ ψ) = true ↔
+    @decide _ (decideExistsEntailsTopFreeReg φ ψ) = true ↔
       ExistsEntailsIn IsRegularTree φ ψ :=
-  @decide_eq_true_iff _ (decideExistsEntailsReg φ ψ)
-
+  @decide_eq_true_iff _ (decideExistsEntailsTopFreeReg φ ψ)
 
 end DeciENSSE.Core

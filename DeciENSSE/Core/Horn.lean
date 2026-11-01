@@ -1,19 +1,36 @@
 import DeciENSSE.Core.Basic
 
-/-! # Horn characterization of existential entailment
+/-! # Horn characterization of covariant existential entailment
 
-Configuration sets turn tree constraints into Horn clauses. Least solutions,
-live configurations, and visible reachability characterize existential entailment.
+An atom `(x, w)` says that the tree assigned to `x` has a constructor at `w`.
+Tree constraints become unary Horn rules on these atoms: copies, pushes,
+pops, and truncations, together with forced roots and forbidden roots.
+`assignmentEquiv` identifies tree assignments with prefix-closed atom sets.
+`mu_least` characterizes the least solution of a satisfiable system, and
+`cl_least` characterizes its least solution containing a live seed.
+
+This is the condition step of the covariant proof. `three_conditions` says
+that, for satisfiable antecedent and consequent, existential entailment is
+exactly preservation of forced visible atoms (I0), liveness, and visible
+consequences of a live seed (II).
+
+The conditions have the same roles as (I0), (U), and (II) in
+`Core/Mixed/Conditions`, with constructor atoms replaced there by signed leaf
+atoms. Here a seed is live exactly when its closure avoids forbidden roots,
+so `CondLive` supplies the unit-obstruction check represented there by (U).
+With variance, a seed can also derive opposite signed atoms: its own closure
+can collide with itself. The variance proof therefore separates unit and
+self-event obstructions to liveness. Its (U) checks forbidden units, while
+(I0), (II), and the collision argument exclude inconsistent extensions;
+self events also enter the automata tests for live antecedent seeds.
 
 ## Main declarations
 
-- `Sol`
-- `Reach`
-- `Mu`
-- `Cl`
-- `Live`
-- `Projected`
-- `three_conditions`
+- `assignmentEquiv`, `sat_iff_sol`: assignments as Horn solutions.
+- `Mu`, `Cl`, `Live`, `Hull`: forced atoms, seed closures, liveness, and hulls.
+- `mu_least`, `cl_least`: least solutions, with and without a live seed.
+- `Projected`, `projected_iff`: extensions characterized by visible Horn data.
+- `CondI0`, `CondLive`, `CondII`, `three_conditions`: the entailment criterion.
 -/
 
 namespace DeciENSSE.Core
@@ -24,7 +41,7 @@ variable {n : ℕ}
 abbrev Config (n : ℕ) (V : Type*) := V × List (Fin n)
 
 /-- Constructor positions present in an assignment. -/
-def configSet {V : Type*} (ρ : V → BFTreeN n) : Set (Config n V) :=
+def configSet {V : Type*} (ρ : V → BFTree n) : Set (Config n V) :=
   {a | a.2 ∈ (ρ a.1).K}
 
 /-- Each variable component is closed under word prefixes. -/
@@ -48,24 +65,24 @@ theorem prefixClosed_iff_truncClosed {V : Type*} {S : Set (Config n V)} :
       exact ih (h v (u ++ w) c (by simpa [List.append_assoc] using hw))
 
 /-- Every tree assignment has a prefix-closed configuration set. -/
-theorem configSet_prefixClosed {V : Type*} (ρ : V → BFTreeN n) :
+theorem configSet_prefixClosed {V : Type*} (ρ : V → BFTree n) :
     PrefixClosed (configSet ρ) := fun v u w => (ρ v).prefix_closed u w
 
 /-- Recover an assignment from a prefix-closed configuration set. -/
 def assignmentOf {V : Type*} (S : Set (Config n V)) (h : PrefixClosed S) :
-    V → BFTreeN n := fun v => ⟨{w | (v, w) ∈ S}, h v⟩
+    V → BFTree n := fun v => ⟨{w | (v, w) ∈ S}, h v⟩
 
 /-- Recovering an assignment preserves its configurations. -/
 @[simp] theorem configSet_assignmentOf {V : Type*} (S : Set (Config n V))
     (h : PrefixClosed S) : configSet (assignmentOf S h) = S := rfl
 
 /-- Recovering an assignment from its configurations is the identity. -/
-@[simp] theorem assignmentOf_configSet {V : Type*} (ρ : V → BFTreeN n) :
+@[simp] theorem assignmentOf_configSet {V : Type*} (ρ : V → BFTree n) :
     assignmentOf (configSet ρ) (configSet_prefixClosed ρ) = ρ := rfl
 
 /-- The bijection between tree assignments and prefix-closed configuration sets. -/
 def assignmentEquiv (V : Type*) :
-    (V → BFTreeN n) ≃ {S : Set (Config n V) // PrefixClosed S} where
+    (V → BFTree n) ≃ {S : Set (Config n V) // PrefixClosed S} where
   toFun ρ := ⟨configSet ρ, configSet_prefixClosed ρ⟩
   invFun S := assignmentOf S.val S.property
   left_inv _ := rfl
@@ -116,7 +133,7 @@ theorem Closed.prefixClosed {S : Set (Config n V)} (h : Closed χ S) : PrefixClo
   prefixClosed_iff_truncClosed.mpr (fun v w c => h (.trunc v w c))
 
 /-- Tree satisfaction agrees with the configuration-set Horn semantics. -/
-theorem sat_iff_sol (ρ : V → BFTreeN n) : Sat ρ χ ↔ Sol χ (configSet ρ) := by
+theorem sat_iff_sol (ρ : V → BFTree n) : Sat ρ χ ↔ Sol χ (configSet ρ) := by
   constructor
   · intro h
     refine ⟨?_, ?_, ?_⟩
@@ -129,10 +146,10 @@ theorem sat_iff_sol (ρ : V → BFTreeN n) : Sat ρ χ ↔ Sol χ (configSet ρ)
         | push c hl => exact h _ hl hp
         | pop c hl => exact h _ hl hp
     · rintro ⟨u, w⟩ ⟨rfl, a, hl⟩
-      exact h _ hl (BFTreeN.nil_mem_node _)
+      exact h _ hl (BFTree.nil_mem_node _)
     · rintro ⟨u, w⟩ hw ⟨rfl, hl⟩
       change [] ∈ (ρ u).K at hw
-      have hb : ρ u = BFTreeN.bot := h _ hl
+      have hb : ρ u = BFTree.bot := h _ hl
       simp [hb] at hw
   · intro h l hl
     cases l with
@@ -148,7 +165,7 @@ theorem sat_iff_sol (ρ : V → BFTreeN n) : Sat ρ χ ↔ Sol χ (configSet ρ)
       | nil => trivial
       | cons c w => exact h.closed (.move (.pop _ hl)) hw
     | bot u =>
-      apply BFTreeN.ext
+      apply BFTree.ext
       apply Set.eq_empty_iff_forall_notMem.mpr
       intro w hw
       exact h.avoids (a := (u, [])) ((ρ u).prefix_closed [] w hw) ⟨rfl, hl⟩
@@ -273,15 +290,10 @@ theorem satisfiable_iff_mu_avoids : (∃ ρ, Sat ρ χ) ↔ Avoids χ (Mu χ) :=
 theorem mu_sol (h : ∃ ρ, Sat ρ χ) : Sol χ (Mu χ) :=
   ⟨mu_closed, facts_subset_mu, satisfiable_iff_mu_avoids.mp h⟩
 
-/-- Liveness means occurrence in a satisfying tree assignment. -/
-theorem live_iff_assignment (a : Config n V) :
-    a ∈ Live χ ↔ ∃ ρ, Sat ρ χ ∧ a ∈ configSet ρ := by
-  constructor
-  · rintro ⟨S, hs, ha⟩
-    obtain ⟨ρ, hρ, rfl⟩ := sol_iff_assignment.mp hs
-    exact ⟨ρ, hρ, ha⟩
-  · rintro ⟨ρ, hρ, ha⟩
-    exact ⟨configSet ρ, (sat_iff_sol ρ).mp hρ, ha⟩
+/-- The least solution of a satisfiable Horn system. -/
+theorem mu_least (h : ∃ ρ, Sat ρ χ) :
+    Sol χ (Mu χ) ∧ ∀ S, Sol χ S → Mu χ ⊆ S :=
+  ⟨mu_sol h, fun _ hs => hs.mu_subset⟩
 
 /-- The closure of a live seed is a solution. -/
 theorem cl_sol {a : Config n V} (ha : a ∈ Live χ) : Sol χ (Cl χ a) := by
@@ -289,7 +301,7 @@ theorem cl_sol {a : Config n V} (ha : a ∈ Live χ) : Sol χ (Cl χ a) := by
   exact ⟨cl_closed a, fun _ h => Or.inl (facts_subset_mu h),
     fun _ h => hs.avoids (hs.cl_subset ha h)⟩
 
-/-- Least pointed Horn solution, the least solution containing a live point. -/
+/-- The least solution containing a live seed. -/
 theorem cl_least {a : Config n V} (ha : a ∈ Live χ) :
     Sol χ (Cl χ a) ∧ a ∈ Cl χ a ∧
       ∀ S, Sol χ S → a ∈ S → Cl χ a ⊆ S :=
@@ -314,11 +326,7 @@ theorem live_iff_reach_avoids (h : ∃ ρ, Sat ρ χ) (a : Config n V) :
     · exact (satisfiable_iff_mu_avoids.mp h) hb
     · exact hr hb
 
-/-- Liveness is the union of all solutions. -/
-theorem sUnion_sol_eq_live : ⋃₀ {S | Sol χ S} = Live χ := by
-  ext a; rfl
-
-/-- Closure under, unions of nonempty subfamilies. -/
+/-- Closure under unions of nonempty subfamilies. -/
 theorem sol_sUnion {F : Set (Set (Config n V))} (hne : F.Nonempty)
     (hF : ∀ S ∈ F, Sol χ S) : Sol χ (⋃₀ F) := by
   refine ⟨?_, ?_, ?_⟩
@@ -329,7 +337,7 @@ theorem sol_sUnion {F : Set (Set (Config n V))} (hne : F.Nonempty)
   · rintro a ⟨S, hs, ha⟩
     exact (hF S hs).avoids ha
 
-/-- Closure under, intersections of nonempty subfamilies. -/
+/-- Closure under intersections of nonempty subfamilies. -/
 theorem sol_sInter {F : Set (Set (Config n V))} (hne : F.Nonempty)
     (hF : ∀ S ∈ F, Sol χ S) : Sol χ (⋂₀ F) := by
   refine ⟨?_, ?_, ?_⟩
@@ -340,17 +348,6 @@ theorem sol_sInter {F : Set (Set (Config n V))} (hne : F.Nonempty)
   · intro a ha
     obtain ⟨S, hs⟩ := hne
     exact (hF S hs).avoids (ha S hs)
-
-/-- The explicit union representation, with μ included to cover the empty set. -/
-theorem sol_eq_mu_union_cl {S : Set (Config n V)} (h : Sol χ S) :
-    S = Mu χ ∪ ⋃₀ {T | ∃ a ∈ S, T = Cl χ a} := by
-  apply Set.Subset.antisymm
-  · intro a ha
-    exact Or.inr ⟨Cl χ a, ⟨a, ha, rfl⟩, mem_cl a⟩
-  · intro b hb
-    rcases hb with hb | ⟨T, ⟨a, ha, rfl⟩, hb⟩
-    · exact h.mu_subset hb
-    · exact h.cl_subset ha hb
 
 /-! The general set-family characterization by least, greatest, and pointed closures. -/
 
@@ -420,14 +417,14 @@ def Projected (ψ : List (Lit n (X ⊕ Z))) : Set (Set (Config n X)) :=
   {S | ∃ T, Sol ψ T ∧ restrict T = S}
 
 /-- Projected membership means existence of a hidden-variable extension. -/
-theorem projected_configSet (ρ : X → BFTreeN n) (ψ : List (Lit n (X ⊕ Z))) :
+theorem projected_configSet (ρ : X → BFTree n) (ψ : List (Lit n (X ⊕ Z))) :
     configSet ρ ∈ Projected ψ ↔ ∃ σ, Sat (Sum.elim ρ σ) ψ := by
   constructor
   · rintro ⟨T, ht, heq⟩
     obtain ⟨τ, hτ, rfl⟩ := sol_iff_assignment.mp ht
     have hv : ∀ x, τ (.inl x) = ρ x := by
       intro x
-      apply BFTreeN.ext
+      apply BFTree.ext
       exact congrArg (fun S => {w | (x, w) ∈ S}) heq
     refine ⟨fun z => τ (.inr z), ?_⟩
     have he : Sum.elim ρ (fun z => τ (.inr z)) = τ := by
@@ -439,9 +436,9 @@ theorem projected_configSet (ρ : X → BFTreeN n) (ψ : List (Lit n (X ⊕ Z)))
   · rintro ⟨σ, hσ⟩
     exact ⟨configSet (Sum.elim ρ σ), (sat_iff_sol _).mp hσ, rfl⟩
 
-/-- eq:horn-entail. -/
+/-- Existential entailment is inclusion of `Sol` in `Projected`. -/
 theorem existsEntails_iff_sol_subset (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) :
-    ExistsEntails φ ψ ↔ ∀ S, Sol φ S → S ∈ Projected ψ := by
+    ExistsEntailsTopFree φ ψ ↔ ∀ S, Sol φ S → S ∈ Projected ψ := by
   constructor
   · intro h S hs
     obtain ⟨ρ, hρ, rfl⟩ := sol_iff_assignment.mp hs
@@ -527,21 +524,21 @@ theorem projected_iff {ψ : List (Lit n (X ⊕ Z))} (h : ∃ ρ, Sat ρ ψ)
     rw [projected_pointCl (hl ha)]
     exact hc a ha
 
-/-- (i): every visible fact consequence of ψ is forced by φ. -/
-def CondI (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) : Prop :=
+/-- `CondI0`: every visible fact consequence of ψ is forced by φ. -/
+def CondI0 (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) : Prop :=
   restrict (Mu ψ) ⊆ Mu φ
 
-/-- (ii): every φ-live configuration is ψ-live. -/
-def CondII (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) : Prop :=
+/-- `CondLive`: every φ-live configuration is ψ-live. -/
+def CondLive (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) : Prop :=
   Live φ ⊆ restrict (Live ψ)
 
-/-- (iii): visible ψ-reachability from a live point lies in its φ-closure. -/
-def CondIII (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) : Prop :=
+/-- `CondII`: visible ψ-reachability from a live point lies in its φ-closure. -/
+def CondII (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) : Prop :=
   ∀ a ∈ Live φ, restrict {b | Reach ψ (visible a) b} ⊆ Cl φ a
 
-/-- The closure formulation equivalent to (iii), assuming (i). -/
-theorem condIII_iff_cl {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
-    (hi : CondI φ ψ) : CondIII φ ψ ↔
+/-- The closure formulation equivalent to `CondII`, assuming `CondI0`. -/
+theorem condII_iff_cl {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
+    (hi : CondI0 φ ψ) : CondII φ ψ ↔
       ∀ a ∈ Live φ, restrict (Cl ψ (visible a)) ⊆ Cl φ a := by
   constructor
   · intro h a ha b hb
@@ -553,22 +550,14 @@ theorem condIII_iff_cl {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
 
 /-- Existential entailment, the vacuous antecedent case. -/
 theorem existsEntails_of_unsat {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
-    (hφ : ¬ ∃ ρ, Sat ρ φ) : ExistsEntails φ ψ := by
+    (hφ : ¬ ∃ ρ, Sat ρ φ) : ExistsEntailsTopFree φ ψ := by
   intro ρ _ hρ
   exact (hφ ⟨ρ, hρ⟩).elim
-
-/-- Existential entailment, the inconsistent consequent case. -/
-theorem not_existsEntails_of_unsat {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
-    (hφ : ∃ ρ, Sat ρ φ) (hψ : ¬ ∃ ρ, Sat ρ ψ) : ¬ ExistsEntails φ ψ := by
-  intro he
-  obtain ⟨ρ, hρ⟩ := hφ
-  obtain ⟨σ, _, hσ⟩ := he ρ (fun _ => trivial) hρ
-  exact hψ ⟨Sum.elim ρ σ, hσ⟩
 
 /-- Existential entailment in reachability form. -/
 theorem three_conditions {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
     (hφ : ∃ ρ, Sat ρ φ) (hψ : ∃ ρ, Sat ρ ψ) :
-    ExistsEntails φ ψ ↔ CondI φ ψ ∧ CondII φ ψ ∧ CondIII φ ψ := by
+    ExistsEntailsTopFree φ ψ ↔ CondI0 φ ψ ∧ CondLive φ ψ ∧ CondII φ ψ := by
   rw [existsEntails_iff_sol_subset]
   constructor
   · intro he
@@ -586,36 +575,6 @@ theorem three_conditions {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
     · intro a ha
       exact hii ⟨S, hs, ha⟩
     · intro a ha b hb
-      exact hs.cl_subset ha ((condIII_iff_cl hi).mp hiii a ⟨S, hs, ha⟩ hb)
-
-/-- The least-solution assertion of Least Horn solution, packaged explicitly. -/
-theorem mu_least (h : ∃ ρ, Sat ρ χ) :
-    Sol χ (Mu χ) ∧ ∀ S, Sol χ S → Mu χ ⊆ S :=
-  ⟨mu_sol h, fun _ hs => hs.mu_subset⟩
-
-/-- The solution-family instance of the lattice-closure hypothesis. -/
-theorem sol_latticeClosed (χ : List (Lit n V)) :
-    HornFamily.LatticeClosed {S | Sol χ S} :=
-  fun _ hne hF => ⟨sol_sUnion hne (fun _ h => hF h),
-    sol_sInter hne (fun _ h => hF h)⟩
-
-/-- The least member really is the intersection of all solutions. -/
-theorem sInter_sol_eq_mu (h : ∃ ρ, Sat ρ χ) : ⋂₀ {S | Sol χ S} = Mu χ := by
-  apply Set.Subset.antisymm
-  · intro a ha; exact ha (Mu χ) (mu_sol h)
-  · intro a ha S hs; exact hs.mu_subset ha
-
-/-- The semantic and syntactic singleton closures coincide on live points. -/
-theorem sol_pointCl {a : Config n V} (ha : a ∈ Live χ) :
-    HornFamily.PointCl {S | Sol χ S} a = Cl χ a := by
-  apply Set.Subset.antisymm
-  · intro b hb; exact hb (Cl χ a) ⟨cl_sol ha, mem_cl a⟩
-  · intro b hb S hs; exact hs.1.cl_subset hs.2 hb
-
-/-- A configuration closure is the special case of a singleton seed hull. -/
-theorem hull_singleton (a : Config n V) : Hull χ {a} = Cl χ a := by
-  ext b
-  simp [Hull, Cl]
-
+      exact hs.cl_subset ha ((condII_iff_cl hi).mp hiii a ⟨S, hs, ha⟩ hb)
 
 end DeciENSSE.Core

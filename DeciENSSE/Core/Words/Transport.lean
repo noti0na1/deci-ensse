@@ -2,29 +2,29 @@ import DeciENSSE.Core.Words.Statements
 
 /-! # Renaming states and alphabets
 
-State and alphabet equivalences preserve holes, finite-head conditions, and length bounds.
+State and alphabet equivalences preserve holes, forced target heads conditions, and length bounds.
 
 ## Main declarations
 
-- `SS2.rename`
-- `SS2.mapAlpha`
-- `SS2.shortHoleBound_transport`
+- `TwoWordInstance.rename`
+- `TwoWordInstance.mapAlpha`
+- `TwoWordInstance.shortHoleBound_transport`
 -/
 
-namespace DeciENSSE.Core
+namespace DeciENSSE.Core.Words
 
 variable {α : Type*}
-namespace SS2
+namespace TwoWordInstance
 variable {SA SB SC SD TA TB TC TD : Type*}
   [Fintype SA] [Fintype SB] [Fintype SC] [Fintype SD]
   [DecidableEq SA] [DecidableEq SB] [DecidableEq SC] [DecidableEq SD]
   [Fintype TA] [Fintype TB] [Fintype TC] [Fintype TD]
   [DecidableEq TA] [DecidableEq TB] [DecidableEq TC] [DecidableEq TD]
-variable (I : SS2 α SA SB SC SD) (a : SA ≃ TA) (b : SB ≃ TB)
+variable (I : TwoWordInstance α SA SB SC SD) (a : SA ≃ TA) (b : SB ≃ TB)
   (c : SC ≃ TC) (d : SD ≃ TD)
 
 /-- Rename all four automata and all four finite tables. -/
-def rename : SS2 α TA TB TC TD where
+def rename : TwoWordInstance α TA TB TC TD where
   A := I.A.rename a
   B := I.B.rename b
   A' := I.A'.rename c
@@ -69,9 +69,9 @@ theorem rename_boundedHole (L : ℕ) :
     (∃ u t, (I.rename a b c d).IsHole u t ∧ u.length + t.length ≤ L) ↔
       ∃ u t, I.IsHole u t ∧ u.length + t.length ≤ L := by simp
 
-/-- State renaming preserves the finite-head condition. -/
-@[simp] theorem rename_fh : (I.rename a b c d).FH ↔ I.FH := by
-  unfold FH
+/-- State renaming preserves the forced target heads condition. -/
+@[simp] theorem rename_forcedHeads : (I.rename a b c d).ForcedHeads ↔ I.ForcedHeads := by
+  unfold ForcedHeads
   constructor
   · intro h p q hp hr γ hγ i hi
     have ht := h (c p) (d q) (by simpa [rename] using hp)
@@ -111,7 +111,7 @@ theorem rename_boundedHole (L : ℕ) :
 /-- Apply the Fin-indexed bound to arbitrary finite state types. -/
 theorem shortHoleBound_transport [Fintype α] [DecidableEq α] (B : HoleBound) (hB : ShortHoleBound
   α B)
-    (hfh : I.FH) (hh : I.HasHole) :
+    (hfh : I.ForcedHeads) (hh : I.HasHole) :
     ∃ u t, I.IsHole u t ∧ u.length + t.length ≤
       B (Fintype.card SA) (Fintype.card SB) (Fintype.card SC) (Fintype.card SD) := by
   let a := Fintype.equivFin SA
@@ -119,10 +119,10 @@ theorem shortHoleBound_transport [Fintype α] [DecidableEq α] (B : HoleBound) (
   let c := Fintype.equivFin SC
   let d := Fintype.equivFin SD
   exact (rename_boundedHole I a b c d _).mp
-    (hB _ _ _ _ (I.rename a b c d) ((rename_fh I a b c d).mpr hfh)
+    (hB _ _ _ _ (I.rename a b c d) ((rename_forcedHeads I a b c d).mpr hfh)
       ((rename_hasHole I a b c d).mpr hh))
 
-end SS2
+end TwoWordInstance
 
 namespace LDFA
 variable {β S : Type*}
@@ -169,14 +169,14 @@ def mapAlpha (M : LDFA α S) (e : α ≃ β) : LDFA β S where
     simp [mapAlpha]
 end LDFA
 
-namespace SS2
+namespace TwoWordInstance
 variable {β SA SB SC SD : Type*}
   [Fintype SA] [Fintype SB] [Fintype SC] [Fintype SD]
   [DecidableEq SA] [DecidableEq SB] [DecidableEq SC] [DecidableEq SD]
-variable (I : SS2 α SA SB SC SD) (e : α ≃ β)
+variable (I : TwoWordInstance α SA SB SC SD) (e : α ≃ β)
 
 /-- Transport the alphabet of all four automata, keeping every finite table. -/
-def mapAlpha : SS2 β SA SB SC SD where
+def mapAlpha : TwoWordInstance β SA SB SC SD where
   A := I.A.mapAlpha e
   B := I.B.mapAlpha e
   A' := I.A'.mapAlpha e
@@ -237,20 +237,9 @@ def mapAlpha : SS2 β SA SB SC SD where
   · rintro ⟨u, t, h⟩
     exact ⟨u.map e, t.map e, (isHole_mapAlpha I e u t).mpr h⟩
 
-/-- Alphabet transport preserves the same numerical length bound. -/
-theorem boundedHole_mapAlpha (L : ℕ) :
-    (∃ u t, (I.mapAlpha e).IsHole u t ∧ u.length + t.length ≤ L) ↔
-      ∃ u t, I.IsHole u t ∧ u.length + t.length ≤ L := by
-  constructor
-  · rintro ⟨u, t, h, hl⟩
-    exact ⟨u.map e.symm, t.map e.symm,
-      (isHole_mapAlpha I e _ _).mp (by simpa using h), by simpa using hl⟩
-  · rintro ⟨u, t, h, hl⟩
-    exact ⟨u.map e, t.map e, (isHole_mapAlpha I e u t).mpr h, by simpa using hl⟩
-
-/-- Alphabet transport preserves the finite-head condition. -/
-@[simp] theorem fh_mapAlpha : (I.mapAlpha e).FH ↔ I.FH := by
-  unfold FH
+/-- Alphabet transport preserves the forced target heads condition. -/
+@[simp] theorem forcedHeads_mapAlpha : (I.mapAlpha e).ForcedHeads ↔ I.ForcedHeads := by
+  unfold ForcedHeads
   constructor
   · intro h p q hp hr γ hγ i hi
     have ht := h p q hp ((LDFA.mapAlpha_reachable I.A' e p).mpr hr) (γ.map e)
@@ -263,7 +252,6 @@ theorem boundedHole_mapAlpha (L : ℕ) :
       i (by simpa only [List.length_map] using hi)
     simpa only [mapAlpha, LDFA.mapAlpha_atCut] using ht
 
-end SS2
+end TwoWordInstance
 
-
-end DeciENSSE.Core
+end DeciENSSE.Core.Words

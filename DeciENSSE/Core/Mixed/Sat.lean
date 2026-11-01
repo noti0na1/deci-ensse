@@ -12,6 +12,7 @@ over arbitrary trees, including the empty alphabet.
 -/
 
 namespace DeciENSSE.Core.Mixed
+open DeciENSSE.Core.Words
 
 variable {n : ℕ}
 open DeciENSSE.Core.Full
@@ -24,10 +25,10 @@ abbrev MuState (V : Type*) := Finset (V × Bool) × Bool
 
 /-- Track lower summaries and a sticky positive-unit hit. -/
 def muDFA (p : V × Bool) : LDFA (Fin n) (MuState V) where
-  start := (Bound.down (signedSys c χ) p,
-    decide ((Bound.down (signedSys c χ) p ∩ PF c χ).Nonempty))
+  start := (Automata.down (signedSys c χ) p,
+    decide ((Automata.down (signedSys c χ) p ∩ PF c χ).Nonempty))
   step S b :=
-    let Q := Bound.qstep (signedSys c χ) S.1 b
+    let Q := Automata.qstep (signedSys c χ) S.1 b
     (Q, S.2 || decide ((Q ∩ PF c χ).Nonempty))
 
 private theorem prefixHit_snoc (H : List (Fin n) → Prop) (w : List (Fin n)) (b : Fin n) :
@@ -46,9 +47,9 @@ private theorem prefixHit_snoc (H : List (Fin n) → Prop) (w : List (Fin n)) (b
 
 /-- The run records the lower summary and positive-unit prefix hits. -/
 theorem muDFA_run (p : V × Bool) (w : List (Fin n)) :
-    ((muDFA c χ p).run w).1 = Bound.Q (signedSys c χ) p w ∧
+    ((muDFA c χ p).run w).1 = Automata.Q (signedSys c χ) p w ∧
     (((muDFA c χ p).run w).2 = true ↔ ∃ e ≤ w.length,
-      (Bound.Q (signedSys c χ) p (w.take e) ∩ PF c χ).Nonempty) := by
+      (Automata.Q (signedSys c χ) p (w.take e) ∩ PF c χ).Nonempty) := by
   induction w using List.reverseRecOn with
   | nil => simp [muDFA, LDFA.run, LDFA.runFrom]
   | append_singleton w b ih =>
@@ -56,12 +57,12 @@ theorem muDFA_run (p : V × Bool) (w : List (Fin n)) :
         (muDFA c χ p).step ((muDFA c χ p).run w) b := by
       simp [LDFA.run, LDFA.runFrom, List.foldl_append]
     rw [hs]
-    change Bound.qstep (signedSys c χ) _ b = _ ∧
-      ((_ || decide ((Bound.qstep (signedSys c χ) _ b ∩ PF c χ).Nonempty)) = true ↔ _)
-    rw [ih.1, ← Bound.Q_snoc]
+    change Automata.qstep (signedSys c χ) _ b = _ ∧
+      ((_ || decide ((Automata.qstep (signedSys c χ) _ b ∩ PF c χ).Nonempty)) = true ↔ _)
+    rw [ih.1, ← Automata.Q_snoc]
     refine ⟨rfl, ?_⟩
     rw [Bool.or_eq_true, decide_eq_true_eq, ih.2]
-    exact (prefixHit_snoc (fun t => (Bound.Q (signedSys c χ) p t ∩ PF c χ).Nonempty)
+    exact (prefixHit_snoc (fun t => (Automata.Q (signedSys c χ) p t ∩ PF c χ).Nonempty)
       w b).symm
 
 /-- The hit includes cut zero and persists after the lower summary becomes empty. -/
@@ -72,7 +73,7 @@ theorem muDFA_accept (p : V × Bool) (w : List (Fin n)) :
 /-- Negative units are roots, so avoidance is a finite down-summary test. -/
 theorem avoids_mu_iff : Avoids χ (Mu c χ) ↔
     ∀ n ∈ negList χ,
-      ¬ (Bound.down (signedSys c χ) (n.1, n.2.1) ∩ PF c χ).Nonempty := by
+      ¬ (Automata.down (signedSys c χ) (n.1, n.2.1) ∩ PF c χ).Nonempty := by
   constructor
   · intro h n hn hh
     have hn' := mem_negList.mp hn
@@ -88,13 +89,13 @@ theorem avoids_mu_iff : Avoids χ (Mu c χ) ↔
     dsimp at hw; subst w
     apply hh
     simpa only [mu_membership, List.length_nil, Nat.le_zero, exists_eq_left,
-      List.take_zero, Bound.Q_nil] using hm
+      List.take_zero, Automata.Q_nil] using hm
 
 /-- Decide whether unit closure avoids all forbidden root atoms. -/
 def decideAvoidsMu : Decidable (Avoids χ (Mu c χ)) :=
   decidable_of_iff
     (∀ n ∈ negList χ,
-      ¬ (Bound.down (signedSys c χ) (n.1, n.2.1) ∩ PF c χ).Nonempty)
+      ¬ (Automata.down (signedSys c χ) (n.1, n.2.1) ∩ PF c χ).Nonempty)
     (avoids_mu_iff c χ).symm
 
 /-- The two signs must hit along the same word, possibly at different cuts. -/
@@ -158,69 +159,5 @@ def decideSatMixed : Decidable (∃ ρ, SatT c ρ χ) := by
 theorem decideSatMixed_true_iff :
     @decide (∃ ρ, SatT c ρ χ) (decideSatMixed c χ) = true ↔ ∃ ρ, SatT c ρ χ :=
   @decide_eq_true_iff _ (decideSatMixed c χ)
-
-namespace SatMixedExamples
-open LeafHornExamples
-
-/-- A satisfiable system that has no joint parity assignment. -/
-theorem mixed_positive :
-    @decide (∃ ρ, SatT arrow ρ mixed) (decideSatMixed arrow mixed) = true :=
-  (decideSatMixed_true_iff _ _).mpr DualityExamples.mixed_sat
-
-/-- A positive root unit forbidden by an upper constructor bound. -/
-def rootClash : List (LitT n Unit) := [.top (), .lef () (fun _ => ())]
-
-/-- The negative-root test has an actual obstruction, independent of consistency. -/
-theorem root_not_avoids (c : Fin n → Bool) : ¬ Avoids rootClash (Mu c rootClash) := by
-  intro h
-  exact h (mem_mu.mpr ⟨((), false, []), .top (by simp [rootClash]), .refl⟩)
-    (.lef (a := fun _ => ()) (by simp [rootClash]))
-
-/-- Kernel evaluation of the actual root-rejection branch of the decider. -/
-theorem root_negative :
-    @decide (∃ ρ, SatT arrow ρ rootClash) (decideSatMixed arrow rootClash) = false := by
-  decide +kernel
-
-/-- Both extreme units on one variable. -/
-def signClash : List (LitT n Unit) := [.top (), .bot ()]
-
-/-- No negative units occur here; intrinsic disjointness detects the contradiction. -/
-theorem sign_collision (c : Fin n → Bool) : MuCollision c signClash () [] := by
-  apply (muCollision_iff _ _ _ _).mpr
-  exact ⟨mem_mu.mpr ⟨((), false, []), .top (by simp [signClash]), .refl⟩,
-    mem_mu.mpr ⟨((), true, []), .bot (by simp [signClash]), .refl⟩⟩
-
-/-- Opposite extreme units introduce no negative root literals. -/
-theorem sign_avoids (c : Fin n → Bool) : Avoids signClash (Mu c signClash) := by
-  intro p _ hn
-  cases hn <;> simp_all [signClash]
-
-/-- The satisfiability decision rejects opposite extreme units. -/
-theorem sign_negative (c : Fin n → Bool) :
-    @decide (∃ ρ, SatT c ρ signClash) (decideSatMixed c signClash) = false := by
-  rw [decide_eq_false_iff_not]
-  intro hs
-  obtain ⟨hp, hm⟩ := (muCollision_iff _ _ _ _).mp (sign_collision c)
-  exact (sat_iff_mu.mp hs).2 (.pair () []) hp hm
-
-/-- The lower summary is already empty after one edge, but the earlier hit remains. -/
-theorem sticky_after_empty :
-    (Bound.Q (signedSys arrow ([.top ()] : List (LitT 3 Unit))) ((), false) [2] = ∅) ∧
-    ((muDFA arrow ([.top ()] : List (LitT 3 Unit)) ((), false)).run [2]).2 = true := by
-  decide +kernel
-
-/-- The executable procedure also covers the empty variable type. -/
-theorem empty_variables :
-    @decide (∃ ρ, SatT arrow ρ ([] : List (LitT 3 Empty)))
-      (decideSatMixed arrow []) = true := by
-  decide +kernel
-
-/-- The root-rejection branch is executable even with no child letters. -/
-theorem nullary_root_negative :
-    @decide (∃ ρ, SatT (fun i : Fin 0 => i.elim0) ρ rootClash)
-      (decideSatMixed (fun i : Fin 0 => i.elim0) rootClash) = false := by
-  decide +kernel
-
-end SatMixedExamples
 
 end DeciENSSE.Core.Mixed

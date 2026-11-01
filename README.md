@@ -17,8 +17,8 @@ appending `_correct`.
 
 | Signature | Variance of `f` | Tree classes | Deciders |
 | --- | --- | --- | --- |
-| `{⊥, f, ⊤}`, arity `n ≥ 0` | any `c : Fin n → Bool` | arbitrary, regular, finite | `decideExistsEntailsAny`, `decideExistsEntailsAnyReg`, `decideExistsEntailsAnyFin` |
-| `{⊥, f}`, arity `n ≥ 0` | covariant | arbitrary, regular, finite | `decideExistsEntails`, `decideExistsEntailsReg`, `decideExistsEntailsFin` |
+| `{⊥, f, ⊤}`, arity `n ≥ 0` | any `c : Fin n → Bool` | arbitrary, regular, finite | `decideExistsEntails`, `decideExistsEntailsReg`, `decideExistsEntailsFin` |
+| `{⊥, f}`, arity `n ≥ 0` | covariant | arbitrary, regular, finite | `decideExistsEntailsTopFree`, `decideExistsEntailsTopFreeReg`, `decideExistsEntailsTopFreeFin` |
 
 **Why it matters.** Type inference with subtyping produces *constrained types*
 `∀ᾱ. C ⇒ τ`, and practical systems simplify their constraints. Semantic
@@ -100,7 +100,7 @@ consequent `ψ : EConstraint n (k + h)` has the visible variables first and then
 `Fin.natAdd k z`. With `join ρ σ` combining the two assignments in this order,
 
 ```lean
-def ExistsEntailsAny {n k h : ℕ} (c : Fin n → Bool)
+def ExistsEntails {n k h : ℕ} (c : Fin n → Bool)
     (φ : EConstraint n k) (ψ : EConstraint n (k + h)) : Prop :=
   ∀ ρ, ESat c ρ φ → ∃ σ : V h → Tree n, ESat c (join ρ σ) ψ
 ```
@@ -114,9 +114,9 @@ every tree class, but the preprocessing is not part of the formal development.
 
 | Class | Meaning | Lean values | Semantics |
 | --- | --- | --- | --- |
-| Arbitrary | all finite and infinite trees | `Tree n` | `ExistsEntailsAny c φ ψ` |
-| Regular | finitely many distinct subtrees | unfoldings of `RGraph n` | `ExistsEntailsAnyReg c φ ψ` |
-| Finite | finitely many nodes | images of `FTree n` | `ExistsEntailsAnyFin c φ ψ` |
+| Arbitrary | all finite and infinite trees | `Tree n` | `ExistsEntails c φ ψ` |
+| Regular | finitely many distinct subtrees | unfoldings of `RGraph n` | `ExistsEntailsReg c φ ψ` |
+| Finite | finitely many nodes | images of `FTree n` | `ExistsEntailsFin c φ ψ` |
 
 In each class the visible and the hidden assignments both range over the
 class. If `φ` has no solution in the class, the entailment holds vacuously; if
@@ -138,13 +138,16 @@ The literal `z ≤ f(z, z)` puts every subtree of `z` below `z`, so `∃z. ψ`
 holds exactly when every subtree of `x` lies below `y`: an infinite family of
 plain entailments, with a witness for `z` that depends on the solution. The
 antecedent `x ≤ y` does not entail it, as `x = y = f(f(⊥, f(⊥, ⊥)), ⊥)` shows;
-`x ≤ y ∧ x ≤ f(x, b) ∧ b = ⊥` entails it, with the witness `z = x`.
+`x ≤ y ∧ x ≤ f(x, b) ∧ b = ⊥` entails it, with the witness `z = x`. Both claims
+are proved in [Examples/Public](DeciENSSE/Examples/Public.lean), as
+`Examples.subtree_not_entails` and `Examples.subtree_entails`.
 
 ### Two signatures
 
 Over `{⊥, f}` the trees have no label `⊤` and the constraints no literal
-`x = ⊤`: the syntax is `BFLit` and `BFConstraint`, the order is covariant, and
-`ExistsEntails`, `ExistsEntailsReg` and `ExistsEntailsFin` require both
+`x = ⊤`: the syntax is `BFLit` and `BFConstraint` (embedded into the full
+syntax by `BFLit.toELit`), the order is covariant, and `ExistsEntailsTopFree`,
+`ExistsEntailsTopFreeReg` and `ExistsEntailsTopFreeFin` require both
 assignments to be `TopFree`. This is not the `{⊥, f, ⊤}` problem with `x = ⊤`
 left out: with `x` visible and `φ` empty, `∃z̄. x ≤ f(z̄)` holds over `{⊥, f}`
 (take the children of `x`, or `⊥` if `x = ⊥`) but fails over `{⊥, f, ⊤}` at
@@ -162,49 +165,54 @@ Import `DeciENSSE` for the whole development. The names below are in namespace
 `DeciENSSE` with `open DeciNSSE`; arity and variable counts are inferred. The
 deciders are `@[instance_reducible] def`s rather than instances, since several
 decide related propositions; install one with `letI` or pass it to `@decide`.
+The module docstring of [Main.lean](DeciENSSE/Main.lean) contains a *proof
+map* from each decider to the theorems it rests on.
 
 ### The six existential deciders
 
 ```lean
 -- {⊥, f, ⊤}: any arity n ≥ 0 and any variance c
-def decideExistsEntailsAny {n k h : ℕ} (c : Fin n → Bool)
+def decideExistsEntails {n k h : ℕ} (c : Fin n → Bool)
     (φ : EConstraint n k) (ψ : EConstraint n (k + h)) :
-    Decidable (ExistsEntailsAny c φ ψ)
-def decideExistsEntailsAnyReg {n k h : ℕ} (c : Fin n → Bool)
+    Decidable (ExistsEntails c φ ψ)
+def decideExistsEntailsReg {n k h : ℕ} (c : Fin n → Bool)
     (φ : EConstraint n k) (ψ : EConstraint n (k + h)) :
-    Decidable (ExistsEntailsAnyReg c φ ψ)
-def decideExistsEntailsAnyFin {n k h : ℕ} (c : Fin n → Bool)
+    Decidable (ExistsEntailsReg c φ ψ)
+def decideExistsEntailsFin {n k h : ℕ} (c : Fin n → Bool)
     (φ : EConstraint n k) (ψ : EConstraint n (k + h)) :
-    Decidable (ExistsEntailsAnyFin c φ ψ)
+    Decidable (ExistsEntailsFin c φ ψ)
 
 -- {⊥, f}: any arity n ≥ 0, f covariant, top-free trees
-def decideExistsEntails {n k h : ℕ} (φ : BFConstraint n k)
-    (ψ : BFConstraint n (k + h)) : Decidable (ExistsEntails φ ψ)
-def decideExistsEntailsReg {n k h : ℕ} (φ : BFConstraint n k)
-    (ψ : BFConstraint n (k + h)) : Decidable (ExistsEntailsReg φ ψ)
-def decideExistsEntailsFin {n k h : ℕ} (φ : BFConstraint n k)
-    (ψ : BFConstraint n (k + h)) : Decidable (ExistsEntailsFin φ ψ)
+def decideExistsEntailsTopFree {n k h : ℕ} (φ : BFConstraint n k)
+    (ψ : BFConstraint n (k + h)) : Decidable (ExistsEntailsTopFree φ ψ)
+def decideExistsEntailsTopFreeReg {n k h : ℕ} (φ : BFConstraint n k)
+    (ψ : BFConstraint n (k + h)) : Decidable (ExistsEntailsTopFreeReg φ ψ)
+def decideExistsEntailsTopFreeFin {n k h : ℕ} (φ : BFConstraint n k)
+    (ψ : BFConstraint n (k + h)) : Decidable (ExistsEntailsTopFreeFin φ ψ)
 ```
 
 None needs satisfiability, positive arity or an inhabited type. Each
 correctness theorem takes the same arguments and states, for example,
-`@decide _ (decideExistsEntailsAny c φ ψ) = true ↔ ExistsEntailsAny c φ ψ`.
+`@decide _ (decideExistsEntails c φ ψ) = true ↔ ExistsEntails c φ ψ`. It is an
+instance of `decide_eq_true_iff`: the substance is that the deciders are
+ordinary computable definitions whose answers come from finite searches
+justified by the proofs.
 
 ### Plain entailment
 
-A conjunction `φ : Constraint n k` of deci-nsse embeds as `liftConstraint φ`,
-and `query x y : EConstraint n (k + 0)` is the literal `x ≤ y` with no hidden
-variables. The three reductions are
+A conjunction `φ : Constraint n k` of deci-nsse embeds as `liftConstraint φ`
+(literal by literal, `Lit.toELit`), and `query x y : EConstraint n (k + 0)` is
+the literal `x ≤ y` with no hidden variables. The three reductions are
 
 ```lean
 theorem nsse_iff_ensse {n k : ℕ} (c : Fin n → Bool) (φ : Constraint n k) (x y : V k) :
-    Entails c φ x y ↔ ExistsEntailsAny (h := 0) c (liftConstraint φ) (query x y)
+    Entails c φ x y ↔ ExistsEntails (h := 0) c (liftConstraint φ) (query x y)
 theorem nsseReg_iff_ensseReg {n k : ℕ} (c : Fin n → Bool) (φ : Constraint n k)
     (x y : V k) :
-    EntailsReg c φ x y ↔ ExistsEntailsAnyReg (h := 0) c (liftConstraint φ) (query x y)
+    EntailsReg c φ x y ↔ ExistsEntailsReg (h := 0) c (liftConstraint φ) (query x y)
 theorem nsseFin_iff_ensseFin {n k : ℕ} (c : Fin n → Bool) (φ : Constraint n k)
     (x y : V k) :
-    EntailsFin c φ x y ↔ ExistsEntailsAnyFin (h := 0) c (liftConstraint φ) (query x y)
+    EntailsFin c φ x y ↔ ExistsEntailsFin (h := 0) c (liftConstraint φ) (query x y)
 ```
 
 and the three NSSE deciders built from them are
@@ -218,20 +226,21 @@ def decideEntailsFin {n k : ℕ} (c : Fin n → Bool)
     (φ : Constraint n k) (x y : V k) : Decidable (DeciNSSE.EntailsFin c φ x y)
 ```
 
-For a covariant constructor over trees without top, `decideEntailsTopFree` and
-its two variants decide `EntailsTopFree φ x y` and its regular and finite
-variants, through `topFree_nsse_iff_ensse` and its two variants.
+For a covariant constructor over trees without top, the query is `bfQuery x y`,
+and `decideEntailsTopFree` and its two variants decide `EntailsTopFree φ x y`
+and its regular and finite variants, through `topFree_nsse_iff_ensse` and its
+two variants.
 
 ### API map
 
 | Decider | Semantics | Correctness theorem | Module |
 | --- | --- | --- | --- |
-| `decideExistsEntailsAny` | `ExistsEntailsAny c φ ψ` | `decideExistsEntailsAny_correct` | [Main](DeciENSSE/Main.lean) |
-| `decideExistsEntailsAnyReg` | `ExistsEntailsAnyReg c φ ψ` | `decideExistsEntailsAnyReg_correct` | [Main](DeciENSSE/Main.lean) |
-| `decideExistsEntailsAnyFin` | `ExistsEntailsAnyFin c φ ψ` | `decideExistsEntailsAnyFin_correct` | [Main](DeciENSSE/Main.lean) |
-| `decideExistsEntails` | `ExistsEntails φ ψ` | `decideExistsEntails_correct` | [Main](DeciENSSE/Main.lean) |
-| `decideExistsEntailsReg` | `ExistsEntailsReg φ ψ` | `decideExistsEntailsReg_correct` | [Main](DeciENSSE/Main.lean) |
-| `decideExistsEntailsFin` | `ExistsEntailsFin φ ψ` | `decideExistsEntailsFin_correct` | [Main](DeciENSSE/Main.lean) |
+| `decideExistsEntails` | `ExistsEntails c φ ψ` | `decideExistsEntails_correct` | [Main](DeciENSSE/Main.lean) |
+| `decideExistsEntailsReg` | `ExistsEntailsReg c φ ψ` | `decideExistsEntailsReg_correct` | [Main](DeciENSSE/Main.lean) |
+| `decideExistsEntailsFin` | `ExistsEntailsFin c φ ψ` | `decideExistsEntailsFin_correct` | [Main](DeciENSSE/Main.lean) |
+| `decideExistsEntailsTopFree` | `ExistsEntailsTopFree φ ψ` | `decideExistsEntailsTopFree_correct` | [Main](DeciENSSE/Main.lean) |
+| `decideExistsEntailsTopFreeReg` | `ExistsEntailsTopFreeReg φ ψ` | `decideExistsEntailsTopFreeReg_correct` | [Main](DeciENSSE/Main.lean) |
+| `decideExistsEntailsTopFreeFin` | `ExistsEntailsTopFreeFin φ ψ` | `decideExistsEntailsTopFreeFin_correct` | [Main](DeciENSSE/Main.lean) |
 | `decideEntails` | `DeciNSSE.Entails c φ x y` | `decideEntails_correct` | [NSSE](DeciENSSE/NSSE.lean) |
 | `decideEntailsReg` | `DeciNSSE.EntailsReg c φ x y` | `decideEntailsReg_correct` | [NSSE](DeciENSSE/NSSE.lean) |
 | `decideEntailsFin` | `DeciNSSE.EntailsFin c φ x y` | `decideEntailsFin_correct` | [NSSE](DeciENSSE/NSSE.lean) |
@@ -239,33 +248,39 @@ variants, through `topFree_nsse_iff_ensse` and its two variants.
 | `decideEntailsTopFreeReg` | `EntailsTopFreeReg φ x y` | `decideEntailsTopFreeReg_correct` | [NSSE](DeciENSSE/NSSE.lean) |
 | `decideEntailsTopFreeFin` | `EntailsTopFreeFin φ x y` | `decideEntailsTopFreeFin_correct` | [NSSE](DeciENSSE/NSSE.lean) |
 
-The semantics are defined in [Semantics.lean](DeciENSSE/Semantics.lean),
-[Constraints/Basic.lean](DeciNSSE/Constraints/Basic.lean) and
-[NSSE.lean](DeciENSSE/NSSE.lean). Below this interface,
-`Core.Main.decideExistsEntailsAny` and its five companions take variables in
-arbitrary finite types `X` and `X ⊕ Z`, connected to it by `toCoreFull`,
-`splitFull`, `toCoreBF`, `splitBF`, `existsEntailsAny_iff_core`,
-`existsEntails_iff_core` and their variants. [Examples.lean](DeciENSSE/Examples.lean)
-proves `Examples.hiddenExtension`, `Examples.noInstance` and the class
-separation above, and evaluates the deciders in the kernel at arity zero
-(`Examples.nullary_yes`, `Examples.nullary_no`).
+All semantics are defined in [Semantics.lean](DeciENSSE/Semantics.lean),
+except the plain `DeciNSSE.Entails` and its variants, which are in
+[Constraints/Basic.lean](DeciNSSE/Constraints/Basic.lean). Below this
+interface, `Core.Main.decideExistsEntails` and its five companions take
+variables in arbitrary finite types `X` and `X ⊕ Z`, connected to it by
+`toCoreFull`, `splitFull`, `toCoreBF`, `splitBF`, `existsEntails_iff_core`,
+`existsEntailsTopFree_iff_core` and their variants.
+[Examples/Public](DeciENSSE/Examples/Public.lean) proves
+`Examples.hiddenExtension`, `Examples.not_existsEntails_unconstrained_eqTop`,
+the binary example and the class separation above, and evaluates the deciders
+in the kernel at arity zero (`Examples.nullary_yes`, `Examples.nullary_no`).
+The other modules under [Examples](DeciENSSE/Examples) exercise the library
+layers on small instances; no library module imports them.
 
 ## Proof overview
 
 The proof works with `{⊥, f, ⊤}` over arbitrary trees, reduces failures of the
 entailment to holes of finite readers, bounds the length of a shortest hole,
 and transfers the result to the other tree classes; every step is proved in
-Lean.
+Lean. The proof map in [Main.lean](DeciENSSE/Main.lean) lists the theorems of
+each step.
 
-1. **Arity zero.** The only trees are `⊥ < f() < ⊤` and the classes coincide;
-   [Core/Nullary](DeciENSSE/Core/Nullary.lean) enumerates the assignments, and
-   [Core/Main](DeciENSSE/Core/Main.lean) dispatches on the arity.
+1. **Arity zero.** The general deciders are correct at every arity, including
+   zero. There the only trees are `⊥ < f() < ⊤`, and the arity dispatch
+   [Core/Main](DeciENSSE/Core/Main.lean) uses instead the label enumeration of
+   [Core/Nullary](DeciENSSE/Core/Nullary.lean), a search small enough for the
+   kernel to evaluate.
 
 2. **Leaf cones and three conditions.** A tree is described by two *leaf
    cones*: the words whose path meets a leaf of sign 0, and those whose path
    meets a leaf of sign 1, where the sign combines the label `⊥` or `⊤` with
    the polarity of the path. The order adds leaves of sign 0 and removes
-   leaves of sign 1 (`Core.Mixed.leGen_iff_leaf`), and every system becomes a
+   leaves of sign 1 (`Core.Mixed.treeLe_iff_leaf`), and every system becomes a
    Horn system with unary rules: moves that copy, push or pop the first letter
    of a word, facts, and forbidden roots, besides the exclusion of opposite
    atoms. Least models are closures of seeds, and colliding derivations can be
@@ -277,12 +292,14 @@ Lean.
    lies in its closure under `φ` ([Core/Mixed](DeciENSSE/Core/Mixed): Leaf,
    LeafHorn, Duality, Conditions).
 
-3. **Automata and self events.** Over signed variables the moves form a
-   pushdown system, summarized by an *upper* automaton for pops and a *lower*
-   one for pushes. Finite-state searches decide satisfiability and (I0).
-   Variance adds a new way for an atom to be dead, a *self event*: a comparison
-   of one word with its own suffixes whose automaton states are related
-   (Signed, Membership, Sat, CondI).
+3. **Automata and self events.** The signed translation
+   ([Full/Signed](DeciENSSE/Core/Full/Signed.lean)) gives each variable a
+   positive and a negative copy; over these the moves form a pushdown system,
+   summarized by an *upper* automaton for pops and a *lower* one for pushes.
+   Finite-state searches decide satisfiability and (I0). Variance adds a new
+   way for an atom to be dead, a *self event*: a comparison of one word with
+   its own suffixes whose automaton states are related (Mixed: Signed,
+   Membership, Sat, CondI0).
 
 4. **Holes for (U) and (II).** A *reader* is a finite automaton with rejected
    states and an admission relation on pairs of states; a *comparison* of `w`
@@ -290,22 +307,24 @@ Lean.
    is a rejected word without an admitted comparison. The failures of (U) are
    the holes of a *unit reader* that admits the self events, decided by
    `RejectedTail.decideHole` ([Units](DeciENSSE/Core/Mixed/Units.lean)). Under
-   (U), (II) fails iff an extracted *two-word instance* has a hole: a safe
-   *spine* word and a *target* word with a rejected cut, a comparison of equal
-   suffixes carrying a head pair, and no guarded cross comparison or self event
-   up to the first rejected cut ([Extract](DeciENSSE/Core/Mixed/Extract.lean),
-   `Core.Mixed.mixed_reduction`). Extracted instances have *forced target
-   heads*, which the bounds below need.
+   (U), (II) fails iff an extracted *two-word instance* with self events has a
+   hole: a safe *spine* word and a *target* word with a rejected cut, a
+   comparison of equal suffixes carrying a head pair, and no guarded cross
+   comparison or self event up to the first rejected cut
+   ([Extract](DeciENSSE/Core/Mixed/Extract.lean), `Core.Mixed.mixed_reduction`).
+   Extracted instances have *forced target heads*, which the bounds below need.
 
 5. **Holes that are not mortal.** After the first rejected cut of the target
    both words share a suffix, which keeps an event only by continuing it
    periodically. From a *branching* spine state a continuation breaking every
    such obligation exists by the Fine–Wilf theorem; from a *thin* one, long
    continuations follow finitely many lassos, and a pump shortens the purely
-   periodic ones. These holes have length polynomial in the state counts. In
-   the remaining *mortal* case the spine has no infinite safe continuation
-   ([Core/Words](DeciENSSE/Core/Words): NonMortal, NonMortalLasso, Periodic,
-   NonMortalBound, Pump, and `Self/`).
+   periodic ones. These holes have length polynomial in the state counts
+   (`Core.Words.Self.nonMortalShortHoleBoundSelf`). In the remaining *mortal*
+   case the spine has no infinite safe continuation. The general word facts are
+   in [Core/Words](DeciENSSE/Core/Words) (Streams, NonMortal, NonMortalLasso,
+   Periodic, NonMortalBound, and the deletion toolkit Pump); the case analysis
+   and the pump are in [Core/Words/Self](DeciENSSE/Core/Words/Self).
 
 6. **Mortal holes and anchored compression.** A mortal hole `(u, t)` becomes
    one *separator word* `u ♯ t`; its events become comparisons, and its head
@@ -317,31 +336,37 @@ Lean.
    hierarchy and is compared before letters are merged or columns deleted, so
    every shortening keeps a witness ([Anchored](DeciENSSE/Anchored),
    `Anchored.exists_short_posHole_elementary`). With step 5 this gives the
-   short-hole theorem `Core.shortHoleBoundS` for every finite alphabet, and
-   the decider tests satisfiability, (I0) and (U) and then searches every
-   extracted instance below that bound ([Mixed/Final](DeciENSSE/Core/Mixed/Final.lean)).
+   short-hole theorem `Core.Words.Self.shortHoleBoundSelf` for every finite
+   alphabet, and `Core.Mixed.decideExistsEntails` tests satisfiability, (I0)
+   and (U) and then searches every extracted instance below that bound
+   ([Mixed/Decide](DeciENSSE/Core/Mixed/Decide.lean),
+   [Mixed/Final](DeciENSSE/Core/Mixed/Final.lean)).
 
 7. **Regular and finite trees, by pinning and medians.** A failed extension of
    a solution of `φ` is retained by at most two visible observations
-   (`Core.Mixed.two_observations_mixed`), each a finite ground bound. A
+   (`Core.Mixed.two_observations_mixed`), each a finite ground bound
+   ([Mixed/ClassTransfer](DeciENSSE/Core/Mixed/ClassTransfer.lean)). A
    satisfiable system with ground bounds has a regular solution, and graph
    equations pin visible regular values, so regular and arbitrary entailment
    coincide (`Core.Mixed.existsEntailsTReg_iff_mixed`). A system with a finite
    solution that is satisfiable with finitely many ground bounds has a finite
-   solution satisfying them (`Core.Mixed.finiteBoundPinningMixed`): pass to
-   signed variables, encode path pins by ranked chains of fresh variables, and
-   restore sign symmetry by a median of three finite assignments. Hence finite
-   entailment holds iff `φ` has no finite solution, or `ψ` has one and
-   arbitrary entailment holds (`Core.Mixed.existsEntailsTFin_iff_mixed`).
+   solution satisfying them (`Core.Mixed.exists_finite_sat_groundBounds`):
+   pass to signed variables, encode path pins by ranked chains of fresh
+   variables, and restore sign symmetry by a median of three finite
+   assignments. Hence finite entailment holds iff `φ` has no finite solution,
+   or `ψ` has one and arbitrary entailment holds
+   (`Core.Mixed.existsEntailsTFin_iff_mixed`).
 
 8. **The signature `{⊥, f}`.** For a covariant constructor every leaf of a
    top-free tree is `⊥`, so a tree is its prefix-closed set of constructor
    positions. The covariant core ([Core](DeciENSSE/Core): Basic, Horn,
    Automata, AutomataDecide, Reduction, Decide, Final, Classes) proves three
-   conditions in this picture, without self events (`Core.three_conditions`),
-   reduces the third to two-word holes (`Core.ss2_reduction`), decides it with
-   `Core.shortHoleBound`, and transfers it to regular and finite trees by
-   regular Horn hulls and finite least solutions;
+   conditions in this picture (`Core.three_conditions`): (I0) as above
+   (`Core.CondI0`), preservation of liveness in place of (U) (`Core.CondLive`),
+   and (II) (`Core.CondII`), with no self events. It reduces (II) to two-word
+   holes (`Core.ss2_reduction`) and decides them with `Core.Words.shortHoleBound`,
+   the theorem of step 6 for an empty self guard; regular and finite trees
+   follow from regular Horn hulls and finite least solutions, and
    [Full/Bridge](DeciENSSE/Core/Full/Bridge.lean) identifies these trees with
    the top-free trees (`Core.Full.bfEquivTopFree`). The paper instead reduces
    covariant `{⊥, f}` to `{⊥, f, ⊤}` by adding `v ≤ y_v` and
@@ -357,7 +382,8 @@ examples evaluate the deciders only at arity zero, and the deciders return
 only the answer, not a counterexample word or a countermodel.
 
 **Bounds proved in Lean.** Every search bound is an explicit function of the
-state counts of the automata involved.
+state counts of the automata involved. For a two-word instance with spine,
+target and head automata of `a`, `b`, `a'`, `b'` states:
 
 - *Anchored compression* (`Anchored.exists_short_posHole_elementary`): a
   positive hole of depth at most `d` of a monitor with `N` cores has one of
@@ -367,12 +393,15 @@ state counts of the automata involved.
   ```text
   anchoredLengthBound N d ≤ 2^(2^(5 Ξ + 6)),   Ξ = 6N² + 10N(N + d)(d + 1) + 7N + 3d + 4.
   ```
-- *Mortal holes* (`Core.Mortal.exists_short_mortalHole`): for spine, target
-  and head automata with `a`, `b`, `a'`, `b'` states, some mortal hole has a
-  separator word of length at most `Core.mortalHoleBound a b a' b'`, that is,
-  `anchoredLengthBound N (2 N a - 1)` with `N = 1 + a a' + b b' + a b'`.
-- *Holes that are not mortal*: `Core.pumpHoleBound`, polynomial in the four
-  state counts (`Core.nonMortalShortHoleBound_poly`).
+- *Mortal holes* (`Core.Words.Self.exists_short_mortalHole`): some mortal hole
+  has a separator word of length at most `Core.Words.Mortal.mortalHoleBound a b a' b'`,
+  that is, `anchoredLengthBound N (2 N a - 1)` with `N = 1 + a a' + b b' + a b'`.
+- *Holes that are not mortal* (`Core.Words.Self.nonMortalShortHoleBoundSelf`):
+  `Core.Words.pumpHoleBound a b a' b' = 4 max(12 a b a' b', P) + 6 a`, where
+  `P = Core.Words.pumpCapacity a b a' b'` is a polynomial of degree 5.
+- *All holes* (`Core.Words.Self.shortHoleBoundSelf`): the maximum of the two,
+  `Core.Words.Self.selfHoleBound`; the covariant core uses the same function as
+  `Core.Words.twoWordHoleBound`.
 - *Condition (U)*: `DeciNSSE.RejectedTail.holeLengthBound N`, at most
   `2^(2^(1280 (N + 1)^5))` for a reader with `N` states
   (`DeciNSSE.RejectedTail.holeLengthBound_le`).
@@ -437,12 +466,12 @@ run `lake env lean Check.lean`:
 ```lean
 import DeciENSSE
 
-#print axioms DeciENSSE.decideExistsEntailsAny_correct
-#print axioms DeciENSSE.decideExistsEntailsAnyReg_correct
-#print axioms DeciENSSE.decideExistsEntailsAnyFin_correct
 #print axioms DeciENSSE.decideExistsEntails_correct
 #print axioms DeciENSSE.decideExistsEntailsReg_correct
 #print axioms DeciENSSE.decideExistsEntailsFin_correct
+#print axioms DeciENSSE.decideExistsEntailsTopFree_correct
+#print axioms DeciENSSE.decideExistsEntailsTopFreeReg_correct
+#print axioms DeciENSSE.decideExistsEntailsTopFreeFin_correct
 #print axioms DeciENSSE.decideEntails_correct
 #print axioms DeciENSSE.decideEntailsReg_correct
 #print axioms DeciENSSE.decideEntailsFin_correct
@@ -458,9 +487,10 @@ deciders also relies on the compiler.
 ## Repository layout
 
 The shared library has 54 Lean files under `DeciNSSE/` and the existential
-proof 77 files under `DeciENSSE/`, with 11,687 and 23,527 lines including the
+proof 86 files under `DeciENSSE/`, with 11,687 and 22,187 lines including the
 root modules `DeciNSSE.lean` and `DeciENSSE.lean`, which import every module of
-their library; the counts include comments, docstrings and examples.
+their library. The counts include comments and docstrings; the 7 example
+modules under `DeciENSSE/Examples/` account for 3,604 of the lines.
 Namespaces are relative to `DeciNSSE` or `DeciENSSE`; "top level" means the
 root namespace itself.
 
@@ -485,24 +515,28 @@ root namespace itself.
 
 | Module | Namespace | Purpose |
 | --- | --- | --- |
-| [Semantics](DeciENSSE/Semantics.lean), [Main](DeciENSSE/Main.lean) | top level | Public syntax and semantics, conversions to the core, the six existential deciders |
+| [Semantics](DeciENSSE/Semantics.lean) | top level | Public syntax, the six existential semantics, plain entailment as a query |
+| [Main](DeciENSSE/Main.lean) | top level | Conversions to the core, the six existential deciders, the proof map |
 | [NSSE](DeciENSSE/NSSE.lean) | top level | Plain entailment: reductions, NSSE deciders and the top-free variants |
-| [Examples](DeciENSSE/Examples.lean) | `Examples` | Small proved and evaluated instances |
-| [Core/Main](DeciENSSE/Core/Main.lean), [Core/Nullary](DeciENSSE/Core/Nullary.lean), [Support/Nullary](DeciENSSE/Support/Nullary/Decide.lean) | `Core.Main`, `Core.Nullary`, `Support.Nullary` | Deciders over finite carriers, dispatch on the arity, enumeration at arity zero |
-| [Core](DeciENSSE/Core): Basic, Horn, Automata, AutomataDecide | `Core`, `Core.Bound` | `{⊥, f}`: trees as constructor sets, Horn characterization, upper and lower automata, the first two conditions |
-| [Core](DeciENSSE/Core): Reduction, Decide, Final, ClassesLanguage, Classes | `Core`, `Core.Classes` | `{⊥, f}`: two-word instances, bounded search, the three classes |
-| [Core/Full](DeciENSSE/Core/Full): Basic, Bridge | `Core.Full` | Full-signature syntax over arbitrary carriers; bottom-only versus top-free trees |
+| [Core/Main](DeciENSSE/Core/Main.lean), [Core/Nullary](DeciENSSE/Core/Nullary.lean), [Support/Nullary](DeciENSSE/Support/Nullary.lean) | `Core.Main`, `Core.Nullary`, `Support.Nullary` | Deciders over finite carriers, the arity dispatch, label enumeration at arity zero |
+| [Core](DeciENSSE/Core): Basic, Horn | `Core`, `Core.BFTree` | `{⊥, f}`: trees as constructor sets, the Horn characterization, conditions `CondI0`, `CondLive`, `CondII` |
+| [Core/Automata](DeciENSSE/Core/Automata): Saturation, Powerset, Moves; [Core](DeciENSSE/Core): Automata, AutomataDecide | `Core.Automata` | `{⊥, f}`: saturation, upper and lower powerset automata, move paths and their lowest point, recognition of forced atoms and liveness, finite tests |
+| [Core](DeciENSSE/Core): Reduction, Decide, Final | `Core`, `Core.Words.TwoWordInstance` | `{⊥, f}`: (II) as two-word holes, bounded search, the arbitrary-tree decider |
+| [Core](DeciENSSE/Core): ClassesLanguage, Classes | `Core`, `Core.Classes` | `{⊥, f}`: regular Horn hulls, regular and finite trees |
+| [Core/Full](DeciENSSE/Core/Full): Basic, Signed, Bridge | `Core.Full` | Full-signature syntax over arbitrary carriers, the signed translation, bottom-only versus top-free trees |
+| [Core/Full](DeciENSSE/Core/Full): AC, Observations, ACPins, Classes, TopGraphs | `Core.Full`, `Core.Full.AC`, `Core.Full.ACPins`, `Core.Full.TopGraphs` | Observations and ground bounds, the restricted tree classes, graph equations for regular trees |
+| [Core/Full](DeciENSSE/Core/Full): Flatten, Pinning, PinningGround, PinningSpines | `Core.Full`, `Core.Full.Flatten`, `Core.Full.Pinning` | Elimination of variable inequalities by constructor sandwiches, finite satisfiability, covariant finite-bound pinning |
 | [Core/Mixed](DeciENSSE/Core/Mixed): Leaf, LeafHorn, Duality, Conditions | `Core.Mixed` | Leaf cones, the Horn presentation, duality and deadness, the three conditions |
-| [Core/Mixed](DeciENSSE/Core/Mixed): Signed, Membership, Sat, CondI, Units | `Core.Mixed` | Pushdown automata, self events, satisfiability, conditions (I0) and (U) |
-| [Core/Mixed](DeciENSSE/Core/Mixed): Extract, Decide, Final | `Core.Mixed`, `Core.SS2Self` | Two-word instances with self events, bounded search, the arbitrary-tree decider |
-| [Core/Mixed](DeciENSSE/Core/Mixed): Regular, Finite, FinitePinning, FinitePinningSigned | `Core.Mixed`, `Core.Mixed.FinitePinning` | Two observations, regular and finite transfer, finite-bound pinning by medians |
-| [Core/Full](DeciENSSE/Core/Full): AC, Observations, ACPins, Classes, Flatten, TopGraphs, Pinning, PinningGround, PinningSpines | `Core.Full`, `Core.Full.AC`, `Core.Full.Flatten`, `Core.Full.TopGraphs`, `Core.Full.Pinning` | Observations and ground bounds, flattening and finite satisfiability, graph equations, covariant finite pinning |
-| [Support](DeciENSSE/Support): Variance, TransferFin, Transfer, VarianceReg, Semantics | `Support`, `Support.FinT`, `Support.Ranked`, `Support.Spines`, `Support.RGraphN` | Tree medians, finite medians, spine chains, ranked extensions, regular satisfiability |
-| [Core/Words](DeciENSSE/Core/Words): LDFA, SS2, Statements, Transport | `Core`, `Core.SS2`, `Core.LDFA` | Automata over arbitrary alphabets, two-word hole instances, statements of hole bounds |
-| [Core/Words](DeciENSSE/Core/Words): NonMortal, NonMortalLasso, Periodic, NonMortalBound, Pump, Bound | `Core`, `Core.SS2`, `Core.TwoTape` | Branching, thin and mortal cases, lassos, the pump, the combined bound |
-| [Core/Words/Mortal](DeciENSSE/Core/Words/Mortal): SepWord, PiReader, Depth, Bound | `Core.Mortal`, `Core` | Separator words, the Π-reader, depth and length of mortal holes |
-| [Core/Words/Self](DeciENSSE/Core/Words/Self): SS2Self, PumpS, NonMortalS, MortalS, BoundS | `Core`, `Core.SS2Self`, `Core.Mortal` | The same results with self events |
+| [Core/Mixed](DeciENSSE/Core/Mixed): Signed, Membership, Sat, CondI0, Units | `Core.Mixed` | Leaf-move automata, self events, satisfiability, conditions (I0) and (U) |
+| [Core/Mixed](DeciENSSE/Core/Mixed): Extract, Decide, Final | `Core.Mixed`, `Core.Words.Self.SelfTwoWordInstance` | Two-word instances with self events, bounded search, the arbitrary-tree decider |
+| [Core/Mixed](DeciENSSE/Core/Mixed): ClassTransfer, Regular, Finite, FinitePinningSigned, FinitePinning | `Core.Mixed`, `Core.Mixed.FinitePinning` | Two observations and class transfer, regular and finite trees, finite-bound pinning by medians |
+| [Support](DeciENSSE/Support): Graphs, Median, Spines, RankedExtension | `Support.Graphs`, `Support.Median`, `Support.Spines`, `Support.RankedExtension` | Graph unfoldings and regular satisfiability, tree and finite medians, path pins as constraint chains, ranked extensions |
+| [Core/Words](DeciENSSE/Core/Words): LDFA, Streams, TwoWordInstance, Statements, Transport | `Core.Words`, `Core.Words.LDFA`, `Core.Words.TwoWordInstance` | Automata over arbitrary alphabets, infinite words and periods, two-word hole instances, bound statements, renaming |
+| [Core/Words](DeciENSSE/Core/Words): NonMortal, NonMortalLasso, Periodic, NonMortalBound, Pump, Bound | `Core.Words`, `Core.Words.TwoWordInstance`, `Core.Words.TwoTapeGraph`, `Core.Words.PeriodicSplit` | Safe paths and their cases, lassos, periodic splits, the finite pre-hole search, the deletion toolkit, the short-hole theorem without self events |
+| [Core/Words/Mortal](DeciENSSE/Core/Words/Mortal): SepWord, PiReader, Depth, Bound | `Core.Words.Mortal` | Separator words, the Π-reader, the depth of mortal holes, the mortal bound |
+| [Core/Words/Self](DeciENSSE/Core/Words/Self): Basic, NonMortal, Pump, Mortal, Bound | `Core.Words.Self`, `Core.Words.Self.SelfTwoWordInstance` | Instances with self events, the case analysis, the pump, mortal compression, the short-hole theorem |
 | [Anchored](DeciENSSE/Anchored): Channel, Desubstitution, Agree, Columns, Unary, NormalForm, ElementaryBound, Estimate | `Anchored` | Positive channels, anchored compression and its elementary bound |
+| [Examples](DeciENSSE/Examples): Public, Covariant, Words, Self, Full, Mixed, Fixtures | `Examples`, and `…Examples` namespaces beside the code they exercise | Small proved and evaluated instances and their shared fixtures; no library module imports them |
 
 ## License
 

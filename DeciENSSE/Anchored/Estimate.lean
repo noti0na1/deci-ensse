@@ -5,7 +5,8 @@ import DeciENSSE.Anchored.ElementaryBound
 The anchored dictionary allowance is at most `2 ^ Ξ` for the polynomial exponent
 `Ξ(N, d) = 6 N² + 10 N (N + d) (d + 1) + 7 N + 3 d + 4`, and the anchored length allowance
 is at most `2 ^ 2 ^ (5 Ξ + 6)`: two exponentials over a polynomial in the number of cores
-and the depth.
+and the depth. The estimate follows `DeciNSSE.ElementaryBound.dictionaryBound_le` and
+`DeciNSSE.ElementaryBound.lengthBound_le`.
 
 ## Main declarations
 
@@ -23,6 +24,8 @@ open DeciNSSE.BoundedDepth DeciNSSE.NormalForm
 def anchoredExponent (N d : ℕ) : ℕ :=
   6 * N ^ 2 + 10 * N * (N + d) * (d + 1) + 7 * N + 3 * d + 4
 
+/-- `a ≤ 2 ^ p` and `b ≤ 2 ^ q` give `a + b ≤ 2 ^ (p + q + 1)`. The shared library has the
+same lemma, private, in `DeciNSSE.Holes.ElementaryBound`. -/
 private theorem add_le_two_pow {a b p q : ℕ} (ha : a ≤ 2 ^ p) (hb : b ≤ 2 ^ q) :
     a + b ≤ 2 ^ (p + q + 1) := by
   have hp : 2 ^ p ≤ 2 ^ (p + q) := Nat.pow_le_pow_right (by decide) (by omega)

@@ -8,12 +8,13 @@ Least periods control lasso survivors and give a finite enumeration of safe lass
 ## Main declarations
 
 - `leastPeriod_suffix`
-- `SS2.lasso_breaking_prefix`
-- `SS2.lassoPairs`
-- `SS2.thin_lassos_finite`
+- `TwoWordInstance.lasso_breaking_prefix`
+- `TwoWordInstance.lassoPairs`
+- `TwoWordInstance.thin_lassos_finite`
 -/
 
-namespace DeciENSSE.Core
+namespace DeciENSSE.Core.Words
+open DeciNSSE.RejectedTail
 
 variable {α : Type*}
 
@@ -21,8 +22,8 @@ variable {α : Type*}
 theorem prepend_factor {x y : Word α} {ξ : ℕ → α} (hl : y.length ≤ x.length)
     (he : prepend x ξ = prepend y ξ) :
     ∃ r, x = y ++ r ∧ prepend r ξ = ξ := by
-  have hx : StreamPrefix x (prepend x ξ) := prepend_prefix x ξ
-  have hy : StreamPrefix y (prepend x ξ) := by rw [he]; exact prepend_prefix y ξ
+  have hx : IsStreamPrefix x (prepend x ξ) := prepend_prefix x ξ
+  have hy : IsStreamPrefix y (prepend x ξ) := by rw [he]; exact prepend_prefix y ξ
   obtain ⟨r, hr⟩ := streamPrefix_compare hy hx hl
   refine ⟨r, hr.symm, ?_⟩
   rw [← hr, prepend_assoc] at he
@@ -99,22 +100,11 @@ theorem leastPeriod_exists {ξ : ℕ → α} (h : ∃ p, 0 < p ∧ StreamPeriod 
   exact ⟨Nat.find h, (Nat.find_spec h).1, (Nat.find_spec h).2,
     fun q hq hp => Nat.find_min' h ⟨hq, hp⟩⟩
 
-namespace SS2
+namespace TwoWordInstance
 variable {SA SB SA' SB' : Type*} [Fintype SA] [Fintype SB]
   [Fintype SA'] [Fintype SB'] [DecidableEq SA] [DecidableEq SB]
   [DecidableEq SA'] [DecidableEq SB']
-variable (I : SS2 α SA SB SA' SB')
-
-/-- The overhang is also the final suffix of the spine of length equal to the offset. -/
-theorem overhang_suffix {u t : Word α} {s e : ℕ} (hc : Cross u t s e) :
-    overhang u t s e = u.drop (u.length - offset u t s e) := by
-  have hlen := hc.2.2.length_le
-  simp only [List.length_drop] at hlen
-  unfold overhang offset
-  rw [List.drop_drop]
-  congr 1
-  have hs := hc.1
-  omega
+variable (I : TwoWordInstance α SA SB SA' SB')
 
 variable [Inhabited α]
 
@@ -165,27 +155,6 @@ theorem lasso_breaking_prefix {u t : Word α} {s e : ℕ} (hc : Cross u t s e)
     have hh := streamPrefix_iff.mp hp i (by simp [overhang_length] at hi ⊢; exact hi)
     simpa only [streamPrefix, List.getElem_ofFn] using hh
   exact hn ((survives_iff_periodic hc ha _).mpr heq)
-
-omit [Inhabited α] in
-/-- The lasso breaking window is bounded by the word lengths and state count. -/
-theorem lasso_breaking_length_le {u t : Word α} {s e : ℕ} (hc : Cross u t s e) (α₀ l : Word α) :
-    α₀.length + l.length + offset u t s e - 1 ≤ α₀.length + l.length + u.length - 1 := by
-  have := cross_offset_le hc
-  omega
-
-/-- A uniform finite prefix of a survivor-free lasso completes a pre-hole. -/
-theorem lasso_completes {u t : Word α} {ξ : ℕ → α} (hlasso : I.Lasso (I.A.run u) ξ)
-    (hf : I.SurvivorFree u t ξ) :
-    I.Completes u t (streamPrefix ξ (u.length + Fintype.card SA - 1)) := by
-  refine ⟨I.infiniteSafe_prefix (I.lasso_safe hlasso) _, ?_⟩
-  obtain ⟨α₀, l, hl, hlen, _, _, rfl⟩ := hlasso
-  intro s e he hk
-  have hbreak := lasso_breaking_prefix he.1 α₀ l hl (hf s e he)
-  apply hbreak
-  apply keeps_prefix hk
-  apply streamPrefix_prefix
-  have := cross_offset_le he.1
-  omega
 
 /-- Every aperiodic continuation is survivor-free for a pre-hole. -/
 theorem aperiodic_survivorFree {u t : Word α} (hp : I.IsPreHole u t) {ξ : ℕ → α}
@@ -268,7 +237,7 @@ def cyclicDecidable (q : SA) : Decidable (I.Cyclic q) := by
         obtain ⟨w, hn, hw, he, hl⟩ := I.short_cyclic hc
         exact ⟨w, (mem_wordsUpTo _ _).mpr hl, hn, hw, he⟩)
 
-/-- Executable state-kind tests, def:nm-kinds. -/
+/-- Decide `Branching` using finite safe reachability and cycle tests. -/
 def branchingDecidable (q : SA) : Decidable (I.Branching q) := by
   letI := I.safeReachableDecidable q
   letI := I.cyclicDecidable
@@ -281,134 +250,6 @@ def thinDecidable (q : SA) : Decidable (I.Thin q) := by
   unfold Thin
   infer_instance
 
+end TwoWordInstance
 
-omit [Fintype α] [DecidableEq α] [Inhabited α] in
-/-- Graph characterization of viability from def:nm-kinds. -/
-theorem viable_iff_reachable_cyclic (q : SA) :
-    I.Viable q ↔ ∃ r, I.SafeReachable q r ∧ I.Cyclic r := by
-  constructor
-  · intro hv
-    obtain ⟨ξ, hξ⟩ := (I.viable_iff q).mp hv
-    let w := streamPrefix ξ (Fintype.card SA)
-    have hw : I.SafeFrom q w := I.infiniteSafe_prefix hξ _
-    obtain ⟨i, j, hij, hj, he⟩ := I.path_repeat (q := q) (w := w) (by simp [w])
-    exact ⟨I.A.runFrom q (w.take i),
-      ⟨w.take i, I.safeFrom_prefix hw (List.take_prefix _ _), rfl⟩,
-      I.cyclic_of_repeat hw hij hj he⟩
-  · rintro ⟨r, hr, hc⟩
-    exact I.viable_of_reachable hr (I.cyclic_viable hc)
-
-omit [Fintype α] [DecidableEq α] [Inhabited α] in
-/-- A nonbad state is mortal exactly when it cannot safely reach a cycle. -/
-theorem mortal_iff_no_reachable_cycle (q : SA) :
-    I.Mortal q ↔ q ∉ I.Bad ∧ ¬ ∃ r, I.SafeReachable q r ∧ I.Cyclic r := by
-  rw [Mortal, I.viable_iff_reachable_cyclic]
-
-omit [Fintype α] [DecidableEq α] [Inhabited α] in
-/-- A factorization at the first rejected cut gives a pre-hole and its completion. -/
-theorem preHole_at_rejection {u t u₀ t₀ θ : Word α} (hf : I.FH) (hh : I.IsHole u t)
-    (hj : I.J t = some t₀.length) (hu : u = u₀ ++ θ) (ht : t = t₀ ++ θ) :
-    I.IsPreHole u₀ t₀ ∧ I.Completes u₀ t₀ θ := by
-  obtain ⟨v, w, z, hv, hw, _, hp, hc⟩ := I.hole_decomposition hf hh
-  have hj' : I.J t = some w.length := by rw [hw]; exact I.J_append hp.2.1 z
-  have hlen : t₀.length = w.length := Option.some.inj (hj.symm.trans hj')
-  have ht₀ : t₀ = w := by
-    have h := congrArg (List.take t₀.length) (ht.symm.trans hw)
-    simpa [hlen] using h
-  have hz : θ = z := by
-    have h := ht.symm.trans hw
-    rw [ht₀, List.append_cancel_left_eq] at h
-    exact h
-  have hu₀ : u₀ = v := by
-    have h := hu.symm.trans hv
-    rw [hz, List.append_cancel_right_eq] at h
-    exact h
-  simpa [ht₀, hu₀, hz] using And.intro hp hc
-
-end SS2
-
-namespace NonMortalExamples
-
-/-- A safe zero-loop with the other letter entering a bad sink. -/
-def thinDFA : LDFA Bool (Fin 2) := ⟨0, fun q c => if q = 0 ∧ c = false then 0 else 1⟩
-
-/-- A two-state thin instance with a zero-loop and a bad sink. -/
-def thinInstance : SS2 Bool (Fin 2) (Fin 1) (Fin 1) (Fin 2) :=
-  CoreExamples.smallInstance thinDFA {1}
-
-/-- The concrete starting state is thin. -/
-theorem thin_state : thinInstance.Thin 0 := by
-  refine ⟨by decide, ?_, ?_⟩
-  · intro hm
-    apply hm.2
-    refine ⟨{0}, by simp, ?_⟩
-    intro r hr
-    have hr' : r = 0 := Finset.mem_singleton.mp hr
-    subst r
-    exact ⟨by decide, false, by decide⟩
-  · rintro ⟨_, r, _, _, a, b, hab, ha, hb⟩
-    have hletter (c : Bool) (hc : thinInstance.A.step r c ∉ thinInstance.Bad) :
-        c = false := by
-      cases c with
-      | false => rfl
-      | true => simp [thinInstance, CoreExamples.smallInstance, thinDFA] at hc
-    exact hab ((hletter a ha).trans (hletter b hb).symm)
-
-/-- The concrete word pair satisfies the pre-hole conditions. -/
-theorem thin_preHole : thinInstance.IsPreHole [] [] := by decide +kernel
-
-/-- The concrete safe stream has a bounded lasso representation. -/
-theorem thin_lasso : thinInstance.Lasso 0 (periodicStream [false]) := by
-  refine ⟨[], [false], by decide, by decide, by decide, rfl, ?_⟩
-  simp
-
-/-- The concrete continuation is survivor-free. -/
-theorem thin_survivorFree : thinInstance.SurvivorFree [] [] (periodicStream [false]) := by
-  intro s e he
-  exact (Finset.notMem_empty _ he.2.2).elim
-
-/-- The thin instance satisfies the non-mortal case. -/
-theorem thin_case : thinInstance.FH ∧ thinInstance.NonMortalCase := by
-  refine ⟨CoreExamples.smallInstance_fh _ _, [], [], thin_preHole, Or.inr ?_⟩
-  exact ⟨thin_state, periodicStream [false], thinInstance.lasso_safe thin_lasso, thin_survivorFree⟩
-
-/-- The finite lasso enumeration contains a safe lasso. -/
-theorem thin_enumeration_nonempty : (thinInstance.lassoPairs 0).Nonempty := by decide +kernel
-
-/-- An empty completion cannot remove the pending event in this instance. -/
-theorem completes_nonempty : thinInstance.Completes [] [] [] := by
-  refine ⟨by decide, ?_⟩
-  intro s e he
-  exact (Finset.notMem_empty _ he.2.2).elim
-
-/-- A least stream period is positive. -/
-theorem leastPeriod_nonempty : LeastStreamPeriod (fun _ => false) 1 := by
-  exact ⟨by decide, fun _ => rfl, fun q hq _ => hq⟩
-
-/-- The executable branching test finds the two safe nonzero ternary letters. -/
-theorem ternary_branching_decide :
-    @decide _ (CoreExamples.ternaryBranch.branchingDecidable 0) = true := by
-  decide +kernel
-
-/-- A single safe state over the unary alphabet. -/
-def unaryInstance : SS2 (Fin 1) (Fin 1) (Fin 1) (Fin 1) (Fin 2) :=
-  CoreExamples.smallInstance CoreExamples.oneDFA ∅
-
-/-- The concrete starting state is thin. -/
-theorem unary_thin : unaryInstance.Thin 0 := by
-  exact @of_decide_eq_true _ (unaryInstance.thinDecidable 0) (by decide +kernel)
-
-/-- The finite enumeration contains exactly the presentation of `0^ω`. -/
-theorem unary_lassoPairs : unaryInstance.lassoPairs 0 = {([], [0])} := by
-  decide +kernel
-
-/-- The only safe unary stream is the constant stream. -/
-theorem unary_safe_iff (ξ : ℕ → Fin 1) :
-    unaryInstance.InfiniteSafe 0 ξ ↔ ξ = periodicStream [0] := by
-  rw [unaryInstance.thin_lassoPairs_iff unary_thin, unary_lassoPairs]
-  simp
-
-end NonMortalExamples
-
-
-end DeciENSSE.Core
+end DeciENSSE.Core.Words

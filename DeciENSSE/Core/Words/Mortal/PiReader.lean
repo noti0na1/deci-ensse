@@ -33,10 +33,10 @@ saturated at `|SA|`. All states of the product types are kept, reachable or not,
   of mortal holes.
 - `rejected_word_form`, `rejected_count_separator`: rejected words have one separator.
 
-The declarations are in the namespace `DeciENSSE.Core.Mortal`.
+The declarations are in the namespace `DeciENSSE.Core.Words.Mortal`.
 -/
 
-namespace DeciENSSE.Core.Mortal
+namespace DeciENSSE.Core.Words.Mortal
 
 variable {α : Type*} [Fintype α] [DecidableEq α]
 open DeciNSSE.CoAlignment DeciNSSE.Holes DeciNSSE.RejectedTail
@@ -53,7 +53,7 @@ inductive RState (SA SB SA' SB' : Type*) [Fintype SA] where
 variable {SA SB SA' SB' : Type*} [Fintype SA] [Fintype SB]
   [Fintype SA'] [Fintype SB'] [DecidableEq SA] [DecidableEq SB]
   [DecidableEq SA'] [DecidableEq SB']
-variable (I : SS2 α SA SB SA' SB')
+variable (I : TwoWordInstance α SA SB SA' SB')
 
 /-- The states of the Π-reader of `I`. -/
 abbrev State := RState SA SB SA' SB'
@@ -175,7 +175,7 @@ omit [Fintype α] [DecidableEq α] in
 theorem safe_snoc (u : Word α) (c : α) :
     I.SafeFrom I.A.start (u ++ [c]) ↔
       I.SafeFrom I.A.start u ∧ I.A.run (u ++ [c]) ∉ I.Bad := by
-  simp only [SS2.SafeFrom, Finset.mem_range]
+  simp only [TwoWordInstance.SafeFrom, Finset.mem_range]
   constructor
   · intro h
     refine ⟨fun i hi => ?_, ?_⟩
@@ -194,7 +194,7 @@ omit [DecidableEq α] in
 theorem eval_binary (u : Word α) : (reader I).eval (u.map some) =
     if I.SafeFrom I.A.start u then .pre (I.A.run u) (I.A'.run u) else .sink := by
   induction u using List.reverseRecOn with
-  | nil => simp [SS2.SafeFrom, LDFA.run, reader, DFA.eval]
+  | nil => simp [TwoWordInstance.SafeFrom, LDFA.run, reader, DFA.eval]
   | append_singleton u c ih =>
     simp only [List.map_append, List.map_singleton, DFA.eval_append_singleton, ih]
     simp only [safe_snoc]
@@ -571,37 +571,4 @@ theorem rejected_count_separator (w : List (Option α)) (hr : (reader I).eval w 
   obtain ⟨u,t,rfl⟩ := rejected_word_form I w hr
   exact count_sepWord u t
 
-namespace Examples
-
-/-- A safe three-state chain followed by an unsafe sink; the target rejects on `true`, the
-guard tests the start states, and the head pair is reached after the common suffix `true`. -/
-def small : SS2 Bool (Fin 4) (Fin 2) (Fin 2) (Fin 2) where
-  A := ⟨0, fun q _ => ⟨min (q.val+1) 3, by omega⟩⟩
-  B := ⟨0, fun _ c => if c then 1 else 0⟩
-  A' := ⟨0, fun _ _ => 1⟩
-  B' := ⟨0, fun _ _ => 1⟩
-  Bad := {3}
-  Rej := {1}
-  Guard := {(0,0)}
-  Head := {(1,0)}
-
-/-- `([false, true], [true])` is a mortal hole of `small`. -/
-theorem mortal_01_1 : small.IsMortalHole [false,true] [true] := by decide
-
-/-- The same chain over a ternary alphabet; the target rejects on letter `2`. -/
-def ternarySmall : SS2 (Fin 3) (Fin 4) (Fin 2) (Fin 2) (Fin 2) where
-  A := ⟨0, fun q _ => ⟨min (q.val+1) 3, by omega⟩⟩
-  B := ⟨0, fun _ c => if c = 2 then 1 else 0⟩
-  A' := ⟨0, fun _ _ => 1⟩
-  B' := ⟨0, fun _ _ => 1⟩
-  Bad := {3}
-  Rej := {1}
-  Guard := {(0,0)}
-  Head := {(1,0)}
-
-/-- `([0, 2], [2])` is a mortal hole of `ternarySmall`. -/
-theorem ternary_mortal_02_2 : ternarySmall.IsMortalHole [0,2] [2] := by decide +kernel
-
-end Examples
-
-end DeciENSSE.Core.Mortal
+end DeciENSSE.Core.Words.Mortal

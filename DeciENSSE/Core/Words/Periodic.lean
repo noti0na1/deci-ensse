@@ -8,21 +8,22 @@ Periodic suffixes characterize surviving comparisons and their forbidden guard p
 
 - `PeriodicSplit`
 - `periodicSplit_exists`
-- `SS2.survivorFree_iff_periodic_tests`
+- `TwoWordInstance.survivorFree_iff_periodic_tests`
 -/
 
-namespace DeciENSSE.Core
+namespace DeciENSSE.Core.Words
+open DeciNSSE.RejectedTail
 
 variable {α : Type*}
 
 /-- A fixed finite prefix of a periodic stream is exactly a prefix whose
 length is a period. This includes the empty word. -/
 theorem prepend_fixed_iff_prefix_period {ξ : ℕ → α} (w : Word α) :
-    prepend w ξ = ξ ↔ StreamPrefix w ξ ∧ StreamPeriod ξ w.length := by
+    prepend w ξ = ξ ↔ IsStreamPrefix w ξ ∧ StreamPeriod ξ w.length := by
   constructor
   · intro h
     refine ⟨?_, ?_⟩
-    · rw [StreamPrefix, ← h, prepend_prefix]
+    · rw [IsStreamPrefix, ← h, prepend_prefix]
     · intro i
       have hh := congrFun h (i + w.length)
       simpa [prepend] using hh.symm
@@ -32,15 +33,6 @@ theorem prepend_fixed_iff_prefix_period {ξ : ℕ → α} (w : Word α) :
     · simpa [prepend, hi] using streamPrefix_iff.mp hw i hi
     · have hh := hp (i - w.length)
       simpa [prepend, hi, Nat.sub_add_cancel (by omega : w.length ≤ i)] using hh.symm
-
-/-- Least-period form of the finite fixed-prefix criterion. -/
-theorem prepend_fixed_iff_prefix_dvd {ξ : ℕ → α} {p : ℕ}
-    (hp : LeastStreamPeriod ξ p) (w : Word α) :
-    prepend w ξ = ξ ↔ StreamPrefix w ξ ∧ p ∣ w.length := by
-  rw [prepend_fixed_iff_prefix_period]
-  by_cases hw : w.length = 0
-  · simp [hw, StreamPeriod]
-  · rw [leastPeriod_dvd_iff hp (by omega)]
 
 /-- Removing a finite prefix from a prefixed stream. -/
 theorem prepend_shift (w : Word α) (ξ : ℕ → α) {n : ℕ} (hn : n ≤ w.length) :
@@ -142,13 +134,6 @@ theorem periodic_iff (h : PeriodicSplit ξ p w r) {s : ℕ} (hs : s ≤ w.length
     rw [prepend_shift _ _ (by simp; omega), List.drop_drop,
       Nat.add_sub_of_le hrs] at hh
     exact hh
-
-/-- Uniqueness makes the semantic split independent of a chosen witness. -/
-theorem unique (h : PeriodicSplit ξ p w r) {s : ℕ} (hs : PeriodicSplit ξ p w s) :
-    r = s := by
-  have h₁ := (h.periodic_iff hs.le_length).mp hs.periodic
-  have h₂ := (hs.periodic_iff h.le_length).mp h.periodic
-  omega
 
 /-- Equal infinite suffixes have the same number of remaining rest letters.
 This includes the mixed periodic/rest case: their remaining rest lengths
@@ -255,29 +240,7 @@ theorem aligned_suffix_eq_iff {u t : Word α} {ru rt k : ℕ}
 
 end PeriodicSplit
 
-/-- A finite test for a periodic extension, assuming its infinite tail is
-already periodic. It makes the semantic periodic-end test executable. -/
-theorem prepend_period_iff_finite {ξ : ℕ → α} {p : ℕ}
-    (hp : StreamPeriod ξ p) (w : Word α) :
-    StreamPeriod (prepend w ξ) p ↔
-      ∀ i < w.length, prepend w ξ (i + p) = prepend w ξ i := by
-  constructor
-  · exact fun h i _ => h i
-  · intro h i
-    by_cases hi : i < w.length
-    · exact h i hi
-    · have hh := hp (i - w.length)
-      simpa [prepend, hi, show ¬ i + p < w.length by omega,
-        show i + p - w.length = i - w.length + p by omega] using hh
-
-/-- The first letter before a maximal periodic end must fail this test. -/
-theorem prepend_letter_period_iff {ξ : ℕ → α} {p : ℕ}
-    (hp : 0 < p) (hξ : StreamPeriod ξ p) (c : α) :
-    StreamPeriod (prepend [c] ξ) p ↔ c = ξ (p - 1) := by
-  rw [prepend_period_iff_finite hξ]
-  simp [prepend, show p ≠ 0 by omega, eq_comm]
-
-namespace SS2
+namespace TwoWordInstance
 
 /-- Survival after cancellation of the common finite target suffix.
 Unlike the nonaligned formulation, this also covers zero offset. -/
@@ -291,20 +254,10 @@ theorem survives_iff_overhang_fixed [Inhabited α] {u t : Word α} {s e : ℕ}
   exact he.trans ⟨fun h => prepend_injective (t.drop e) h,
     congrArg (prepend (t.drop e))⟩
 
-/-- The residue test alone is insufficient: the overhang must also be a
-prefix of the fixed periodic stream. -/
-theorem survives_iff_periodic_prefix [Inhabited α] {u t : Word α} {s e : ℕ}
-    (hc : Cross u t s e) {ξ : ℕ → α} {p : ℕ}
-    (hp : LeastStreamPeriod ξ p) :
-    Survives u t s e ξ ↔
-      StreamPrefix (overhang u t s e) ξ ∧ offset u t s e % p = 0 := by
-  rw [survives_iff_overhang_fixed hc, prepend_fixed_iff_prefix_dvd hp,
-    overhang_length, Nat.dvd_iff_mod_eq_zero]
-
 variable {SA SB SA' SB' : Type*} [Fintype SA] [Fintype SB]
   [Fintype SA'] [Fintype SB'] [DecidableEq SA] [DecidableEq SB]
   [DecidableEq SA'] [DecidableEq SB']
-variable (I : SS2 α SA SB SA' SB')
+variable (I : TwoWordInstance α SA SB SA' SB')
 
 /-- The residue dimension in Appendix C.6 is at most the spine-state count,
 even if the supplied lasso presentation has a nonempty transient part. -/
@@ -346,25 +299,6 @@ def periodicGuardInverse (b : SB) : Finset SA :=
     a ∈ I.periodicGuardInverse b ↔ (a, b) ∈ I.Guard := by
   simp [periodicGuardInverse]
 
-/-- Add a reached target cut to its residue's forbidden-state set. -/
-def periodicInsert {p : ℕ} (F : Fin p → Finset SA) (i : Fin p) (b : SB) :
-    Fin p → Finset SA :=
-  Function.update F i (F i ∪ I.periodicGuardInverse b)
-
-/-- Insertion adds the target state at its periodic residue. -/
-@[simp] theorem mem_periodicInsert {p : ℕ} (F : Fin p → Finset SA)
-    (i j : Fin p) (a : SA) (b : SB) :
-    a ∈ I.periodicInsert F i b j ↔ a ∈ F j ∨ (j = i ∧ (a, b) ∈ I.Guard) := by
-  by_cases h : j = i
-  · subst j; simp [periodicInsert]
-  · simp [periodicInsert, h]
-
-/-- The sets only grow; insert-before-test includes the current aligned pair. -/
-theorem periodicInsert_mono {p : ℕ} (F : Fin p → Finset SA) (i j : Fin p) (b : SB) :
-    F j ⊆ I.periodicInsert F i b j := by
-  intro a ha
-  exact (I.mem_periodicInsert F i j a b).mpr (Or.inl ha)
-
 /-- Semantic forbidden sets after the target cuts of depths `0,...,k`
 have been visited. In uses below `k` does not exceed the target length. -/
 def periodicForbidden {p : ℕ} (t : Word α) (k : ℕ) (i : Fin p) : Finset SA :=
@@ -376,36 +310,6 @@ def periodicForbidden {p : ℕ} (t : Word α) (k : ℕ) (i : Fin p) : Finset SA 
     a ∈ I.periodicForbidden t k i ↔
       ∃ d ≤ k, d % p = i.val ∧ (a, I.B.atCut t (t.length - d)) ∈ I.Guard := by
   simp [periodicForbidden]
-
-/-- Initialization includes the depth-zero target cut. -/
-theorem periodicForbidden_zero {p : ℕ} (t : Word α) :
-    I.periodicForbidden (p := p) t 0 =
-      (fun i => if i.val = 0 then I.periodicGuardInverse (I.B.run t) else ∅) := by
-  funext i
-  apply Finset.ext
-  intro a
-  by_cases hi : i.val = 0 <;>
-    simp [hi, periodicForbidden, periodicGuardInverse, LDFA.atCut, eq_comm]
-
-/-- Exact recursive update; the new target cut is added before the guard test. -/
-theorem periodicForbidden_succ {p : ℕ} (hp : 0 < p) (t : Word α) (k : ℕ) :
-    I.periodicForbidden t (k + 1) =
-      I.periodicInsert (I.periodicForbidden t k) ⟨(k + 1) % p, Nat.mod_lt _ hp⟩
-        (I.B.atCut t (t.length - (k + 1))) := by
-  funext i
-  apply Finset.ext
-  intro a
-  rw [mem_periodicForbidden, mem_periodicInsert, mem_periodicForbidden]
-  constructor
-  · rintro ⟨d, hd, hm, hg⟩
-    by_cases hdk : d ≤ k
-    · exact Or.inl ⟨d, hdk, hm, hg⟩
-    · have he : d = k + 1 := by omega
-      subst d
-      exact Or.inr ⟨Fin.ext hm.symm, hg⟩
-  · rintro (⟨d, hd, hm, hg⟩ | ⟨rfl, hg⟩)
-    · exact ⟨d, by omega, hm, hg⟩
-    · exact ⟨k + 1, le_rfl, rfl, hg⟩
 
 /-- The forbidden-set test expresses both residue agreement and the
 nonnegative signed offset. Target cuts deeper than the current spine cut
@@ -476,114 +380,6 @@ theorem survivorFree_iff_periodic_tests [Inhabited α] {u t : Word α} {ξ : ℕ
       apply h
       simpa only [hdist] using hcore
 
-end SS2
+end TwoWordInstance
 
-namespace NonMortalExamples
-
-/-- Both first letters enter a thin zero-loop. The guard at the initial
-spine state distinguishes the overhangs `[false]` and `[true]`. -/
-def periodicGuardDFA : LDFA Bool (Fin 3) :=
-  ⟨0, fun q c => if q = 0 ∨ (q = 1 ∧ c = false) then 1 else 2⟩
-
-/-- A thin instance whose initial guard distinguishes the two overhang letters. -/
-def periodicGuardInstance : SS2 Bool (Fin 3) (Fin 1) (Fin 1) (Fin 2) :=
-  { CoreExamples.smallInstance periodicGuardDFA {2} with Guard := {(0, 0)} }
-
-/-- The concrete starting state is thin. -/
-theorem periodicGuard_thin : periodicGuardInstance.Thin 1 := by
-  exact @of_decide_eq_true _ (periodicGuardInstance.thinDecidable 1) (by decide +kernel)
-
-/-- The concrete safe stream has a bounded lasso representation. -/
-theorem periodicGuard_lasso : periodicGuardInstance.Lasso 1 (fun _ => false) := by
-  refine ⟨[], [false], by decide, by decide, by decide, rfl, ?_⟩
-  funext i
-  simp [prepend, periodicStream, Nat.mod_one]
-
-/-- The concrete word pair satisfies the pre-hole conditions. -/
-theorem periodicGuard_preHoles :
-    periodicGuardInstance.IsPreHole [false] [] ∧
-      periodicGuardInstance.IsPreHole [true] [] := by decide +kernel
-
-/-- A zero residue is not by itself sufficient for survival. -/
-theorem periodicGuard_true_survivorFree :
-    periodicGuardInstance.SurvivorFree [true] [] (fun _ => false) := by
-  rw [periodicGuardInstance.survivorFree_iff_suffix_guard (by decide)]
-  intro s hs e he _ heq
-  have he' : e = 0 := by simpa using he
-  subst e
-  have hs' : s ≤ 1 := by simpa using hs
-  interval_cases s
-  · have hh := congrFun heq 0
-    simp [prepend] at hh
-  · decide +kernel
-
-/-- The zero overhang event survives the constant-zero stream. -/
-theorem periodicGuard_false_survivor :
-    periodicGuardInstance.Event [false] [] 0 0 ∧
-      SS2.Survives [false] [] 0 0 (fun _ => false) := by
-  refine ⟨by unfold SS2.Event SS2.Cross; decide +kernel, ?_⟩
-  apply (SS2.survives_iff_overhang_fixed (by simp [SS2.Cross] : SS2.Cross [false] [] 0 0) _).mpr
-  funext i
-  simp [SS2.overhang, prepend]
-
-/-- Maximal periodic ends have witnesses even when the rest is nonempty. -/
-theorem periodicSplit_nonempty_rest :
-    PeriodicSplit (fun _ => false) 1 [true, false, false] 1 := by
-  refine ⟨by decide, ?_, ?_⟩
-  · intro i
-    cases i with
-    | zero => rfl
-    | succ i =>
-      cases i with
-      | zero => rfl
-      | succ i =>
-        simp [prepend, show ¬ i + 1 + 1 < 2 by omega,
-          show ¬ i + 1 + 1 + 1 < 2 by omega]
-  · intro s hs h
-    have hs' : s = 0 := by omega
-    subst s
-    have hh := h 0
-    simp [prepend] at hh
-
-/-- A third letter can form the nonperiodic rest before a constant tail. -/
-theorem periodicSplit_ternary_rest :
-    PeriodicSplit (fun _ => (0 : Fin 3)) 1 [2, 0, 0] 1 := by
-  refine ⟨by decide, ?_, ?_⟩
-  · intro i
-    cases i with
-    | zero => rfl
-    | succ i =>
-      cases i with
-      | zero => rfl
-      | succ i =>
-        simp [prepend, show ¬ i + 1 + 1 < 2 by omega,
-          show ¬ i + 1 + 1 + 1 < 2 by omega]
-  · intro s hs h
-    have hs' : s = 0 := by omega
-    subst s
-    have hh := h 0
-    simp [prepend] at hh
-
-/-- The guard at depth zero is included, even at zero offset. -/
-theorem periodicForbidden_aligned :
-    (0 : Fin 3) ∈ periodicGuardInstance.periodicForbidden [] 0 (0 : Fin 1) := by
-  decide +kernel
-
-/-- A deeper target cut enters its own residue only when it is reached. -/
-theorem periodicForbidden_depth_cutoff :
-    periodicGuardInstance.periodicForbidden [false] 0 (1 : Fin 2) = ∅ ∧
-      periodicGuardInstance.periodicForbidden [false] 1 (1 : Fin 2) = {0} := by
-  decide +kernel
-
-/-- The surviving false overhang is rejected by the semantic periodic test. -/
-theorem periodicGuard_false_forbidden :
-    ¬ (∀ k ≤ ([false] : Word Bool).length,
-      periodicGuardInstance.A.atCut [false] (1 - k) ∉
-        periodicGuardInstance.periodicForbidden [] (min k 0) (0 : Fin 1)) := by
-  intro h
-  exact h 1 (by decide) (by decide +kernel)
-
-end NonMortalExamples
-
-
-end DeciENSSE.Core
+end DeciENSSE.Core.Words

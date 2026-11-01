@@ -6,8 +6,11 @@ import DeciNSSE.Semantics.Tree
 
 /-! # Two observations of a covariant tree
 
-A tree is determined by its constructor observation and the complement of its top
-observation. Every pair of prefix-closed sets covering all words realizes a tree.
+The top leaf cone A (`aobs`) contains paths with a top-labeled prefix. The
+nonbottom observation C (`cobs`) contains paths with no bottom-labeled prefix;
+it includes paths below top leaves, not just constructor positions. A tree is
+determined by C and the complement of A. Every pair of prefix-closed sets
+covering all words realizes a tree.
 
 ## Main declarations
 
@@ -25,12 +28,12 @@ open DeciNSSE
 
 variable {n : ℕ}
 
-/-- A top label occurs on a prefix of the path. -/
+/-- The top leaf cone A: a top label occurs on a prefix of the path. -/
 def aobs (t : DeciNSSE.Tree n) (w : List (Fin n)) : Prop :=
   Safety.HasLabel t w Sym.top
 
-/-- The prefix-closed set of paths with no bottom-labeled prefix. -/
-def cobs (t : DeciNSSE.Tree n) : BFTreeN n where
+/-- The nonbottom observation C: paths with no bottom-labeled prefix. -/
+def cobs (t : DeciNSSE.Tree n) : BFTree n where
   K := {w | ¬ Safety.HasLabel t w Sym.bot}
   prefix_closed := by
     rintro u v h ⟨p, ⟨s, hs⟩, hp⟩
@@ -46,12 +49,12 @@ def cobs (t : DeciNSSE.Tree n) : BFTreeN n where
 /-- Top satisfies every positive top observation. -/
 @[simp] theorem aobs_top (w : List (Fin n)) : aobs DeciNSSE.Tree.top w := by simp [aobs]
 /-- The constructor observation of bottom is empty. -/
-@[simp] theorem cobs_bot : cobs (DeciNSSE.Tree.bot : DeciNSSE.Tree n) = BFTreeN.bot := by
+@[simp] theorem cobs_bot : cobs (DeciNSSE.Tree.bot : DeciNSSE.Tree n) = BFTree.bot := by
   ext w
   simp
 
 /-- The prefix-closed set of all paths. -/
-def full : BFTreeN n := ⟨Set.univ, by simp⟩
+def full : BFTree n := ⟨Set.univ, by simp⟩
 /-- Every path belongs to the full prefix-closed set. -/
 @[simp] theorem mem_full (w : List (Fin n)) : w ∈ full.K := trivial
 /-- The constructor observation of top contains every path. -/
@@ -59,7 +62,7 @@ def full : BFTreeN n := ⟨Set.univ, by simp⟩
 
 /-- Constructor observation commutes with every constructor child. -/
 @[simp] theorem cobs_node (a : Fin n → DeciNSSE.Tree n) :
-    cobs (DeciNSSE.Tree.node a) = BFTreeN.node (cobs ∘ a) := by
+    cobs (DeciNSSE.Tree.node a) = BFTree.node (cobs ∘ a) := by
   ext w
   cases w with
   | nil => simp [Safety.HasLabel]
@@ -112,8 +115,8 @@ theorem order_iff (t u : DeciNSSE.Tree n) :
 
 /-- Store C and the complement of A, both prefix closed. -/
 structure Pair (n : ℕ) where
-  c : BFTreeN n
-  n : BFTreeN n
+  c : BFTree n
+  n : BFTree n
   cover : ∀ w, w ∈ c.K ∨ w ∈ n.K
 
 /-- Store the constructor observation and the complement of the top observation. -/
@@ -199,7 +202,7 @@ theorem realize_observations (p : Pair n) (w : List (Fin n)) :
         simpa [cobs_node, aobs,
           Safety.hasLabel_node_cons _ _ _ Sym.bot (by decide),
         Safety.hasLabel_node_cons _ _ _ Sym.top (by decide), Pair.child,
-          BFTreeN.subtree, BFTreeN.residual] using hh
+          BFTree.subtree, BFTree.residual] using hh
       · have hn' : b :: w ∉ p.n.K := fun h => hn (p.n.prefix_closed [] _ h)
         have hc' := (p.cover (b :: w)).resolve_right hn'
         rw [realize_top p hn]; simp [hc', hn']
@@ -227,26 +230,5 @@ theorem observations_injective {t u : DeciNSSE.Tree n}
 /-- Realizing the observations of a tree recovers that tree. -/
 @[simp] theorem realize_ofTree (t : DeciNSSE.Tree n) : realize (ofTree t) = t :=
   observations_injective (cobs_realize _) (cobs_dual_realize _)
-
-namespace ACExamples
-
-/-- The third child is observed directly, without a binary path encoding. -/
-theorem ternary_third_child :
-    aobs (DeciNSSE.Tree.node ![DeciNSSE.Tree.bot, DeciNSSE.Tree.bot, DeciNSSE.Tree.top]) [2] ∧
-      [2] ∈ (cobs (DeciNSSE.Tree.node ![DeciNSSE.Tree.bot, DeciNSSE.Tree.bot, DeciNSSE.Tree.top])).K
-        := by
-  constructor
-  · simp [aobs, Safety.hasLabel_node_cons _ _ _ Sym.top (by decide)]
-  · simp
-
-/-- The all-constructor tree realizes two full observations, also at arity three. -/
-theorem ternary_full_pair :
-    cobs (realize (⟨full, full, fun _ => Or.inl trivial⟩ : Pair 3)) = full ∧
-      cobs (DeciNSSE.Tree.dual (realize (⟨full, full, fun _ => Or.inl trivial⟩ : Pair 3))) = full :=
-        by
-  simp
-
-end ACExamples
-
 
 end DeciENSSE.Core.Full.AC

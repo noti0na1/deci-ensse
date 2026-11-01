@@ -8,7 +8,7 @@ this domain, and subtype comparison is the label order.
 ## Main declarations
 
 - `treeEquiv`: nullary trees correspond to labels.
-- `leGen_zero_iff`: comparison is root-label comparison.
+- `treeLe_zero_iff`: comparison is root-label comparison.
 - `toTree_zero_surjective`, `unfold_zero_surjective`: both presentations cover all trees.
 -/
 
@@ -26,14 +26,14 @@ theorem node_eq_f (a : Fin 0 → Tree 0) : node a = node Fin.elim0 := by
   exact i.elim0
 
 /-- **Classification of `Tree 0`.** -/
-theorem treeN_zero_cases (t : Tree 0) : t = bot ∨ t = top ∨ t = node Fin.elim0 := by
+theorem tree_zero_cases (t : Tree 0) : t = bot ∨ t = top ∨ t = node Fin.elim0 := by
   rcases t.eq_bot_or_eq_top_or_node with h | h | ⟨a, rfl⟩
   · exact Or.inl h
   · exact Or.inr (Or.inl h)
   · exact Or.inr (Or.inr (node_eq_f a))
 
 /-- A tree of arity zero is determined by its root label. -/
-theorem treeN_zero_ext {t u : Tree 0} (h : t.fn [] = u.fn []) : t = u := by
+theorem tree_zero_ext {t u : Tree 0} (h : t.fn [] = u.fn []) : t = u := by
   apply Tree.ext
   funext π
   cases π with
@@ -73,7 +73,7 @@ def toSym (t : Tree 0) : Sym := (t.fn []).getD Sym.bot
 
 /-- Decoding after encoding is the identity. -/
 @[simp] theorem ofSym_toSym (t : Tree 0) : ofSym (toSym t) = t := by
-  rcases treeN_zero_cases t with rfl | rfl | rfl <;> rfl
+  rcases tree_zero_cases t with rfl | rfl | rfl <;> rfl
 
 /-- Distinct labels give distinct trees. -/
 theorem ofSym_injective : Function.Injective ofSym := fun a b h => by
@@ -91,15 +91,15 @@ def treeEquiv : Tree 0 ≃ Sym where
   right_inv := toSym_ofSym
 
 /-- `Tree.Le c` on labeled trees is the order of `Sym`. -/
-@[simp] theorem leGen_ofSym_iff (c : Fin 0 → Bool) (a b : Sym) :
+@[simp] theorem treeLe_ofSym_iff (c : Fin 0 → Bool) (a b : Sym) :
     Tree.Le c (ofSym a) (ofSym b) ↔ a ≤ b := by
   rw [variance_zero c, treeLe_false_iff_le]
   cases a <;> cases b <;> simp
 
 /-- **`Tree.Le c` on `Tree 0` is the chain order on root labels.** -/
-theorem leGen_zero_iff (c : Fin 0 → Bool) (t u : Tree 0) :
+theorem treeLe_zero_iff (c : Fin 0 → Bool) (t u : Tree 0) :
     Tree.Le c t u ↔ toSym t ≤ toSym u := by
-  rw [← leGen_ofSym_iff c, ofSym_toSym, ofSym_toSym]
+  rw [← treeLe_ofSym_iff c, ofSym_toSym, ofSym_toSym]
 
 /-- The finite tree carrying a given label. -/
 def fOfSym : Sym → FTree 0
@@ -120,8 +120,8 @@ theorem toTree_zero_surjective : Function.Surjective (@FTree.toTree 0) :=
   fun t => ⟨fOfSym (toSym t), by simp⟩
 
 /-- The unfolding of a nullary graph is fixed by the root label. -/
-theorem rGraphN_unfold_zero (g : RGraph 0) : g.unfold = ofSym (g.label g.root) :=
-  treeN_zero_ext (by rw [RGraph.unfold_root, ofSym_fn_nil])
+theorem rGraph_unfold_zero (g : RGraph 0) : g.unfold = ofSym (g.label g.root) :=
+  tree_zero_ext (by rw [RGraph.unfold_root, ofSym_fn_nil])
 
 /-- The one-state graph carrying a given label. -/
 def gOfSym (s : Sym) : RGraph 0 where
@@ -132,7 +132,7 @@ def gOfSym (s : Sym) : RGraph 0 where
 
 /-- The one-state graph decodes to the same tree. -/
 @[simp] theorem gOfSym_unfold (s : Sym) : (gOfSym s).unfold = ofSym s :=
-  rGraphN_unfold_zero _
+  rGraph_unfold_zero _
 
 /-- At arity zero every tree is regular. -/
 theorem unfold_zero_surjective : Function.Surjective (@RGraph.unfold 0) :=

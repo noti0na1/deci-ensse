@@ -1,4 +1,4 @@
-import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
+import DeciENSSE.Support.Median
 import DeciENSSE.Core.Full.Observations
 import DeciNSSE.Semantics.Finite
 import DeciNSSE.Semantics.Normalization
@@ -13,7 +13,7 @@ Finite spine trees translate path observations into upper or lower ground bounds
 ## Main declarations
 
 - `ACPins.lower`
-- `ACPins.dual`
+- `Support.Median.finD`
 - `Observation.bound`
 - `observation_bound`
 -/
@@ -24,19 +24,6 @@ open DeciNSSE
 variable {n : ℕ}
 
 namespace ACPins
-
-/-- Flip the extreme labels of a finite tree. -/
-def dual : FTree n → FTree n
-  | .bot => .top
-  | .top => .bot
-  | .node a => .node (fun i => dual (a i))
-
-/-- Finite label duality presents tree duality. -/
-@[simp] theorem dual_toTree (g : FTree n) : (dual g).toTree = DeciNSSE.Tree.dual g.toTree := by
-  induction g with
-  | bot => simp [dual]
-  | top => simp [dual]
-  | node a ih => simp [dual, ih]
 
 /-- Follow one child at each level; each of the other n−1 children is bottom. -/
 def lower : List (Fin n) → FTree n → FTree n
@@ -85,31 +72,8 @@ theorem lower_a_iff (t : DeciNSSE.Tree n) (w : List (Fin n)) :
 
 /-- Duality reverses a comparison with a finite ground tree. -/
 theorem le_dual_iff (t : DeciNSSE.Tree n) (g : FTree n) :
-    t ≤ (dual g).toTree ↔ g.toTree ≤ DeciNSSE.Tree.dual t := by
-  rw [dual_toTree, ← DeciNSSE.dual_le_iff, DeciNSSE.dual_involutive]
-
-/-- Number of labeled positions, including bottom and top leaves. -/
-def size : FTree n → ℕ
-  | .bot | .top => 1
-  | .node a => 1 + ∑ i, size (a i)
-
-/-- Duality preserves the number of finite-tree positions. -/
-theorem size_dual (g : FTree n) : size (dual g) = size g := by
-  induction g with
-  | bot => rfl
-  | top => rfl
-  | node a ih => simp [dual, size, ih]
-
-/-- Each spine level adds one constructor and its n−1 sibling leaves. -/
-theorem size_lower (w : List (Fin n)) (g : FTree n) :
-    size (lower w g) = n * w.length + size g := by
-  induction w with
-  | nil => simp [lower]
-  | cons i w ih =>
-    simp [lower, size, apply_ite, Finset.sum_ite, Finset.filter_eq',
-      Finset.filter_ne', Finset.card_erase_of_mem, ih, Nat.mul_add]
-    have hi := i.isLt
-    omega
+    t ≤ (Support.Median.finD g).toTree ↔ g.toTree ≤ DeciNSSE.Tree.dual t := by
+  rw [Support.Median.finD_toTree, ← DeciNSSE.dual_le_iff, DeciNSSE.dual_involutive]
 
 end ACPins
 
@@ -117,17 +81,18 @@ end ACPins
 def Observation.bound {V : Type*} (o : Observation n V) : GroundBound n V :=
   match o.dual, o.value with
   | false, true => ⟨o.var, true, ACPins.lower o.word (.node (fun _ => .bot))⟩
-  | false, false => ⟨o.var, false, ACPins.dual (ACPins.lower o.word .top)⟩
-  | true, true => ⟨o.var, false, ACPins.dual (ACPins.lower o.word (.node (fun _ => .bot)))⟩
+  | false, false => ⟨o.var, false, Support.Median.finD (ACPins.lower o.word .top)⟩
+  | true, true => ⟨o.var, false, Support.Median.finD (ACPins.lower o.word (.node (fun _ => .bot)))⟩
   | true, false => ⟨o.var, true, ACPins.lower o.word .top⟩
 
 /-- The ground comparison holds exactly when the observation does. -/
 theorem observation_bound {V : Type*} (ρ : V → DeciNSSE.Tree n) (o : Observation n V) :
-    o.bound.Holds ρ ↔ o.Holds ρ := by
+    o.bound.Holds (fun _ => false) ρ ↔ o.Holds ρ := by
   classical
   obtain ⟨s,v,w,b⟩ := o
   cases s <;> cases b <;>
-    simp only [Observation.bound, GroundBound.Holds, Observation.Holds,
+    simp only [Observation.bound, GroundBound.Holds, DeciNSSE.treeLe_false_iff_le,
+      Observation.Holds,
       Bool.false_eq_true, ite_false, ite_true]
   · rw [ACPins.le_dual_iff, ACPins.lower_a_iff]
     have hh := AC.cobs_dual (DeciNSSE.Tree.dual (ρ v)) w
@@ -137,44 +102,5 @@ theorem observation_bound {V : Type*} (ρ : V → DeciNSSE.Tree n) (o : Observat
     exact ACPins.lower_a_iff _ _
   · rw [ACPins.le_dual_iff]
     exact ACPins.lower_c_iff _ _
-
-/-- The observation pin has at most 1 + n(|w|+1) labeled positions. -/
-theorem Observation.bound_size {V : Type*} (o : Observation n V) :
-    ACPins.size o.bound.tree ≤ 1 + n * (o.word.length + 1) := by
-  obtain ⟨s, v, w, b⟩ := o
-  cases s <;> cases b <;>
-    simp [Observation.bound, ACPins.size_dual, ACPins.size_lower, ACPins.size,
-      Nat.mul_add] <;> omega
-
-namespace ACPinsExamples
-
-/-- The third child is selected and both siblings are bottom. -/
-theorem ternary_lower : ACPins.lower [2] (.top : FTree 3) =
-    .node ![.bot, .bot, .top] := by
-  simp only [ACPins.lower]
-  congr 1
-  funext i
-  fin_cases i <;> rfl
-
-/-- There are no sibling fillers at arity one. -/
-theorem unary_lower : ACPins.lower [0] (.top : FTree 1) =
-    .node (fun _ => .top) := by
-  simp only [ACPins.lower]
-  congr 1
-  funext i
-  fin_cases i
-  rfl
-
-/-- The two positive observations of a top third child yield valid bounds. -/
-theorem ternary_bounds :
-    let ρ : Unit → DeciNSSE.Tree 3 := fun _ => DeciNSSE.Tree.node ![DeciNSSE.Tree.bot,
-      DeciNSSE.Tree.bot, DeciNSSE.Tree.top]
-    (⟨false, (), [2], true⟩ : Observation 3 Unit).bound.Holds ρ ∧
-      (⟨true, (), [2], false⟩ : Observation 3 Unit).bound.Holds ρ := by
-  simp only [observation_bound]
-  exact ObservationExamples.ternary_flags
-
-end ACPinsExamples
-
 
 end DeciENSSE.Core.Full

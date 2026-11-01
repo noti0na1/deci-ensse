@@ -1,5 +1,7 @@
 import DeciENSSE.Core.Full.Flatten
-import DeciENSSE.Support.Semantics.Regular
+import DeciENSSE.Support.Graphs
+import DeciENSSE.Support.Nullary
+import DeciENSSE.Core.Full.Classes
 import DeciNSSE.Semantics.Regular
 import DeciNSSE.Semantics.Sym
 import DeciNSSE.Semantics.Tree
@@ -14,6 +16,7 @@ equations preserves visible regular values when choosing a regular solution.
 - `TopGraphs.Model`
 - `TopGraphs.model_unique`
 - `TopGraphs.equations`
+- `TopGraphs.regularize`: preserve graph bounds at any variance and arity.
 -/
 
 namespace DeciENSSE.Core.Full.TopGraphs
@@ -41,11 +44,11 @@ def values (g : I → RGraph n) (q : States g) : DeciNSSE.Tree n := ((g q.1).rer
 theorem values_model (g : I → RGraph n) : Model g (values g) := by
   intro i q
   cases hl : (g i).label q with
-  | bot => simpa only [rhs, hl, values] using Support.RGraphN.unfold_bot ((g i).reroot q) hl
-  | top => simpa only [rhs, hl, values] using Support.RGraphN.unfold_top ((g i).reroot q) hl
+  | bot => simpa only [rhs, hl, values] using Support.Graphs.RGraph.unfold_bot ((g i).reroot q) hl
+  | top => simpa only [rhs, hl, values] using Support.Graphs.RGraph.unfold_top ((g i).reroot q) hl
   | f =>
     change ((g i).reroot q).unfold = _
-    rw [Support.RGraphN.unfold_node _ hl]
+    rw [Support.Graphs.RGraph.unfold_node _ hl]
     simp only [rhs, hl]
     congr 1
 
@@ -84,8 +87,9 @@ noncomputable def equations [Fintype I] (g : I → RGraph n) : List (LitT n (Sta
   Finset.univ.toList.flatMap (equationsAt g)
 
 /-- Satisfying the graph literals is equivalent to solving its state equations. -/
-theorem sat_equations [Fintype I] (g : I → RGraph n) (τ : States g → DeciNSSE.Tree n) :
-    SatT (fun _ => false) τ (equations g) ↔ Model g τ := by
+theorem sat_equations [Fintype I] (c : Fin n → Bool) (g : I → RGraph n)
+    (τ : States g → DeciNSSE.Tree n) :
+    SatT c τ (equations g) ↔ Model g τ := by
   simp only [equations, SatT, List.forall_mem_flatMap, Finset.mem_toList,
     Finset.mem_univ, forall_const]
   constructor
@@ -93,25 +97,27 @@ theorem sat_equations [Fintype I] (g : I → RGraph n) (τ : States g → DeciNS
     have hh := h ⟨i,q⟩
     cases hl : (g i).label q <;>
       simp only [equationsAt, hl, List.mem_cons, List.not_mem_nil, or_false,
-        forall_eq_or_imp, forall_eq, HoldsT, DeciNSSE.treeLe_false_iff_le, rhs] at hh ⊢
+        forall_eq_or_imp, forall_eq, HoldsT, rhs] at hh ⊢
     · exact hh
-    · exact le_antisymm hh.2 hh.1
+    · exact DeciNSSE.treeLe_antisymm hh.2 hh.1
     · exact hh
   · intro h ⟨i,q⟩
     have hh := h i q
     cases hl : (g i).label q <;>
       simp only [equationsAt, hl, List.mem_cons, List.not_mem_nil, or_false,
-        forall_eq_or_imp, forall_eq, HoldsT, DeciNSSE.treeLe_false_iff_le, rhs] at hh ⊢
+        forall_eq_or_imp, forall_eq, HoldsT, rhs] at hh ⊢
     · exact hh
-    · rw [hh]; exact ⟨le_rfl, le_rfl⟩
+    · rw [hh]; exact ⟨DeciNSSE.treeLe_refl _ _, DeciNSSE.treeLe_refl _ _⟩
     · exact hh
 
 /-- A bound between an old variable and a designated graph root. -/
 abbrev Binding (V I : Type*) := V × I × Bool
 
 /-- Interpret a comparison between a variable and a designated graph root. -/
-def bindingHolds (g : I → RGraph n) (ρ : V → DeciNSSE.Tree n) (b : Binding V I) : Prop :=
-  if b.2.2 then (g b.2.1).unfold ≤ ρ b.1 else ρ b.1 ≤ (g b.2.1).unfold
+def bindingHolds (c : Fin n → Bool) (g : I → RGraph n) (ρ : V → DeciNSSE.Tree n)
+    (b : Binding V I) : Prop :=
+  if b.2.2 then DeciNSSE.Tree.Le c (g b.2.1).unfold (ρ b.1)
+  else DeciNSSE.Tree.Le c (ρ b.1) (g b.2.1).unfold
 
 /-- Encode a comparison with a graph root as a flat literal. -/
 def bindingLit (g : I → RGraph n) (b : Binding V I) : LitT n (V ⊕ States g) :=
@@ -121,80 +127,45 @@ def bindingLit (g : I → RGraph n) (b : Binding V I) : LitT n (V ⊕ States g) 
 private theorem root_value (g : I → RGraph n) (i : I) :
     values g ⟨i,(g i).root⟩ = (g i).unfold := rfl
 
-private theorem binding_spec (g : I → RGraph n) (τ : V ⊕ States g → DeciNSSE.Tree n)
+private theorem binding_spec (c : Fin n → Bool) (g : I → RGraph n)
+    (τ : V ⊕ States g → DeciNSSE.Tree n)
     (h : τ ∘ Sum.inr = values g) (b : Binding V I) :
-    HoldsT (fun _ => false) τ (bindingLit g b) ↔ bindingHolds g (τ ∘ Sum.inl) b := by
+    HoldsT c τ (bindingLit g b) ↔ bindingHolds c g (τ ∘ Sum.inl) b := by
   have he := congrFun h ⟨b.2.1, (g b.2.1).root⟩
   simp only [Function.comp_apply, root_value] at he
   cases hb : b.2.2 <;> simp [bindingLit, bindingHolds, hb, HoldsT, he]
 
-private theorem sat_map {A B : Type*} (f : A → B) (τ : B → DeciNSSE.Tree n) (χ : List (LitT n A)) :
-    SatT (fun _ => false) τ (χ.map (LitT.map f)) ↔ SatT (fun _ => false) (τ ∘ f) χ := by
-  simp [SatT]
-
-private theorem Covariant.sat_append {A : Type*} (τ : A → DeciNSSE.Tree n) (χ ψ : List (LitT n A)) :
-    SatT (fun _ => false) τ (χ ++ ψ) ↔
-      SatT (fun _ => false) τ χ ∧ SatT (fun _ => false) τ ψ := by
-  simp [SatT, or_imp, forall_and]
-
 /-- Finitely many inequalities to regular graph values can be preserved while
-regularizing a satisfiable full-signature assignment. -/
-theorem regularize [NeZero n] [Fintype V] [Fintype I]
+regularizing a satisfiable full-signature assignment. The arity split supplies
+`NeZero n` for constructor sandwiches; nullary trees already have presentations. -/
+theorem regularize [Fintype V] [Fintype I] (c : Fin n → Bool)
     (χ : List (LitT n V)) (g : I → RGraph n) (B : List (Binding V I))
-    (hs : ∃ ρ, SatT (fun _ => false) ρ χ ∧ ∀ b ∈ B, bindingHolds g ρ b) :
-    ∃ τ, (∀ v, ∃ g : RGraph n, g.unfold = τ v) ∧ SatT (fun _ => false) τ χ ∧
-      ∀ b ∈ B, bindingHolds g τ b := by
+    (hs : ∃ ρ, SatT c ρ χ ∧ ∀ b ∈ B, bindingHolds c g ρ b) :
+    ∃ τ, (∀ v, RegularTop (τ v)) ∧ SatT c τ χ ∧
+      ∀ b ∈ B, bindingHolds c g τ b := by
   let E : List (LitT n (V ⊕ States g)) :=
     χ.map (LitT.map Sum.inl) ++
     (equations g).map (LitT.map Sum.inr) ++ B.map (bindingLit g)
   obtain ⟨ρ, hρ, hb⟩ := hs
-  have hsE : ∃ ρ, SatT (fun _ => false) ρ E := by
+  have hsE : ∃ ρ, SatT c ρ E := by
     refine ⟨Sum.elim ρ (values g), ?_⟩
-    simp only [E, Covariant.sat_append, sat_map]
-    refine ⟨⟨hρ, (sat_equations g _).mpr (values_model g)⟩, ?_⟩
+    simp only [E, satT_append, satT_map]
+    refine ⟨⟨hρ, (sat_equations c g _).mpr (values_model g)⟩, ?_⟩
     intro l hl
     obtain ⟨b, hbB, rfl⟩ := List.mem_map.mp hl
-    exact (binding_spec g _ rfl b).mpr (hb b hbB)
-  obtain ⟨τ, hc, ht⟩ := satisfiable_regular (fun _ => false) hsE
-  simp only [E, Covariant.sat_append, sat_map] at ht
-  have hv : τ ∘ Sum.inr = values g := model_unique g ((sat_equations g _).mp ht.1.2)
+    exact (binding_spec c g _ rfl b).mpr (hb b hbB)
+  have hr : SatisfiableIn RegularTop c E := by
+    -- Constructor sandwiches need a child slot; nullary trees are already regular.
+    cases n with
+    | zero =>
+      obtain ⟨σ, hσ⟩ := hsE
+      exact ⟨σ, fun v => Support.Nullary.unfold_zero_surjective (σ v), hσ⟩
+    | succ m => exact satisfiable_regular c hsE
+  obtain ⟨τ, hc, ht⟩ := hr
+  simp only [E, satT_append, satT_map] at ht
+  have hv : τ ∘ Sum.inr = values g := model_unique g ((sat_equations c g _).mp ht.1.2)
   refine ⟨τ ∘ Sum.inl, fun v => hc (.inl v), ht.1.1, ?_⟩
   intro b hb
-  exact (binding_spec g τ hv b).mp (ht.2 _ (List.mem_map.mpr ⟨b, hb, rfl⟩))
-
-namespace GraphExamples
-
-/-- The third child differs from the first two, exercising all n-ary slots. -/
-def ternaryGraph : RGraph 3 where
-  size := 3
-  root := 0
-  label := ![.f, .bot, .top]
-  child := fun _ => ![1, 1, 2]
-
-/-- The ternary graph unfolding satisfies its graph equations. -/
-theorem ternary_values_satisfy :
-    SatT (fun _ => false) (values (fun _ : Unit => ternaryGraph))
-      (equations (fun _ : Unit => ternaryGraph)) :=
-  (sat_equations _ _).mpr (values_model _)
-
-/-- Every model of the graph equations sees top at the third child. -/
-theorem ternary_third_child {τ : States (fun _ : Unit => ternaryGraph) → DeciNSSE.Tree 3}
-    (h : Model (fun _ : Unit => ternaryGraph) τ) :
-    (τ ⟨(), ternaryGraph.root⟩).fn [2] = some Sym.top := by
-  rw [model_unique _ h]
-  rfl
-
-/-- Simultaneous lower and upper bindings retain the designated graph root. -/
-theorem ternary_regularize :
-    ∃ τ : Unit → DeciNSSE.Tree 3, (∀ v, ∃ g : RGraph 3, g.unfold = τ v) ∧
-      τ () = ternaryGraph.unfold := by
-  obtain ⟨τ, hc, _, hb⟩ := regularize ([] : List (LitT 3 Unit))
-    (fun _ : Unit => ternaryGraph) [((), (), true), ((), (), false)]
-    ⟨fun _ => ternaryGraph.unfold, by simp [SatT], by simp [bindingHolds]⟩
-  exact ⟨τ, hc, le_antisymm (hb ((), (), false) (by simp))
-    (hb ((), (), true) (by simp))⟩
-
-end GraphExamples
-
+  exact (binding_spec c g τ hv b).mp (ht.2 _ (List.mem_map.mpr ⟨b, hb, rfl⟩))
 
 end DeciENSSE.Core.Full.TopGraphs

@@ -9,14 +9,15 @@ positive column automaton runs it for `D` and for the monitor carrying `F`, `R` 
 and adds, for each track, the weighted terminal events inside the block, the pending `S'`
 test at its end, and the letter test of its first letter. These summaries determine the
 derived channel on the tuple, so short sub-words with the same summary give an agreement of
-the derived monitors and channels.
+the derived monitors and channels. The column automaton is `DeciNSSE.BoundedDepth.colDFA`
+of `DeciNSSE/Holes/Columns.lean`; the results here are its positive versions.
 
 ## Main declarations
 
 - `weighted`, `term_decode`: weighted terminal events, and terminal events decoded.
-- `PCS`, `psumm`, `pcolDFA`, `pcolEval`: states, intended summaries, the automaton, and its
-  correctness on valid column words.
-- `pcolBound`, `card_PCS`: the number of states.
+- `PosColumnState`, `psumm`, `pcolDFA`, `pcolDFA_eval`: states, intended summaries, the
+  automaton, and its correctness on valid column words.
+- `pcolBound`, `card_posColumnState`: the number of states.
 - `pos_type_of_psumm`: equal summaries give the same derived channel rows.
 - `exists_short_pos_tuple`, `exists_short_pos_letters`: short tuples with the same
   summary, and short blocks with an agreement of the derived monitors and channels.
@@ -78,38 +79,55 @@ theorem term_decode (c : Option C) (X : List Γ) (d : C) :
     · exact ⟨p, hp.le, Or.inr ⟨hr, (at_snoc_lt _ _ _ hp).mpr hf⟩⟩
     · exact ⟨X.length, le_rfl, Or.inr ⟨hr, (at_snoc_last _ _ _).mpr hf⟩⟩
 
-/-- States of the positive column automaton: the column states of `D` and of
-`withPos D P`, the weighted events, the pending `S'` tests at the end of each track, and the
-letter test of the first letter of each track (`none` for an empty track). -/
-abbrev PCS (C : Type*) (k : ℕ) :=
-  CS C k × CS C k × (Fin k → Option C → C → Prop) ×
-    (Fin k → Option C → C → Prop) × (Fin k → Option Prop)
+/-- A state of the positive column automaton on `k` tracks. -/
+@[ext] structure PosColumnState (C : Type*) (k : ℕ) where
+  /-- The column state of `D`. -/
+  summary : CS C k
+  /-- The column state of `withPos D P`, the monitor carrying `F`, `R` and `S`. -/
+  posSummary : CS C k
+  /-- The weighted terminal events of each track. -/
+  events : Fin k → Option C → C → Prop
+  /-- The pending `S'` test at the end of each track. -/
+  pending : Fin k → Option C → C → Prop
+  /-- The letter test of the first letter of each track, `none` for an empty track. -/
+  first : Fin k → Option Prop
 
 variable (k : ℕ)
 
+/-- Positive column states as a product of their fields. -/
+def PosColumnState.equivProd :
+    PosColumnState C k ≃ CS C k × CS C k × (Fin k → Option C → C → Prop) ×
+      (Fin k → Option C → C → Prop) × (Fin k → Option Prop) where
+  toFun s := (s.summary, s.posSummary, s.events, s.pending, s.first)
+  invFun s := ⟨s.1, s.2.1, s.2.2.1, s.2.2.2.1, s.2.2.2.2⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
 /-- The intended positive summary of a tuple of blocks. -/
-def psumm (Ws : Fin k → List Γ) : PCS C k :=
-  (summ D ℓ k Ws, summ (withPos D P) ℓ k Ws,
-   fun a c d => weighted D P ℓ c (Ws a) d,
-   fun a c d => P.S' (zlab D ℓ c (Ws a) (Ws a).length) (some (d, ℓ)),
-   fun a => (Ws a).head?.map P.Φ)
+def psumm (Ws : Fin k → List Γ) : PosColumnState C k where
+  summary := summ D ℓ k Ws
+  posSummary := summ (withPos D P) ℓ k Ws
+  events a c d := weighted D P ℓ c (Ws a) d
+  pending a c d := P.S' (zlab D ℓ c (Ws a) (Ws a).length) (some (d, ℓ))
+  first a := (Ws a).head?.map P.Φ
 
 /-- The transition of the positive column automaton; padding leaves the positive fields
 unchanged. -/
-def pcolStep (s : PCS C k) (col : Fin k → Option Γ) : PCS C k :=
-  ((colDFA D ℓ k).step s.1 col, (colDFA (withPos D P) ℓ k).step s.2.1 col,
-   fun a c d => match col a with
-     | none => s.2.2.1 a c d
-     | some z => s.2.2.1 a c d ∨ (s.2.2.2.1 a c d ∧ P.Φ z),
-   fun a c d => match col a with
-     | none => s.2.2.2.1 a c d
-     | some z => P.S' (some (s.1.1 a c, z)) (some (d, ℓ)),
-   fun a => match s.2.2.2.2 a with
-     | some b => some b
-     | none => (col a).map P.Φ)
+def pcolStep (s : PosColumnState C k) (col : Fin k → Option Γ) : PosColumnState C k where
+  summary := (colDFA D ℓ k).step s.summary col
+  posSummary := (colDFA (withPos D P) ℓ k).step s.posSummary col
+  events a c d := match col a with
+    | none => s.events a c d
+    | some z => s.events a c d ∨ (s.pending a c d ∧ P.Φ z)
+  pending a c d := match col a with
+    | none => s.pending a c d
+    | some z => P.S' (some (s.summary.exit a c, z)) (some (d, ℓ))
+  first a := match s.first a with
+    | some b => some b
+    | none => (col a).map P.Φ
 
 /-- The positive column automaton. -/
-def pcolDFA : DFA (Fin k → Option Γ) (PCS C k) where
+def pcolDFA : DFA (Fin k → Option Γ) (PosColumnState C k) where
   start := psumm D P ℓ k (fun _ => [])
   step := pcolStep D P ℓ k
   accept := ∅
@@ -123,7 +141,7 @@ theorem first_snoc (X : List Γ) (z : Γ) :
 
 /-- On a valid column word, the positive column automaton computes the positive summary of
 the decoded tuple. -/
-theorem pcolEval (w : List (Fin k → Option Γ)) (hw : Valid w) :
+theorem pcolDFA_eval (w : List (Fin k → Option Γ)) (hw : Valid w) :
     (pcolDFA D P ℓ k).eval w = psumm D P ℓ k (dec w) := by
   induction w using List.reverseRecOn with
   | nil => rfl
@@ -135,7 +153,7 @@ theorem pcolEval (w : List (Fin k → Option Γ)) (hw : Valid w) :
     rw [DFA.eval_append_singleton, colEval (withPos D P) ℓ k w hv] at hp
     rw [DFA.eval_append_singleton, ih hv]
     change pcolStep D P ℓ k (psumm D P ℓ k (dec w)) col = _
-    refine Prod.ext hn (Prod.ext hp (Prod.ext ?_ (Prod.ext ?_ ?_)))
+    refine PosColumnState.ext hn hp ?_ ?_ ?_
     · funext a c d
       simp only [pcolStep, psumm, dec_snoc]
       cases col a with
@@ -153,10 +171,9 @@ theorem pcolEval (w : List (Fin k → Option Γ)) (hw : Valid w) :
       | some z => simpa using (first_snoc P (dec w a) z).symm
 
 /-- The positive column automaton has finitely many states. -/
-instance instFintypePCS [Fintype C] [DecidableEq C] : Fintype (PCS C k) :=
-  @instFintypeProd _ _ inferInstance
-    (@instFintypeProd _ _ inferInstance
-      (@instFintypeProd _ _ inferInstance (@instFintypeProd _ _ inferInstance inferInstance)))
+instance instFintypePosColumnState [Fintype C] [DecidableEq C] :
+    Fintype (PosColumnState C k) :=
+  Fintype.ofEquiv _ (PosColumnState.equivProd k).symm
 
 /-- The number of states of the positive column automaton for `N` cores and `k` tracks; it
 counts both column states in full. -/
@@ -165,9 +182,10 @@ def pcolBound (N k : ℕ) : ℕ :=
     (((2 ^ N) ^ (N + 1)) ^ k) * 3 ^ k
 
 /-- The positive column automaton has `pcolBound |C| k` states. -/
-theorem card_PCS [Fintype C] [DecidableEq C] :
-    Fintype.card (PCS C k) = pcolBound (Fintype.card C) k := by
-  rw [Fintype.card_prod, Fintype.card_prod, Fintype.card_prod, Fintype.card_prod]
+theorem card_posColumnState [Fintype C] [DecidableEq C] :
+    Fintype.card (PosColumnState C k) = pcolBound (Fintype.card C) k := by
+  rw [Fintype.card_congr (PosColumnState.equivProd k), Fintype.card_prod, Fintype.card_prod,
+    Fintype.card_prod, Fintype.card_prod]
   simp [Fintype.card_option, pcolBound, colBound, mul_assoc]
 
 /-- Every tuple of blocks has a tuple of sub-words, each shorter than `pcolBound |C| k`,
@@ -178,9 +196,9 @@ theorem exists_short_pos_tuple [Fintype C] [DecidableEq C] (Ws : Fin k → List 
       psumm D P ℓ k Ws' = psumm D P ℓ k Ws := by
   obtain ⟨Ws', h1, h2, h3⟩ := exists_short_conv (fun x => (pcolDFA D P ℓ k).eval x)
     (fun x y a h => by simp only [DFA.eval_append_singleton]; rw [h]) Ws
-  refine ⟨Ws', h1, fun a => (h2 a).trans_eq (card_PCS k), ?_⟩
-  have e1 := pcolEval D P ℓ k _ (valid_conv Ws')
-  have e2 := pcolEval D P ℓ k _ (valid_conv Ws)
+  refine ⟨Ws', h1, fun a => (h2 a).trans_eq (card_posColumnState k), ?_⟩
+  have e1 := pcolDFA_eval D P ℓ k _ (valid_conv Ws')
+  have e2 := pcolDFA_eval D P ℓ k _ (valid_conv Ws)
   rw [dec_conv] at e1 e2
   rw [← e1, ← e2]
   exact h3
@@ -200,17 +218,16 @@ theorem pos_type_of_psumm {Ws Ws' : Fin k → List Γ}
     (∀ c c', (posDer D P ℓ).S (some (c, Ws' a)) (some (c', Ws' b)) ↔
       (posDer D P ℓ).S (some (c, Ws a)) (some (c', Ws b))) ∧
     ((posDer D P ℓ).Φ (Ws' a) ↔ (posDer D P ℓ).Φ (Ws a)) := by
-  have hn := congrArg Prod.fst hs
-  have hp := congrArg (fun s : PCS C k => s.2.1) hs
+  have hn := congrArg PosColumnState.summary hs
+  have hp := congrArg PosColumnState.posSummary hs
   have hc : ∀ a c, fcore D ℓ c (Ws' a) = fcore D ℓ c (Ws a) := fun a c =>
-    congrFun (congrFun (congrArg Prod.fst hn) a) c
+    congrFun (congrFun (congrArg CS.exit hn) a) c
   have ht : ∀ a c d, term D P ℓ c (Ws' a) d ↔ term D P ℓ c (Ws a) d := by
     intro a c d
     rw [term_decode, term_decode]
-    have hS := congrFun (congrFun (congrFun (congrArg (fun s => s.2.1) hp) a) c) d
-    have hW := congrFun (congrFun (congrFun (congrArg (fun s : PCS C k => s.2.2.1) hs) a) c) d
-    have hpend := congrFun (congrFun (congrFun
-      (congrArg (fun s : PCS C k => s.2.2.2.1) hs) a) c) d
+    have hS := congrFun (congrFun (congrFun (congrArg CS.terminalAdmission hp) a) c) d
+    have hW := congrFun (congrFun (congrFun (congrArg PosColumnState.events hs) a) c) d
+    have hpend := congrFun (congrFun (congrFun (congrArg PosColumnState.pending hs) a) c) d
     exact or_congr (Iff.of_eq hS)
       (or_congr (Iff.of_eq hW) (and_congr (Iff.of_eq hpend) Iff.rfl))
   refine ⟨?_, (der_type_of_summ (withPos D P) ℓ k hp a b).2.2.2.1, ?_, ?_⟩
@@ -225,7 +242,7 @@ theorem pos_type_of_psumm {Ws Ws' : Fin k → List Γ}
   · change At P.Φ (Ws' a ++ [ℓ]) 0 ↔ At P.Φ (Ws a ++ [ℓ]) 0
     rw [phi_decode, phi_decode]
     exact Iff.of_eq (congrArg (fun x : Option Prop => x.getD (P.Φ ℓ))
-      (congrFun (congrArg (fun s : PCS C k => s.2.2.2.2) hs) a))
+      (congrFun (congrArg PosColumnState.first hs) a))
 
 /-- Every list of at most `k` blocks has a map sending each block to a sub-word shorter than
 `pcolBound |C| k`, with an agreement of the derived monitors and channels on the list. -/
@@ -237,7 +254,7 @@ theorem exists_short_pos_letters [Fintype C] [DecidableEq C] (E : List (List Γ)
   classical
   set Ws : Fin k → List Γ := fun a => E.getD a.1 [] with hWs
   obtain ⟨Ws', hsub, hlen, hsumm⟩ := exists_short_pos_tuple D P ℓ k Ws
-  have hT := der_type_of_summ D ℓ k (congrArg Prod.fst hsumm)
+  have hT := der_type_of_summ D ℓ k (congrArg PosColumnState.summary hsumm)
   have hP := pos_type_of_psumm D P ℓ k hsumm
   have hidx : ∀ X ∈ E, E.idxOf X < k := fun X hX =>
     (List.idxOf_lt_length_of_mem hX).trans_le hk

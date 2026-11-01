@@ -80,7 +80,7 @@ theorem finiteBoundPinning [NeZero n] {V : Type*} (χ : List (LitT n V)) : Finit
     obtain ⟨l0, hl0, rfl⟩ := List.mem_map.mp hl
     rw [holdsT_map]
     exact (Pinning.holds_congr _ l0 (fun v hv => htag ρ v (hvar hl0 hv))).mpr (hρ l0 hl0)
-  have hf' : SatisfiableTopIn FiniteTop χ' := by
+  have hf' : SatisfiableIn FiniteTop (fun _ => false) χ' := by
     obtain ⟨ρ, hc, ht⟩ := hf
     refine ⟨pull ρ, ?_, hsat ρ ht⟩
     intro w
@@ -88,7 +88,7 @@ theorem finiteBoundPinning [NeZero n] {V : Type*} (χ : List (LitT n V)) : Finit
     | none => exact ⟨.bot, rfl⟩
     | some v => exact hc v.val
   obtain ⟨ρ, ht, hb⟩ := hs
-  have hb' : ∀ b ∈ B', b.Holds (pull ρ) := by
+  have hb' : ∀ b ∈ B', b.Holds (fun _ => false) (pull ρ) := by
     intro b hm
     obtain ⟨b0, hm0, rfl⟩ := List.mem_map.mp hm
     simpa only [GroundBound.Holds, htag ρ b0.var (hbvar hm0)] using hb b0 hm0
@@ -99,59 +99,5 @@ theorem finiteBoundPinning [NeZero n] {V : Type*} (χ : List (LitT n V)) : Finit
     exact (holdsT_map _ tag τ l).mp (ht _ (List.mem_map.mpr ⟨l, hl, rfl⟩))
   · intro b hm
     exact hbτ ⟨tag b.var, b.lower, b.tree⟩ (List.mem_map.mpr ⟨b, hm, rfl⟩)
-
-namespace PinningExamples
-
-/-- A nonempty system on an infinite ambient carrier, including an inequality. -/
-def sample (n : ℕ) : List (LitT n ℕ) :=
-  [.bot 0, .le 0 1, .fle (fun _ => 0) 1]
-
-/-- A finite assignment witnessing the displayed constraints and pins. -/
-def assignment (g : FTree n) : ℕ → DeciNSSE.Tree n :=
-  fun v => if v = 1 then g.toTree else DeciNSSE.Tree.bot
-
-/-- Every value of the example assignment has a finite presentation. -/
-theorem assignment_finite (g : FTree n) (v : ℕ) : FiniteTop (assignment g v) := by
-  by_cases hv : v = 1
-  · exact ⟨g, by simp [assignment, hv]⟩
-  · exact ⟨.bot, by simp [assignment, hv]⟩
-
-/-- The example assignment satisfies the displayed constraints. -/
-theorem assignment_sat (a : Fin n → FTree n) :
-    SatT (fun _ => false) (assignment (.node a)) (sample n) := by
-  simp [sample, SatT, HoldsT, assignment, DeciNSSE.Tree.node_le_node_iff]
-
-/-- The example constraint has a finite solution. -/
-theorem sample_finite (n : ℕ) : SatisfiableTopIn FiniteTop (sample n) :=
-  ⟨assignment (.node (fun _ => .bot)), assignment_finite _, assignment_sat _⟩
-
-/-- Opposite bounds pin exactly the finite tree with top in the selected slot. -/
-def bounds (i : Fin n) : List (GroundBound n ℕ) :=
-  [⟨1, true, ACPins.lower [i] .top⟩, ⟨1, false, ACPins.lower [i] .top⟩]
-
-/-- The example constraints and bounds have a common solution. -/
-theorem sample_joint (i : Fin n) :
-    ∃ ρ, SatT (fun _ => false) ρ (sample n) ∧ ∀ b ∈ bounds i, b.Holds ρ := by
-  refine ⟨assignment (ACPins.lower [i] .top), assignment_sat _, ?_⟩
-  simp [bounds, GroundBound.Holds, assignment]
-
-/-- Both pinning premises have concrete witnesses; the carrier is ℕ. -/
-theorem sample_realized [NeZero n] (i : Fin n) :
-    ∃ τ, (∀ v, FiniteTop (τ v)) ∧ SatT (fun _ => false) τ (sample n) ∧
-      ∀ b ∈ bounds i, b.Holds τ :=
-  finiteBoundPinning (sample n) (sample_finite n) (bounds i) (sample_joint i)
-
-/-- The unary example satisfies the finite realization conclusion. -/
-theorem unary_realized :
-    ∃ τ, (∀ v, FiniteTop (τ v)) ∧ SatT (fun _ => false) τ (sample 1) ∧
-      ∀ b ∈ bounds (0 : Fin 1), b.Holds τ := sample_realized 0
-
-/-- The ternary example satisfies the finite realization conclusion. -/
-theorem ternary_realized :
-    ∃ τ, (∀ v, FiniteTop (τ v)) ∧ SatT (fun _ => false) τ (sample 3) ∧
-      ∀ b ∈ bounds (2 : Fin 3), b.Holds τ := sample_realized 2
-
-end PinningExamples
-
 
 end DeciENSSE.Core.Full

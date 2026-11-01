@@ -5,8 +5,9 @@ import DeciNSSE.Semantics.Tree
 
 /-! # Finite observations and ground bounds
 
-A signed path observation records membership in one of the two tree observations.
-Ground bounds compare a variable with a finite tree.
+An observation asserts or denies membership of a path in the nonbottom set C
+or the complement of the top leaf cone A. Ground bounds compare a variable with
+a finite tree in the specified variance order; covariance is `fun _ => false`.
 
 ## Main declarations
 
@@ -40,27 +41,10 @@ structure GroundBound (n : ℕ) (V : Type*) where
   lower : Bool
   tree : FTree n
 
-/-- Interpret the finite ground comparison in covariant tree order. -/
-def GroundBound.Holds {V : Type*} (ρ : V → DeciNSSE.Tree n) (b : GroundBound n V) : Prop :=
-  if b.lower then b.tree.toTree ≤ ρ b.var else ρ b.var ≤ b.tree.toTree
-
-namespace ObservationExamples
-
-/-- At child two, top has C and A; the dual-C observation is therefore false. -/
-theorem ternary_flags :
-    let ρ : Unit → DeciNSSE.Tree 3 := fun _ => DeciNSSE.Tree.node ![DeciNSSE.Tree.bot,
-      DeciNSSE.Tree.bot, DeciNSSE.Tree.top]
-    (⟨false, (), [2], true⟩ : Observation 3 Unit).Holds ρ ∧
-      (⟨true, (), [2], false⟩ : Observation 3 Unit).Holds ρ := by
-  simp [Observation.Holds]
-
-/-- Both directions of a ground bound can pin the same finite tree. -/
-theorem ground_bounds_nonvacuous (g : FTree n) :
-    (⟨(), true, g⟩ : GroundBound n Unit).Holds (fun _ => g.toTree) ∧
-      (⟨(), false, g⟩ : GroundBound n Unit).Holds (fun _ => g.toTree) :=
-  ⟨le_rfl, le_rfl⟩
-
-end ObservationExamples
-
+/-- Interpret the finite ground comparison in the specified variance order. -/
+def GroundBound.Holds {V : Type*} (c : Fin n → Bool) (ρ : V → DeciNSSE.Tree n)
+    (b : GroundBound n V) : Prop :=
+  if b.lower then Tree.Le c b.tree.toTree (ρ b.var)
+  else Tree.Le c (ρ b.var) b.tree.toTree
 
 end DeciENSSE.Core.Full

@@ -1,3 +1,4 @@
+import DeciENSSE.Semantics
 import DeciENSSE.Core.Basic
 import DeciENSSE.Core.Full.Basic
 import DeciNSSE.Semantics.Characterization
@@ -21,11 +22,8 @@ open DeciNSSE
 
 variable {n : ℕ}
 
-/-- No top label at any path, including paths outside the domain. -/
-def TopFree (t : DeciNSSE.Tree n) : Prop := ∀ w, t.fn w ≠ some Sym.top
-
 /-- Extract constructor positions; valid even for trees containing top. -/
-def toBF (t : DeciNSSE.Tree n) : BFTreeN n where
+def toBF (t : DeciNSSE.Tree n) : BFTree n where
   K := {w | t.fn w = some Sym.f}
   prefix_closed := by
     intro u v h
@@ -39,18 +37,18 @@ def toBF (t : DeciNSSE.Tree n) : BFTreeN n where
         simp at this
       · simp_all
 
-private noncomputable def encodeFn (t : BFTreeN n) (w : List (Fin n)) : Option Sym := by
+private noncomputable def encodeFn (t : BFTree n) (w : List (Fin n)) : Option Sym := by
   classical
   exact if w ∈ t.K then some Sym.f
   else if w = [] ∨ w.dropLast ∈ t.K then some Sym.bot else none
 
-private theorem encodeFn_f (t : BFTreeN n) (w : List (Fin n)) :
+private theorem encodeFn_f (t : BFTree n) (w : List (Fin n)) :
     encodeFn t w = some Sym.f ↔ w ∈ t.K := by
   classical
   simp only [encodeFn]
   split <;> simp_all
 
-private theorem encodeFn_child (t : BFTreeN n) (w : List (Fin n)) (i : Fin n) :
+private theorem encodeFn_child (t : BFTree n) (w : List (Fin n)) (i : Fin n) :
     (encodeFn t (w ++ [i])).isSome ↔ w ∈ t.K := by
   classical
   have hp : (w ++ [i]) ∈ t.K → w ∈ t.K := by
@@ -62,7 +60,7 @@ private theorem encodeFn_child (t : BFTreeN n) (w : List (Fin n)) (i : Fin n) :
   · simp
 
 /-- Restore the root and bottom frontier of a prefix-closed constructor set. -/
-noncomputable def toTree (t : BFTreeN n) : DeciNSSE.Tree n where
+noncomputable def toTree (t : BFTree n) : DeciNSSE.Tree n where
   fn := encodeFn t
   wf := by
     constructor
@@ -73,7 +71,7 @@ noncomputable def toTree (t : BFTreeN n) : DeciNSSE.Tree n where
       rw [encodeFn_child, encodeFn_f]
 
 /-- Encoding constructor positions introduces no top labels. -/
-theorem toTree_topFree (t : BFTreeN n) : TopFree (toTree t) := by
+theorem toTree_topFree (t : BFTree n) : TopFree (toTree t) := by
   classical
   intro w
   change encodeFn t w ≠ some Sym.top
@@ -81,11 +79,11 @@ theorem toTree_topFree (t : BFTreeN n) : TopFree (toTree t) := by
   split <;> simp_all
 
 /-- A position has constructor label exactly when it is in the prefix-closed set. -/
-@[simp] theorem toTree_f (t : BFTreeN n) (w : List (Fin n)) :
+@[simp] theorem toTree_f (t : BFTree n) (w : List (Fin n)) :
     (toTree t).fn w = some Sym.f ↔ w ∈ t.K := encodeFn_f t w
 
 /-- Extracting constructor positions after encoding recovers the bottom-only tree. -/
-@[simp] theorem toBF_toTree (t : BFTreeN n) : toBF (toTree t) = t := by
+@[simp] theorem toBF_toTree (t : BFTree n) : toBF (toTree t) = t := by
   ext w
   change (toTree t).fn w = some Sym.f ↔ _
   simp
@@ -116,21 +114,21 @@ theorem topFree_ext {t u : DeciNSSE.Tree n} (ht : TopFree t) (hu : TopFree u)
   simp [toBF]
 
 /-- The equivalence between bottom-only trees and top-free trees. -/
-noncomputable def bfEquivTopFree : BFTreeN n ≃ {t : DeciNSSE.Tree n // TopFree t} where
+noncomputable def bfEquivTopFree : BFTree n ≃ {t : DeciNSSE.Tree n // TopFree t} where
   toFun t := ⟨toTree t, toTree_topFree t⟩
   invFun t := toBF t.val
   left_inv := toBF_toTree
   right_inv t := Subtype.ext (toTree_toBF t.val t.property)
 
 /-- Encoding bottom gives the bottom tree. -/
-@[simp] theorem toTree_bot : toTree (BFTreeN.bot : BFTreeN n) = DeciNSSE.Tree.bot := by
+@[simp] theorem toTree_bot : toTree (BFTree.bot : BFTree n) = DeciNSSE.Tree.bot := by
   apply topFree_ext (toTree_topFree _) (by intro w; cases w <;> simp)
   intro w
   cases w <;> simp
 
 /-- Encoding commutes with every constructor child. -/
-@[simp] theorem toTree_node (a : Fin n → BFTreeN n) :
-    toTree (BFTreeN.node a) = DeciNSSE.Tree.node (toTree ∘ a) := by
+@[simp] theorem toTree_node (a : Fin n → BFTree n) :
+    toTree (BFTree.node a) = DeciNSSE.Tree.node (toTree ∘ a) := by
   apply topFree_ext (toTree_topFree _)
   · intro w
     cases w with
@@ -175,7 +173,7 @@ theorem constructor_subset_of_le {t u : DeciNSSE.Tree n} (hu : TopFree u) (h : t
     | top => exact False.elim (hu _ hb)
 
 /-- Encoding preserves and reflects covariant tree order. -/
-@[simp] theorem toTree_le_iff (t u : BFTreeN n) : toTree t ≤ toTree u ↔ t ≤ u := by
+@[simp] theorem toTree_le_iff (t u : BFTree n) : toTree t ≤ toTree u ↔ t ≤ u := by
   constructor
   · intro h w hw
     have := constructor_subset_of_le (toTree_topFree u) h w (by simpa using hw)
@@ -186,7 +184,7 @@ theorem constructor_subset_of_le {t u : DeciNSSE.Tree n} (hu : TopFree u) (h : t
     simpa using h ((toTree_f t w).mp hw)
 
 /-- Encoding preserves and reflects order at constant covariant variance. -/
-@[simp] theorem toTree_leGen_iff (t u : BFTreeN n) :
+@[simp] theorem toTree_treeLe_iff (t u : BFTree n) :
     DeciNSSE.Tree.Le (fun _ => false) (toTree t) (toTree u) ↔ t ≤ u := by simp
 
 /-- Literal-preserving embedding of the bottom-only language. -/
@@ -197,16 +195,16 @@ def ofLit {V : Type*} : Lit n V → LitT n V
   | .bot u => .bot u
 
 /-- Translating a bottom-only literal preserves its satisfaction. -/
-@[simp] theorem holdsT_ofLit {V : Type*} (ρ : V → BFTreeN n) (l : Lit n V) :
+@[simp] theorem holdsT_ofLit {V : Type*} (ρ : V → BFTree n) (l : Lit n V) :
     HoldsT (fun _ => false) (toTree ∘ ρ) (ofLit l) ↔ l.Holds ρ := by
   have hi : Function.Injective (toTree (n := n)) := fun _ _ h => by
     have := congrArg toBF h
     simpa using this
   cases l <;> simp only [ofLit, HoldsT, Lit.Holds, Function.comp_apply, Function.comp_assoc,
-    ← toTree_node, toTree_leGen_iff, ← toTree_bot, hi.eq_iff]
+    ← toTree_node, toTree_treeLe_iff, ← toTree_bot, hi.eq_iff]
 
 /-- Translating bottom-only constraints preserves their satisfaction. -/
-@[simp] theorem satT_ofLit {V : Type*} (ρ : V → BFTreeN n) (χ : List (Lit n V)) :
+@[simp] theorem satT_ofLit {V : Type*} (ρ : V → BFTree n) (χ : List (Lit n V)) :
     SatT (fun _ => false) (toTree ∘ ρ) (χ.map ofLit) ↔ DeciENSSE.Core.Sat ρ χ := by
   simp [SatT, DeciENSSE.Core.Sat]
 
@@ -216,12 +214,12 @@ def ExistsEntailsTopFree {X Z : Type*}
   ExistsEntailsTIn TopFree (fun _ => false) φ ψ
 
 /-- Transport also works for any additional class predicate on bottom-only trees. -/
-theorem existsEntailsIn_bridge {X Z : Type*} (C : BFTreeN n → Prop)
+theorem existsEntailsIn_bridge {X Z : Type*} (C : BFTree n → Prop)
     (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) :
     ExistsEntailsIn C φ ψ ↔
       ExistsEntailsTIn (fun t => TopFree t ∧ C (toBF t)) (fun _ => false)
         (φ.map ofLit) (ψ.map ofLit) := by
-  have comp (ρ : X → BFTreeN n) (σ : Z → BFTreeN n) :
+  have comp (ρ : X → BFTree n) (σ : Z → BFTree n) :
       toTree ∘ Sum.elim ρ σ = Sum.elim (toTree ∘ ρ) (toTree ∘ σ) := by
     funext v; cases v <;> rfl
   constructor
@@ -243,12 +241,12 @@ theorem existsEntailsIn_bridge {X Z : Type*} (C : BFTreeN n → Prop)
 /-- Arbitrary bottom-only entailment equals top-free entailment. -/
 theorem existsEntails_topFree_iff {X Z : Type*}
     (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) :
-    ExistsEntails φ ψ ↔ ExistsEntailsTopFree (φ.map ofLit) (ψ.map ofLit) := by
-  simpa only [ExistsEntails, ExistsEntailsTopFree, and_true] using
+    DeciENSSE.Core.ExistsEntailsTopFree φ ψ ↔ ExistsEntailsTopFree (φ.map ofLit) (ψ.map ofLit) := by
+  simpa only [DeciENSSE.Core.ExistsEntailsTopFree, ExistsEntailsTopFree, and_true] using
     existsEntailsIn_bridge (fun _ => True) φ ψ
 
 /-- Finite constructor support is equivalent to a finite path-tree domain. -/
-theorem finite_dom_iff (t : BFTreeN n) :
+theorem finite_dom_iff (t : BFTree n) :
     IsFiniteTree t ↔ (Characterization.domain (toTree t)).Finite := by
   constructor
   · intro ht
@@ -270,7 +268,7 @@ theorem finite_dom_iff (t : BFTreeN n) :
     rfl
 
 /-- Finite bottom-only trees are exactly top-free finite-term trees under the bridge. -/
-theorem finite_iff (t : BFTreeN n) :
+theorem finite_iff (t : BFTree n) :
     IsFiniteTree t ↔ ∃ a : FTree n, a.toTree = toTree t := by
   rw [Characterization.toTree_range_iff, finite_dom_iff]
 
@@ -293,25 +291,25 @@ theorem topFree_subtree {t u : DeciNSSE.Tree n} (ht : TopFree t) {w : List (Fin 
 /-- Outside the path-tree domain, an bottom-only residual is empty. -/
 theorem toBF_residual_of_absent {t : DeciNSSE.Tree n} {w : List (Fin n)}
     (h : t.subtree w = none) :
-    (toBF t).residual w = BFTreeN.bot := by
+    (toBF t).residual w = BFTree.bot := by
   ext v
-  simp only [BFTreeN.mem_bot, iff_false]
+  simp only [BFTree.mem_bot, iff_false]
   intro hv
   have hf : t.fn (w ++ v) = some Sym.f := by
-    simpa [BFTreeN.residual, toBF] using hv
+    simpa [BFTree.residual, toBF] using hv
   have hd := t.domain_append_left w v (by rw [hf]; rfl)
   have := (DeciNSSE.Tree.subtree_isSome_iff t w).mpr hd
   simp [h] at this
 
 /-- Finite residual families agree with the library's finite subtree families. -/
-theorem regular_subtrees_iff (t : BFTreeN n) :
+theorem regular_subtrees_iff (t : BFTree n) :
     IsRegularTree t ↔ (Characterization.subtrees (toTree t)).Finite := by
   constructor
   · intro ht
     have hr : (Set.range (fun w => t.residual w)).Finite := by
-      apply Set.Finite.of_finite_image (f := BFTreeN.K)
+      apply Set.Finite.of_finite_image (f := BFTree.K)
       · simpa only [← Set.range_comp, IsRegularTree, Function.comp_def] using ht
-      · intro a _ b _ he; exact BFTreeN.ext he
+      · intro a _ b _ he; exact BFTree.ext he
     apply (hr.image toTree).subset
     rintro u ⟨w, hw⟩
     refine ⟨t.residual w, ⟨_, rfl⟩, ?_⟩
@@ -320,21 +318,21 @@ theorem regular_subtrees_iff (t : BFTreeN n) :
     rw [← he, toTree_toBF u (topFree_subtree (toTree_topFree t) hw)]
   · intro ht
     apply ((ht.image (fun u => (toBF u).K)).union
-      (Set.finite_singleton BFTreeN.bot.K)).subset
+      (Set.finite_singleton BFTree.bot.K)).subset
     rintro s ⟨w, rfl⟩
     cases he : (toTree t).subtree w with
     | none =>
       right
       have hz := toBF_residual_of_absent he
-      simpa using congrArg BFTreeN.K hz
+      simpa using congrArg BFTree.K hz
     | some u =>
       left
       refine ⟨u, ⟨w, he⟩, ?_⟩
       have hz := toBF_subtree he
-      simpa using congrArg BFTreeN.K hz
+      simpa using congrArg BFTree.K hz
 
 /-- Regular bottom-only trees are exactly top-free finite-graph unfoldings. -/
-theorem regular_iff (t : BFTreeN n) :
+theorem regular_iff (t : BFTree n) :
     IsRegularTree t ↔ ∃ g : RGraph n, g.unfold = toTree t := by
   rw [Characterization.unfold_range_iff, regular_subtrees_iff]
 
@@ -385,57 +383,5 @@ theorem existsEntailsReg_topFree_iff {X Z : Type*}
     exact ⟨fun h => ⟨h.1, (topFree_regular_iff t h.1).mp h.2⟩,
       fun h => ⟨h.1, (topFree_regular_iff t h.1).mpr h.2⟩⟩
   simpa only [ExistsEntailsTopFreeReg, hc] using existsEntailsIn_bridge IsRegularTree φ ψ
-
-/-- Transport a source decision without evaluating the classical tree encoding. -/
-def decideExistsEntailsTopFree {X Z : Type*}
-    (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z)))
-    [Decidable (ExistsEntails φ ψ)] :
-    Decidable (ExistsEntailsTopFree (φ.map ofLit) (ψ.map ofLit)) :=
-  decidable_of_iff (ExistsEntails φ ψ) (existsEntails_topFree_iff φ ψ)
-
-/-- Regular source decisions transport through the same syntax embedding. -/
-def decideExistsEntailsTopFreeReg {X Z : Type*}
-    (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z)))
-    [Decidable (ExistsEntailsIn IsRegularTree φ ψ)] :
-    Decidable (ExistsEntailsTopFreeReg (φ.map ofLit) (ψ.map ofLit)) :=
-  decidable_of_iff (ExistsEntailsIn IsRegularTree φ ψ) (existsEntailsReg_topFree_iff φ ψ)
-
-/-- Finite source decisions transport through the same syntax embedding. -/
-def decideExistsEntailsTopFreeFin {X Z : Type*}
-    (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z)))
-    [Decidable (ExistsEntailsIn IsFiniteTree φ ψ)] :
-    Decidable (ExistsEntailsTopFreeFin (φ.map ofLit) (ψ.map ofLit)) :=
-  decidable_of_iff (ExistsEntailsIn IsFiniteTree φ ψ) (existsEntailsFin_topFree_iff φ ψ)
-
-namespace BridgeExamples
-
-/-- Constructor transport preserves every child at arity three. -/
-theorem ternary_node (a b c : BFTreeN 3) :
-    toTree (BFTreeN.node ![a, b, c]) = DeciNSSE.Tree.node ![toTree a, toTree b, toTree c] := by
-  rw [toTree_node]
-  congr 1
-  funext i
-  fin_cases i <;> rfl
-
-/-- Class correspondence includes the nullary constructor as well. -/
-theorem nullary_constructor_finite :
-    IsFiniteTree (BFTreeN.node (Fin.elim0 : Fin 0 → BFTreeN 0)) := by
-  apply (finite_iff _).mpr
-  refine ⟨FTree.node Fin.elim0, ?_⟩
-  rw [FTree.toTree_node, toTree_node]
-  congr 1
-  funext i
-  exact Fin.elim0 i
-
-/-- A ternary bottom constraint entails a visible reflexive inequality. -/
-theorem ternary_entails :
-    ExistsEntailsTopFree
-      (([.bot ()] : List (Lit 3 Unit)).map ofLit)
-      (([.le (.inl ()) (.inl ())] : List (Lit 3 (Unit ⊕ Unit))).map ofLit) := by
-  apply (existsEntails_topFree_iff _ _).mp
-  intro ρ _ _
-  exact ⟨fun _ => BFTreeN.bot, fun _ => trivial, by simp [DeciENSSE.Core.Sat, Lit.Holds]⟩
-
-end BridgeExamples
 
 end DeciENSSE.Core.Full

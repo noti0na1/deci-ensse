@@ -2,22 +2,28 @@ import DeciENSSE.Core.AutomataDecide
 import Mathlib.Data.Set.Finite.Lattice
 import Mathlib.Data.Set.Finite.List
 
-/-! # Finite residuals and regular Horn hulls
+/-! # Regular constructor languages and Horn hulls
 
-Finite residual families prove regularity of least solutions and Horn hulls.
-The witnesses need not be minimized automata.
+A constructor language is regular when it has finitely many residuals.
+Finite automata recognize the least forced-atom solution, and upper/lower
+summaries express a Horn hull using unions and concatenations of regular
+languages. Thus regular seed assignments have regular least extensions;
+in particular, least solutions and singleton seed closures are regular.
+
+These are the language facts used by `Core/Classes` to transfer the covariant
+entailment criterion from arbitrary trees to regular trees.
 
 ## Main declarations
 
-- `Classes.Reg`
-- `Classes.reg_mul`
-- `Classes.reg_dfa`
-- `Classes.mu_regular`
-- `Classes.hull_regular`
-- `Classes.cl_regular`
+- `Classes.Reg`, `Classes.reg_mul`, `Classes.reg_dfa`: finite residuals,
+  concatenation, and automaton recognition.
+- `Classes.hull_language`: the upper/lower summary formula for a Horn hull.
+- `Classes.mu_regular`, `Classes.hull_regular`, `Classes.cl_regular`:
+  regularity of forced atoms, regular-seed hulls, and singleton closures.
 -/
 
 namespace DeciENSSE.Core.Classes
+open DeciENSSE.Core.Words
 variable {n : ℕ}
 
 /-- A language of constructor positions. -/
@@ -144,7 +150,7 @@ theorem reg_mul {A B : Lang n} (ha : Reg A) (hb : Reg B) :
       ext v
       by_cases he : [] ∈ quot A u <;> simp [he, or_assoc, or_left_comm, or_comm]
 
-open DeciENSSE.Core.Bound
+open DeciENSSE.Core.Automata
 variable {V : Type*} [Fintype V] [DecidableEq V]
 
 /-- Regularity of μ follows directly from the lower automaton state. -/
@@ -156,15 +162,15 @@ theorem mu_regular (χ : List (Lit n V)) (y : V) :
   simpa only [mu_membership] using h
 
 /-- All possible residual seed languages after an upper-automaton cut. -/
-def seedResiduals (χ : List (Lit n V)) (ρ : V → (BFTreeN n)) (r : V) : Set (Lang n) :=
+def seedResiduals (χ : List (Lit n V)) (ρ : V → (BFTree n)) (r : V) : Set (Lang n) :=
   {L | ∃ x β, r ∈ P χ x β ∧ L = quot (ρ x).K β}
 
 /-- The possible residual tails supplied by a seed assignment. -/
-def seedTail (χ : List (Lit n V)) (ρ : V → (BFTreeN n)) (r : V) : Lang n :=
+def seedTail (χ : List (Lit n V)) (ρ : V → (BFTree n)) (r : V) : Lang n :=
   ⋃₀ seedResiduals χ ρ r
 
 /-- Regular seed assignments give regular tail languages. -/
-theorem seedTail_regular (χ : List (Lit n V)) (ρ : V → (BFTreeN n))
+theorem seedTail_regular (χ : List (Lit n V)) (ρ : V → (BFTree n))
     (hr : ∀ x, IsRegularTree (ρ x)) (r : V) : Reg (seedTail χ ρ r) := by
   have hR : (⋃ x, Set.range (quot (ρ x).K)).Finite := Set.finite_iUnion hr
   have hf : (seedResiduals χ ρ r).Finite := hR.subset (by
@@ -175,7 +181,7 @@ theorem seedTail_regular (χ : List (Lit n V)) (ρ : V → (BFTreeN n))
   exact reg_residual (hr x) β
 
 /-- The normal-form expression for the hull of a prefix-closed seed tuple. -/
-theorem hull_language (χ : List (Lit n V)) (ρ : V → (BFTreeN n)) (y : V) :
+theorem hull_language (χ : List (Lit n V)) (ρ : V → (BFTree n)) (y : V) :
     {t | (y,t) ∈ Hull χ (configSet ρ)} = {t | (y,t) ∈ Mu χ} ∪
       ⋃ r, cat {γ | r ∈ Q χ y γ} (seedTail χ ρ r) := by
   ext t
@@ -202,7 +208,7 @@ theorem hull_language (χ : List (Lit n V)) (ρ : V → (BFTreeN n)) (y : V) :
       exact (normal_moves ⟨β,γ,σ,r,rfl,rfl,hp,hq⟩).reach
 
 /-- Regular input tuples have regular least Horn extensions. -/
-theorem hull_regular (χ : List (Lit n V)) (ρ : V → (BFTreeN n))
+theorem hull_regular (χ : List (Lit n V)) (ρ : V → (BFTree n))
     (hr : ∀ x, IsRegularTree (ρ x)) (y : V) :
     IsRegularTree (assignmentOf (Hull χ (configSet ρ))
       (hull_closed _).prefixClosed y) := by
@@ -216,7 +222,7 @@ theorem hull_regular (χ : List (Lit n V)) (ρ : V → (BFTreeN n))
   simpa only [Set.sUnion_range] using reg_sUnion hf hg
 
 /-- The finite prefix tree naming a singleton seed. -/
-def seedTree (a : Config n V) (x : V) : BFTreeN n where
+def seedTree (a : Config n V) (x : V) : BFTree n where
   K := {w | x = a.1 ∧ w.IsPrefix a.2}
   prefix_closed := by
     rintro u v ⟨hx,hp⟩
@@ -247,7 +253,7 @@ theorem hull_seedTree (χ : List (Lit n V)) (a : Config n V) :
     · exact Or.inl hb
     · exact Or.inr ⟨a, ⟨rfl, List.prefix_refl _⟩, hb⟩
 
-/-- Least countermodels are regular, with no liveness premise needed. -/
+/-- Every singleton Horn closure has regular components. -/
 theorem cl_regular (χ : List (Lit n V)) (a : Config n V) (y : V) :
     IsRegularTree (assignmentOf (Cl χ a) (cl_closed a).prefixClosed y) := by
   have h := hull_regular χ (seedTree a) (fun x => reg_finite (seedTree_finite a x)) y

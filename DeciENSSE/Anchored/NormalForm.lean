@@ -10,7 +10,8 @@ the start label, and its `Φ` bit. Merging isolated letters with equal anchored 
 the core run, the comparisons and the positions of continuation letters, so it keeps the
 positive condition. Repeated merges give an anchored-normal positive hole, whose dictionary
 at each positive level below the unary top is bounded by the protected letters, one letter
-per anchored type, and the endpoints of its boundary pairs.
+per anchored type, and the endpoints of its boundary pairs. The exchange types and the
+normal form without a channel are those of `DeciNSSE.Exchange` and `DeciNSSE.NormalForm`.
 
 ## Main declarations
 
@@ -100,7 +101,6 @@ theorem pos_identify {Qo U : Set C} {Z : Set Γ} {v : List Γ} {x y : Γ}
 
 end Identify
 
-
 section Rows
 variable {Γ C : Type*} (P : PosChan Γ C)
 
@@ -140,7 +140,6 @@ theorem card_posRows [DecidableEq C] [DecidableEq Γ] (Qo U : Finset C) (Z : Fin
   ring
 
 end Rows
-
 
 section Merge
 open DeciNSSE.Exchange DeciNSSE.NormalForm DeciNSSE.LevelMaps DeciNSSE.HierarchyDepth
@@ -244,7 +243,6 @@ theorem exists_posNormal_form {D0 : Lettered α Q} {P0 : PosChan α Q} {w : List
 
 end Merge
 
-
 section Count
 open DeciNSSE.Exchange DeciNSSE.NormalForm DeciNSSE.HierarchyDepth DeciNSSE.BoundaryPairs
   DeciNSSE.StartCores
@@ -253,7 +251,9 @@ variable {α : Type u} {Q : Type v} [DecidableEq α] [Inhabited α] [Fintype Q] 
 
 omit [Fintype Q] [DecidableEq Q] in
 /-- A level dictionary is bounded by its protected letters, the size of any type space
-on which the isolated letters are separated, and twice its boundary pairs. -/
+on which the isolated letters are separated, and twice its boundary pairs. This generalizes
+`DeciNSSE.NormalForm.normalAt_alphCard_le_types` from exchange types to any type map, with
+the same proof. -/
 theorem alphCard_le_of_isolated_injOn {D0 : Lettered α Q} {w : List α} {i : ℕ} {T : Type*}
     [Fintype T] (τ : Alph α i → T)
     (hn : ∀ x y, Isolated (hierOf w i) (Pset D0 w i) x → Isolated (hierOf w i) (Pset D0 w i) y →

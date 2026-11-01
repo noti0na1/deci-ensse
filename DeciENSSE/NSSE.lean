@@ -2,24 +2,33 @@ import DeciENSSE.Main
 
 /-! # Subtype entailment as existential entailment
 
-Ordinary entailment is a singleton visible query with no hidden variables.
+Plain subtype entailment `φ ⊨ x ≤ y` is existential entailment with no hidden variables
+and the consequent `x ≤ y` (`query`). The three reductions below turn the existential
+deciders of `DeciENSSE.Main` into deciders of the plain entailment `DeciNSSE.Entails` of the
+shared library and of its regular and finite variants; they have the same names and types
+as the deciders of deci-nsse and use no other decision procedure for plain entailment. The
+same reductions, with the consequent `bfQuery`, decide covariant plain entailment over
+top-free trees.
 
 ## Main declarations
 
-- `nsse_iff_ensse`, `nsseReg_iff_ensseReg`, `nsseFin_iff_ensseFin`: reductions.
-- `decideEntails`, `decideEntailsReg`, `decideEntailsFin`: the ordinary subtype API.
-- `EntailsTopFree`, `EntailsTopFreeReg`, `EntailsTopFreeFin`: top-free subtype semantics.
-- `decideEntailsTopFree`, `decideEntailsTopFreeReg`, `decideEntailsTopFreeFin`: bonus decisions.
-- The six `_correct` theorems characterize their Boolean answers.
+- `nsse_iff_ensse`, `nsseReg_iff_ensseReg`, `nsseFin_iff_ensseFin`: plain entailment is a
+  query with no hidden variables.
+- `decideEntails`, `decideEntailsReg`, `decideEntailsFin`: deciders for plain entailment.
+- `topFree_nsse_iff_ensse`, `topFree_nsseReg_iff_ensseReg`, `topFree_nsseFin_iff_ensseFin`:
+  the same reductions over top-free trees.
+- `decideEntailsTopFree`, `decideEntailsTopFreeReg`, `decideEntailsTopFreeFin`: deciders for
+  covariant plain entailment over top-free trees.
+- The six `_correct` theorems identify the Boolean answers with the semantics.
 -/
 
 namespace DeciENSSE
 open DeciNSSE
 
-/-- Unrestricted subtype entailment is a query with no hidden variables. -/
+/-- Plain subtype entailment is a query with no hidden variables. -/
 theorem nsse_iff_ensse {n k : ℕ} (c : Fin n → Bool) (φ : Constraint n k) (x y : V k) :
-    Entails c φ x y ↔ ExistsEntailsAny (h := 0) c (liftConstraint φ) (query x y) := by
-  simp only [Entails, ExistsEntailsAny, sat_lift, sat_query]
+    Entails c φ x y ↔ ExistsEntails (h := 0) c (liftConstraint φ) (query x y) := by
+  simp only [Entails, ExistsEntails, sat_lift, sat_query]
   constructor
   · intro H ρ hs; exact ⟨Fin.elim0, H ρ hs⟩
   · intro H ρ hs; exact (H ρ hs).choose_spec
@@ -27,8 +36,8 @@ theorem nsse_iff_ensse {n k : ℕ} (c : Fin n → Bool) (φ : Constraint n k) (x
 /-- Regular subtype entailment is a query with no hidden variables. -/
 theorem nsseReg_iff_ensseReg {n k : ℕ} (c : Fin n → Bool) (φ : Constraint n k)
     (x y : V k) :
-    EntailsReg c φ x y ↔ ExistsEntailsAnyReg (h := 0) c (liftConstraint φ) (query x y) := by
-  simp only [EntailsReg, ExistsEntailsAnyReg, sat_lift, sat_query, Function.comp_apply]
+    EntailsReg c φ x y ↔ ExistsEntailsReg (h := 0) c (liftConstraint φ) (query x y) := by
+  simp only [EntailsReg, ExistsEntailsReg, sat_lift, sat_query, Function.comp_apply]
   constructor
   · intro H ρ hs; exact ⟨Fin.elim0, H ρ hs⟩
   · intro H ρ hs; exact (H ρ hs).choose_spec
@@ -36,79 +45,16 @@ theorem nsseReg_iff_ensseReg {n k : ℕ} (c : Fin n → Bool) (φ : Constraint n
 /-- Finite subtype entailment is a query with no hidden variables. -/
 theorem nsseFin_iff_ensseFin {n k : ℕ} (c : Fin n → Bool) (φ : Constraint n k)
     (x y : V k) :
-    EntailsFin c φ x y ↔ ExistsEntailsAnyFin (h := 0) c (liftConstraint φ) (query x y) := by
-  simp only [EntailsFin, ExistsEntailsAnyFin, sat_lift, sat_query, Function.comp_apply]
+    EntailsFin c φ x y ↔ ExistsEntailsFin (h := 0) c (liftConstraint φ) (query x y) := by
+  simp only [EntailsFin, ExistsEntailsFin, sat_lift, sat_query, Function.comp_apply]
   constructor
   · intro H ρ hs; exact ⟨Fin.elim0, H ρ hs⟩
   · intro H ρ hs; exact (H ρ hs).choose_spec
 
-/-- Covariant entailment restricted to top-free assignments. -/
-def EntailsTopFree {n k : ℕ} (φ : BFConstraint n k) (x y : V k) : Prop :=
-  ∀ ρ, (∀ v, TopFree (ρ v)) → BFSat ρ φ →
-    DeciNSSE.Tree.Le (fun _ => false) (ρ x) (ρ y)
-
-/-- Top-free subtype entailment is a query with no hidden variables. -/
-theorem topFree_nsse_iff_ensse {n k : ℕ} (φ : BFConstraint n k) (x y : V k) :
-    EntailsTopFree φ x y ↔ ExistsEntails (h := 0) φ
-      [BFLit.le (Fin.castAdd 0 x) (Fin.castAdd 0 y)] := by
-  constructor
-  · intro H ρ hρ hs
-    refine ⟨Fin.elim0, (fun z => Fin.elim0 z), ?_⟩
-    simpa only [BFSat, List.map_cons, List.map_nil, BFLit.toELit, ESat,
-      List.mem_singleton, forall_eq, ELit.holds, join, Fin.addCases_left] using H ρ hρ hs
-  · intro H ρ hρ hs
-    obtain ⟨σ, _, Hσ⟩ := H ρ hρ hs
-    simpa only [BFSat, List.map_cons, List.map_nil, BFLit.toELit, ESat,
-      List.mem_singleton, forall_eq, ELit.holds, join, Fin.addCases_left] using Hσ
-
-/-- Top-free subtype entailment over regular graphs. -/
-def EntailsTopFreeReg {n k : ℕ} (φ : BFConstraint n k) (x y : V k) : Prop :=
-  ∀ ρ : V k → RGraph n,
-    (∀ v, TopFree (ρ v).unfold) → BFSat (RGraph.unfold ∘ ρ) φ →
-    DeciNSSE.Tree.Le (fun _ => false) ((ρ x).unfold) ((ρ y).unfold)
-
-/-- Top-free subtype entailment is a query with no hidden variables. -/
-theorem topFree_nsseReg_iff_ensseReg {n k : ℕ} (φ : BFConstraint n k) (x y : V k) :
-    EntailsTopFreeReg φ x y ↔ ExistsEntailsReg (h := 0) φ
-      [BFLit.le (Fin.castAdd 0 x) (Fin.castAdd 0 y)] := by
-  constructor
-  · intro H ρ hρ hs
-    refine ⟨Fin.elim0, (fun z => Fin.elim0 z), ?_⟩
-    simpa only [BFSat, List.map_cons, List.map_nil, BFLit.toELit, ESat,
-      List.mem_singleton, forall_eq, ELit.holds, join, Fin.addCases_left,
-      Function.comp_apply] using H ρ hρ hs
-  · intro H ρ hρ hs
-    obtain ⟨σ, _, Hσ⟩ := H ρ hρ hs
-    simpa only [BFSat, List.map_cons, List.map_nil, BFLit.toELit, ESat,
-      List.mem_singleton, forall_eq, ELit.holds, join, Fin.addCases_left,
-      Function.comp_apply] using Hσ
-
-/-- Top-free subtype entailment over finite terms. -/
-def EntailsTopFreeFin {n k : ℕ} (φ : BFConstraint n k) (x y : V k) : Prop :=
-  ∀ ρ : V k → FTree n,
-    (∀ v, TopFree (ρ v).toTree) → BFSat (FTree.toTree ∘ ρ) φ →
-    DeciNSSE.Tree.Le (fun _ => false) ((ρ x).toTree) ((ρ y).toTree)
-
-/-- Top-free subtype entailment is a query with no hidden variables. -/
-theorem topFree_nsseFin_iff_ensseFin {n k : ℕ} (φ : BFConstraint n k) (x y : V k) :
-    EntailsTopFreeFin φ x y ↔ ExistsEntailsFin (h := 0) φ
-      [BFLit.le (Fin.castAdd 0 x) (Fin.castAdd 0 y)] := by
-  constructor
-  · intro H ρ hρ hs
-    refine ⟨Fin.elim0, (fun z => Fin.elim0 z), ?_⟩
-    simpa only [BFSat, List.map_cons, List.map_nil, BFLit.toELit, ESat,
-      List.mem_singleton, forall_eq, ELit.holds, join, Fin.addCases_left,
-      Function.comp_apply] using H ρ hρ hs
-  · intro H ρ hρ hs
-    obtain ⟨σ, _, Hσ⟩ := H ρ hρ hs
-    simpa only [BFSat, List.map_cons, List.map_nil, BFLit.toELit, ESat,
-      List.mem_singleton, forall_eq, ELit.holds, join, Fin.addCases_left,
-      Function.comp_apply] using Hσ
-
 /-- Decide arbitrary-tree subtype entailment through existential entailment. -/
 @[instance_reducible] def decideEntails {n k : ℕ} (c : Fin n → Bool)
     (φ : Constraint n k) (x y : V k) : Decidable (DeciNSSE.Entails c φ x y) := by
-  letI := decideExistsEntailsAny (h := 0) c (liftConstraint φ) (query x y)
+  letI := decideExistsEntails (h := 0) c (liftConstraint φ) (query x y)
   exact decidable_of_iff _ (nsse_iff_ensse c φ x y).symm
 
 /-- The decision returns true exactly when arbitrary-tree subtype entailment holds. -/
@@ -120,7 +66,7 @@ theorem decideEntails_correct {n k : ℕ} (c : Fin n → Bool)
 /-- Decide regular-tree subtype entailment through existential entailment. -/
 @[instance_reducible] def decideEntailsReg {n k : ℕ} (c : Fin n → Bool)
     (φ : Constraint n k) (x y : V k) : Decidable (DeciNSSE.EntailsReg c φ x y) := by
-  letI := decideExistsEntailsAnyReg (h := 0) c (liftConstraint φ) (query x y)
+  letI := decideExistsEntailsReg (h := 0) c (liftConstraint φ) (query x y)
   exact decidable_of_iff _ (nsseReg_iff_ensseReg c φ x y).symm
 
 /-- The decision returns true exactly when regular-tree subtype entailment holds. -/
@@ -132,7 +78,7 @@ theorem decideEntailsReg_correct {n k : ℕ} (c : Fin n → Bool)
 /-- Decide finite-tree subtype entailment through existential entailment. -/
 @[instance_reducible] def decideEntailsFin {n k : ℕ} (c : Fin n → Bool)
     (φ : Constraint n k) (x y : V k) : Decidable (DeciNSSE.EntailsFin c φ x y) := by
-  letI := decideExistsEntailsAnyFin (h := 0) c (liftConstraint φ) (query x y)
+  letI := decideExistsEntailsFin (h := 0) c (liftConstraint φ) (query x y)
   exact decidable_of_iff _ (nsseFin_iff_ensseFin c φ x y).symm
 
 /-- The decision returns true exactly when finite-tree subtype entailment holds. -/
@@ -141,11 +87,34 @@ theorem decideEntailsFin_correct {n k : ℕ} (c : Fin n → Bool)
     @decide _ (decideEntailsFin c φ x y) = true ↔ DeciNSSE.EntailsFin c φ x y :=
   @decide_eq_true_iff _ (decideEntailsFin c φ x y)
 
+/-- Top-free subtype entailment is a query with no hidden variables. -/
+theorem topFree_nsse_iff_ensse {n k : ℕ} (φ : BFConstraint n k) (x y : V k) :
+    EntailsTopFree φ x y ↔ ExistsEntailsTopFree (h := 0) φ (bfQuery x y) := by
+  simp only [EntailsTopFree, ExistsEntailsTopFree, bfSat_query]
+  constructor
+  · intro H ρ hρ hs; exact ⟨Fin.elim0, fun z => z.elim0, H ρ hρ hs⟩
+  · intro H ρ hρ hs; exact (H ρ hρ hs).choose_spec.2
+
+/-- Top-free regular subtype entailment is a query with no hidden variables. -/
+theorem topFree_nsseReg_iff_ensseReg {n k : ℕ} (φ : BFConstraint n k) (x y : V k) :
+    EntailsTopFreeReg φ x y ↔ ExistsEntailsTopFreeReg (h := 0) φ (bfQuery x y) := by
+  simp only [EntailsTopFreeReg, ExistsEntailsTopFreeReg, bfSat_query, Function.comp_apply]
+  constructor
+  · intro H ρ hρ hs; exact ⟨Fin.elim0, fun z => z.elim0, H ρ hρ hs⟩
+  · intro H ρ hρ hs; exact (H ρ hρ hs).choose_spec.2
+
+/-- Top-free finite subtype entailment is a query with no hidden variables. -/
+theorem topFree_nsseFin_iff_ensseFin {n k : ℕ} (φ : BFConstraint n k) (x y : V k) :
+    EntailsTopFreeFin φ x y ↔ ExistsEntailsTopFreeFin (h := 0) φ (bfQuery x y) := by
+  simp only [EntailsTopFreeFin, ExistsEntailsTopFreeFin, bfSat_query, Function.comp_apply]
+  constructor
+  · intro H ρ hρ hs; exact ⟨Fin.elim0, fun z => z.elim0, H ρ hρ hs⟩
+  · intro H ρ hρ hs; exact (H ρ hρ hs).choose_spec.2
+
 /-- Decide top-free covariant subtype entailment over arbitrary trees. -/
 @[instance_reducible] def decideEntailsTopFree {n k : ℕ} (φ : BFConstraint n k)
     (x y : V k) : Decidable (EntailsTopFree φ x y) := by
-  letI := decideExistsEntails (h := 0) φ
-    [BFLit.le (Fin.castAdd 0 x) (Fin.castAdd 0 y)]
+  letI := decideExistsEntailsTopFree (h := 0) φ (bfQuery x y)
   exact decidable_of_iff _ (topFree_nsse_iff_ensse φ x y).symm
 
 /-- The decision returns true exactly when top-free arbitrary-tree entailment holds. -/
@@ -156,8 +125,7 @@ theorem decideEntailsTopFree_correct {n k : ℕ} (φ : BFConstraint n k) (x y : 
 /-- Decide top-free covariant subtype entailment over regular trees. -/
 @[instance_reducible] def decideEntailsTopFreeReg {n k : ℕ} (φ : BFConstraint n k)
     (x y : V k) : Decidable (EntailsTopFreeReg φ x y) := by
-  letI := decideExistsEntailsReg (h := 0) φ
-    [BFLit.le (Fin.castAdd 0 x) (Fin.castAdd 0 y)]
+  letI := decideExistsEntailsTopFreeReg (h := 0) φ (bfQuery x y)
   exact decidable_of_iff _ (topFree_nsseReg_iff_ensseReg φ x y).symm
 
 /-- The decision returns true exactly when top-free regular-tree entailment holds. -/
@@ -168,8 +136,7 @@ theorem decideEntailsTopFreeReg_correct {n k : ℕ} (φ : BFConstraint n k) (x y
 /-- Decide top-free covariant subtype entailment over finite trees. -/
 @[instance_reducible] def decideEntailsTopFreeFin {n k : ℕ} (φ : BFConstraint n k)
     (x y : V k) : Decidable (EntailsTopFreeFin φ x y) := by
-  letI := decideExistsEntailsFin (h := 0) φ
-    [BFLit.le (Fin.castAdd 0 x) (Fin.castAdd 0 y)]
+  letI := decideExistsEntailsTopFreeFin (h := 0) φ (bfQuery x y)
   exact decidable_of_iff _ (topFree_nsseFin_iff_ensseFin φ x y).symm
 
 /-- The decision returns true exactly when top-free finite-tree entailment holds. -/

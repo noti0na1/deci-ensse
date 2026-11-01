@@ -12,6 +12,8 @@ supported compression with the positive column automaton shortens every lower le
 factor `pcolBound (N + d + 1) G♯` while keeping both the derived monitors and channels.
 Together these bound the length of a shortest positive hole of depth at most `d` by
 `L♯(N, d) = 3 (N + d + 1) · pcolBound (N + d + 1) G♯ ^ d`, independently of the alphabet.
+The argument is that of `DeciNSSE.ElementaryBound` and `DeciNSSE.BoundedDepth` for holes,
+with the positive channel carried along.
 
 ## Main declarations
 
@@ -24,6 +26,8 @@ Together these bound the length of a shortest positive hole of depth at most `d`
 - `exists_short_posHole_of_dictionary`: a short positive hole from bounded dictionaries.
 - `anchoredLengthBound`, `exists_short_posHole_elementary`: the length allowance
   `L♯(N, d)`, and short positive holes of bounded depth.
+- `Examples.unit_posHole_short`: the hypotheses of `exists_short_posHole_elementary` are
+  satisfiable.
 
 The declarations are in the namespace `DeciENSSE.Anchored`.
 -/
@@ -39,7 +43,9 @@ variable {α : Type u} {Q : Type v} [DecidableEq α] [Inhabited α] [Fintype Q] 
 
 /-- If every positive level below the unary top exceeds an allowance `A ≥ 1` by at most
 twice its boundary pairs, then twice the boundary pairs at level `i` are at most
-`(A - 1) (3 ^ (D - 1 - i) - 1)`, where `D` is the depth. -/
+`(A - 1) (3 ^ (D - 1 - i) - 1)`, where `D` is the depth. This generalizes
+`DeciNSSE.ElementaryBound.normal_boundary_count_le` from the normal allowance to any
+allowance, with the same proof. -/
 theorem boundary_count_le_of_allowance {w : List α} (hw0 : w ≠ []) {A : ℕ} (hA : 1 ≤ A)
     (hg : ∀ i, 1 ≤ i → i < depth w →
       alphCard w i ≤ A + 2 * (boundaryPairs (hierOf w i)).card)
@@ -72,7 +78,9 @@ theorem boundary_count_le_of_allowance {w : List α} (hw0 : w ≠ []) {A : ℕ} 
   omega
 
 /-- Under a per-level allowance `A ≥ 1`, the dictionary at a positive level `i` below the
-unary top is at most `1 + (A - 1) 3 ^ (D - 1 - i)`. -/
+unary top is at most `1 + (A - 1) 3 ^ (D - 1 - i)`. This generalizes
+`DeciNSSE.ElementaryBound.normal_alphCard_le` from the normal allowance to any allowance,
+with the same proof. -/
 theorem alphCard_le_of_allowance {w : List α} (hw0 : w ≠ []) {A : ℕ} (hA : 1 ≤ A)
     (hg : ∀ i, 1 ≤ i → i < depth w →
       alphCard w i ≤ A + 2 * (boundaryPairs (hierOf w i)).card)
@@ -90,7 +98,8 @@ theorem alphCard_le_of_allowance {w : List α} (hw0 : w ≠ []) {A : ℕ} (hA : 
 def anchoredDictionaryBound (N d : ℕ) : ℕ := 2 + anchoredAllowance N d * 3 ^ d
 
 /-- Every positive hole of depth at most `d` has a positive hole of the same depth and no
-greater length whose positive dictionaries are at most `G♯(N, d)`. -/
+greater length whose positive dictionaries are at most `G♯(N, d)`; the positive version of
+`DeciNSSE.ElementaryBound.exists_bounded_dictionary_hole`. -/
 theorem exists_bounded_dictionary_posHole {D0 : Lettered α Q} {P0 : PosChan α Q}
     {w : List α} {d : ℕ} (hw : PosHole D0 P0 w) (hd : depth w ≤ d) :
     ∃ v, PosHole D0 P0 v ∧ depth v = depth w ∧ v.length ≤ w.length ∧
@@ -115,7 +124,8 @@ open DeciNSSE.HierarchyDepth DeciNSSE.NormalForm DeciNSSE.ElementaryBound
 universe u v
 variable {α : Type u} {Q : Type v}
 
-/-- More cores do not decrease the number of states of the positive column automaton. -/
+/-- More cores do not decrease the number of states of the positive column automaton; the
+positive version of `DeciNSSE.BoundedDepth.colBound_mono_core`. -/
 theorem pcolBound_mono_core {N M k : ℕ} (hNM : N ≤ M) (hM : 1 ≤ M) :
     pcolBound N k ≤ pcolBound M k := by
   unfold pcolBound
@@ -133,7 +143,9 @@ def posDescentFactor (N d g : ℕ) : ℕ := pcolBound (N + d + 1) g
 /-- Positive supported compression of a level `j ≤ d` of a hierarchy with positive
 dictionaries at most `g`: every duplicate-free list of level letters has new markers and a
 letter map that agree with the towers of monitors and channels on the list, keep it
-admissible, and expand each letter to at most `posDescentFactor N d g ^ j` letters. -/
+admissible, and expand each letter to at most `posDescentFactor N d g ^ j` letters. This
+follows `DeciNSSE.BoundedDepth.shorten_level_supported`, with the positive column automaton
+in place of the column automaton. -/
 theorem shorten_pos_level_supported (D0 : Lettered α Q) (P0 : PosChan α Q) [Fintype Q]
     [DecidableEq α] [Inhabited α] {w : List α} (hw : w ≠ [])
     {d g j : ℕ} (hj : j ≤ d) (hg : PositiveDictionaryBound w j g)
@@ -209,7 +221,9 @@ theorem shorten_pos_level_supported (D0 : Lettered α Q) (P0 : PosChan α Q) [Fi
 
 /-- A positive hole with a unary level `i ≤ d` and positive dictionaries at most `g` has a
 positive hole of depth at most `d` and length at most
-`3 (N + d + 1) · posDescentFactor N d g ^ d`. -/
+`3 (N + d + 1) · posDescentFactor N d g ^ d`. This follows
+`DeciNSSE.BoundedDepth.exists_short_hole_of_dictionary`; the factor `3` comes from the
+positive unary shortening `unary_posHole_shorten`. -/
 theorem exists_short_posHole_of_dictionary [DecidableEq α] [Inhabited α]
     (D0 : Lettered α Q) (P0 : PosChan α Q) [Fintype Q]
     {w : List α} {i d g : ℕ} (hw : PosHole D0 P0 w) (hi : i ≤ d)

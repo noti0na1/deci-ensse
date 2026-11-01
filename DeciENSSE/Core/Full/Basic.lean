@@ -10,7 +10,7 @@ arbitrary trees, regular graph unfoldings, or finite terms.
 - `LitT`, `HoldsT`, `SatT`: syntax and satisfaction.
 - `ExistsEntailsTIn`: entailment with both tuples restricted to a tree class.
 - `ExistsEntailsT`, `ExistsEntailsTReg`, `ExistsEntailsTFin`: the three semantics.
-- `existsEntailsT_ofLitN_le_iff`: ordinary entailment as a special case.
+- `satT_map`, `satT_append`: renaming and conjunction.
 -/
 
 namespace DeciENSSE.Core.Full
@@ -51,6 +51,22 @@ def HoldsT {V : Type*} (c : Fin n → Bool) (ρ : V → Tree n) : LitT n V → P
 /-- Every literal in the conjunction holds. -/
 def SatT {V : Type*} (c : Fin n → Bool) (ρ : V → Tree n)
     (χ : List (LitT n V)) : Prop := ∀ l ∈ χ, HoldsT c ρ l
+
+/-- Renaming a conjunction precomposes its assignment. -/
+@[simp] theorem satT_map {V W : Type*} (c : Fin n → Bool) (f : V → W)
+    (ρ : W → Tree n) (χ : List (LitT n V)) :
+    SatT c ρ (χ.map (LitT.map f)) ↔ SatT c (ρ ∘ f) χ := by
+  simp [SatT]
+
+/-- Satisfaction of an appended conjunction splits into its two parts. -/
+@[simp] theorem satT_append {V : Type*} (c : Fin n → Bool) (ρ : V → Tree n)
+    (χ ψ : List (LitT n V)) : SatT c ρ (χ ++ ψ) ↔ SatT c ρ χ ∧ SatT c ρ ψ := by
+  simp [SatT, or_imp, forall_and]
+
+/-- Existence of a solution in a tree class, with the specified variance. -/
+def SatisfiableIn {V : Type*} (C : Tree n → Prop) (c : Fin n → Bool)
+    (χ : List (LitT n V)) : Prop :=
+  ∃ ρ, (∀ v, C (ρ v)) ∧ SatT c ρ χ
 
 /-- Class restrictions apply to both the visible tuple and its extension. -/
 def ExistsEntailsTIn {X Z : Type*} (C : Tree n → Prop) (c : Fin n → Bool)
@@ -110,43 +126,5 @@ theorem existsEntailsTFin_iff {X Z : Type*} (c : Fin n → Bool)
     ExistsEntailsTFin c φ ψ ↔
       ExistsEntailsTIn (fun t => ∃ a : FTree n, a.toTree = t) c φ ψ :=
   (existsEntailsTIn_range_iff _ _ _ _).symm
-
-/-- A visible inequality is the special case of existential entailment. -/
-theorem existsEntailsT_le_iff {X Z : Type*} (c : Fin n → Bool)
-    (φ : List (LitT n X)) (x y : X) :
-    ExistsEntailsT c φ [(.le (.inl x) (.inl y) : LitT n (X ⊕ Z))] ↔
-      ∀ ρ, SatT c ρ φ → Tree.Le c (ρ x) (ρ y) := by
-  constructor
-  · intro h ρ hs
-    obtain ⟨σ, _, hσ⟩ := h ρ (fun _ => trivial) hs
-    exact hσ (.le (.inl x) (.inl y)) (by simp)
-  · intro h ρ _ hs
-    exact ⟨fun _ => Tree.bot, fun _ => trivial, by simpa [SatT, HoldsT] using h ρ hs⟩
-
-/-- Embed the existing plain-constraint language (which has no variable inequality). -/
-def ofLitN {k : ℕ} : Lit n k → LitT n (Fin k)
-  | .leF u a => .lef u a
-  | .fLe a u => .fle a u
-  | .eqBot u => .bot u
-  | .eqTop u => .top u
-
-/-- Embedding a plain literal preserves its meaning. -/
-@[simp] theorem holdsT_ofLitN {k : ℕ} (c : Fin n → Bool)
-    (ρ : Fin k → Tree n) (l : Lit n k) :
-    HoldsT c ρ (ofLitN l) ↔ Lit.holds c ρ l := by
-  cases l <;> rfl
-
-/-- Embedding a plain conjunction preserves satisfaction. -/
-@[simp] theorem satT_ofLitN {k : ℕ} (c : Fin n → Bool)
-    (ρ : Fin k → Tree n) (φ : Constraint n k) :
-    SatT c ρ (φ.map ofLitN) ↔ Sat c ρ φ := by
-  simp [SatT, Sat]
-
-/-- Plain subtype entailment is existential entailment of a visible inequality. -/
-theorem existsEntailsT_ofLitN_le_iff {k : ℕ} {Z : Type*} (c : Fin n → Bool)
-    (φ : Constraint n k) (x y : Fin k) :
-    ExistsEntailsT c (φ.map ofLitN)
-      [(.le (.inl x) (.inl y) : LitT n (Fin k ⊕ Z))] ↔ Entails c φ x y := by
-  simp [existsEntailsT_le_iff, Entails]
 
 end DeciENSSE.Core.Full

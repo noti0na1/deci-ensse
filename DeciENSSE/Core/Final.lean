@@ -1,41 +1,37 @@
 import DeciENSSE.Core.Decide
 import DeciENSSE.Core.Words.Bound
 
-/-! # Unconditional existential entailment over {⊥, fₙ}
+/-! # Deciding covariant existential entailment over {⊥, fₙ}
 
-The short-hole theorem discharges the bound premise of the executable decision
-procedure for arbitrary covariant trees, at every arity including zero.
+The word-layer short-hole theorem supplies the bound for `Core/Decide`.
+The resulting procedure decides whether every visible solution extends to
+hidden variables over arbitrary covariant trees, including arity zero.
+
+This closes the arbitrary-tree decision proof. `Core/Classes` transfers the
+result to regular and finite trees.
 
 ## Main declarations
 
-- `decideExistsEntails`
-- `decideExistsEntails_correct`
-- `existsEntails_iff_boundedCheck'`
+- `decideExistsEntailsTopFree`: the executable decision with the proved bound.
+- `decideExistsEntailsTopFree_correct`: its Boolean correctness theorem.
 -/
 
-set_option autoImplicit false
-
 namespace DeciENSSE.Core
+open DeciENSSE.Core.Words DeciENSSE.Core.Words.Mortal
 
 variable {n : ℕ} {X Z : Type*}
   [Fintype X] [DecidableEq X] [Fintype Z] [DecidableEq Z]
 
-/-- Executable existential entailment decision, with no bound premise. -/
-def decideExistsEntails (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) :
-    Decidable (ExistsEntails φ ψ) :=
-  decideExistsEntailsOfShortHoles existsHoleBound (shortHoleBound (Fin n)) φ ψ
+/-- Executable existential entailment using the proved two-word hole bound. -/
+def decideExistsEntailsTopFree (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) :
+    Decidable (ExistsEntailsTopFree φ ψ) :=
+  decideExistsEntailsTopFreeOfShortHoles twoWordHoleBound (shortHoleBound (Fin n)) φ ψ
 
-/-- Correctness of the explicit bounded Boolean check. -/
-theorem existsEntails_iff_boundedCheck' (φ : List (Lit n X))
+/-- Boolean correctness of the decision procedure. -/
+theorem decideExistsEntailsTopFree_correct (φ : List (Lit n X))
     (ψ : List (Lit n (X ⊕ Z))) :
-    ExistsEntails φ ψ ↔ boundedCheck existsHoleBound φ ψ = true :=
-  existsEntails_iff_boundedCheck existsHoleBound (shortHoleBound (Fin n)) φ ψ
-
-/-- Boolean correctness of the unconditional decision procedure. -/
-theorem decideExistsEntails_correct (φ : List (Lit n X))
-    (ψ : List (Lit n (X ⊕ Z))) :
-    @decide (ExistsEntails φ ψ) (decideExistsEntails φ ψ) = true ↔
-      ExistsEntails φ ψ :=
-  decideExistsEntailsOfShortHoles_correct existsHoleBound (shortHoleBound (Fin n)) φ ψ
+    @decide (ExistsEntailsTopFree φ ψ) (decideExistsEntailsTopFree φ ψ) = true ↔
+      ExistsEntailsTopFree φ ψ :=
+  decideExistsEntailsTopFreeOfShortHoles_correct twoWordHoleBound (shortHoleBound (Fin n)) φ ψ
 
 end DeciENSSE.Core

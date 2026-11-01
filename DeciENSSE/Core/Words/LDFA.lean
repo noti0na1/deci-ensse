@@ -1,8 +1,11 @@
 import Mathlib.Computability.DFA
 import Mathlib.Data.Finset.Image
+import DeciNSSE.RejectedTail.Forced
 
 /-! # Deterministic word automata over arbitrary alphabets
 
+`LDFA` stands for labeled deterministic finite automaton. Unlike Mathlib’s `DFA`, it
+has no accepting-state set: acceptance is supplied separately for each word instance.
 A complete deterministic automaton without accepting states reads finite words, and the
 prefixes of infinite words, over an arbitrary alphabet. Its states can be renamed along an
 equivalence, two automata run in parallel as a product, and a safe path can be shortened
@@ -14,17 +17,18 @@ of bounded length are enumerated executably; the empty alphabet needs no special
 - `Word`, `LDFA`: words and complete deterministic automata.
 - `LDFA.runFrom`, `LDFA.run`, `LDFA.atCut`, `LDFA.streamRun`: runs on words, at cuts, and
   on infinite words.
-- `streamPrefix`, `LDFA.streamRun_eq`: finite prefixes of infinite words.
+- `LDFA.streamRun_eq`: runs on finite prefixes from `DeciNSSE.RejectedTail.streamPrefix`.
 - `LDFA.rename`: renaming the states along an equivalence.
 - `LDFA.PathSafe`, `LDFA.short_safe_path`: paths that stay in a set of states, and short
   safe paths with the same endpoint.
-- `LDFA.prod`, `LDFA.toDFA`: products, and the Mathlib reader of an automaton.
+- `LDFA.prod`: products of automata.
 - `wordsUpTo`, `mem_wordsUpTo`: the words of length at most `n`.
 
-The declarations are in the namespace `DeciENSSE.Core`.
+The declarations are in the namespace `DeciENSSE.Core.Words`.
 -/
 
-namespace DeciENSSE.Core
+namespace DeciENSSE.Core.Words
+open DeciNSSE.RejectedTail
 
 /-- Words over the alphabet `α`. -/
 abbrev Word (α : Type*) := List α
@@ -66,15 +70,6 @@ def streamRun (M : LDFA α S) (q : S) (ξ : ℕ → α) : ℕ → S
   | n + 1 => M.step (M.streamRun q ξ n) (ξ n)
 
 end LDFA
-
-/-- The finite prefix of length `n` of an infinite word. -/
-def streamPrefix (ξ : ℕ → α) (n : ℕ) : Word α := List.ofFn (fun i : Fin n => ξ i)
-
-/-- A prefix of length `n + 1` extends the prefix of length `n` by one letter. -/
-theorem streamPrefix_succ (ξ : ℕ → α) (n : ℕ) :
-    streamPrefix ξ (n + 1) = streamPrefix ξ n ++ [ξ n] := by
-  simpa [streamPrefix, List.concat_eq_append] using
-    (List.ofFn_succ' (fun i : Fin (n + 1) => ξ i))
 
 /-- The run on an infinite word is the run on its finite prefixes. -/
 theorem LDFA.streamRun_eq {S : Type*} (M : LDFA α S) (q : S) (ξ : ℕ → α) (n : ℕ) :
@@ -201,13 +196,6 @@ theorem prod_runFrom {T : Type*} (M : LDFA α S) (N : LDFA α T)
 @[simp] theorem prod_run {T : Type*} (M : LDFA α S) (N : LDFA α T) (w : Word α) :
     (M.prod N).run w = (M.run w, N.run w) := prod_runFrom M N M.start N.start w
 
-/-- The automaton as a Mathlib reader that accepts every state. -/
-def toDFA (M : LDFA α S) : DFA α S := ⟨M.step, M.start, Set.univ⟩
-
-/-- The Mathlib reader has the same runs. -/
-@[simp] theorem toDFA_evalFrom (M : LDFA α S) (q : S) (w : Word α) :
-    M.toDFA.evalFrom q w = M.runFrom q w := rfl
-
 end LDFA
 
 /-- The words of length at most `n`, also for an empty alphabet. -/
@@ -226,4 +214,4 @@ def wordsUpTo [Fintype α] [DecidableEq α] : ℕ → Finset (Word α)
     | nil => simp [wordsUpTo]
     | cons c w => simp [wordsUpTo, ih]
 
-end DeciENSSE.Core
+end DeciENSSE.Core.Words

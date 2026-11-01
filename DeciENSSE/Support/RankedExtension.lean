@@ -1,76 +1,26 @@
-import DeciENSSE.Support.Transfer.Spines
+import DeciENSSE.Support.Spines
 import DeciNSSE.Transfer.RankedExtension
-
+import DeciNSSE.Satisfiability.Finite
 
 /-! # Ranked extensions with a fixed old block
 
 The old variables embed through Fin.castAdd. Source and sink separation and
 strictly increasing ranks reflect every nonempty cycle to the original system.
 
+Cycle clashes are preserved and reflected by ranked extensions. A satisfiable
+extension has a finite solution whenever its original system does.
+
 ## Main declarations
 
-- `Ranked.ExtensionN`
-- `Ranked.ExtensionN.toExtension`
+- `DeciNSSE.Ranked.Extension`: the shared rank contract.
 - `Spines.extension_of_append`
+- `RankedExtension.extension_cycleClash_iff`
+- `RankedExtension.extension_satFin_iff`
 -/
 
-namespace DeciENSSE.Support
+namespace DeciENSSE.Support.RankedExtension
+open DeciENSSE.Support.Spines
 open DeciNSSE
-
-namespace Ranked
-
-variable {n k m : ℕ}
-
-/-- Abstract fresh classes and a natural-number rank. Every fresh lower
-(upper) constructor literal has all children in the source (sink) class, a
-non-sink (non-source) root, and strictly greater child ranks. -/
-structure ExtensionN (ϕ : Constraint n k) (ψ : Constraint n (k + m))
-    (Source Sink : V (k + m) → Prop) (rank : V (k + m) → ℕ) : Prop where
-  source_not_old : ∀ {z}, Source z → ¬ z.val < k
-  sink_not_old : ∀ {z}, Sink z → ¬ z.val < k
-  source_not_sink : ∀ {z}, Source z → ¬ Sink z
-  variable_cases : ∀ z, (∃ u : V k, z = Fin.castAdd m u) ∨ Source z ∨ Sink z
-  old_mem : ∀ l ∈ ϕ, l.rename (Fin.castAdd m) ∈ ψ
-  lower : ∀ a c, Lit.fLe a c ∈ ψ →
-    (∃ a' c', Lit.fLe a' c' ∈ ϕ ∧ a = Fin.castAdd m ∘ a' ∧ c = Fin.castAdd m c') ∨
-    ((∀ i, Source (a i) ∧ rank c < rank (a i)) ∧ ¬ Sink c)
-  upper : ∀ c b, Lit.leF c b ∈ ψ →
-    (∃ c' b', Lit.leF c' b' ∈ ϕ ∧ c = Fin.castAdd m c' ∧ b = Fin.castAdd m ∘ b') ∨
-    ((∀ i, Sink (b i) ∧ rank c < rank (b i)) ∧ ¬ Source c)
-
-variable {ϕ : Constraint n k} {ψ : Constraint n (k + m)}
-  {Source Sink : V (k + m) → Prop} {rank : V (k + m) → ℕ}
-
-/-- An embedded old variable is not a source. -/
-theorem ExtensionN.not_source_old (e : ExtensionN ϕ ψ Source Sink rank) (u : V k) :
-    ¬ Source (Fin.castAdd m u) := fun h => e.source_not_old h u.isLt
-/-- An embedded old variable is not a sink. -/
-theorem ExtensionN.not_sink_old (e : ExtensionN ϕ ψ Source Sink rank) (u : V k) :
-    ¬ Sink (Fin.castAdd m u) := fun h => e.sink_not_old h u.isLt
-/-- Embed the fixed old block into the general ranked contract. -/
-theorem ExtensionN.toExtension (e : ExtensionN ϕ ψ Source Sink rank) :
-    DeciNSSE.Ranked.Extension (Fin.castAdd m) ϕ ψ Source Sink rank where
-  injective := Fin.castAdd_injective k m
-  not_source_old := e.not_source_old
-  not_sink_old := e.not_sink_old
-  source_not_sink := e.source_not_sink
-  variable_cases := e.variable_cases
-  old_mem := e.old_mem
-  lower := e.lower
-  upper := e.upper
-
-/-- Every nonempty cycle of an extension reflects to the original variables. -/
-theorem ExtensionN.cycle_reflect (e : ExtensionN ϕ ψ Source Sink rank)
-    {π : List (Fin n)} {a b : V (k + m)} (hn : π ≠ [])
-    (hl : DeciNSSE.LowerAt ψ π a a) (hd : DeciNSSE.Derives ψ a b)
-    (hu : DeciNSSE.UpperAt ψ π b b) :
-    ∃ u v : V k, DeciNSSE.LowerAt ϕ π u u ∧ DeciNSSE.Derives ϕ u v ∧
-      DeciNSSE.UpperAt ϕ π v v :=
-  e.toExtension.cycle_reflect hn hl hd hu
-
-end Ranked
-
-/-! ## The fixed two-chain layout -/
 
 namespace Spines
 
@@ -154,12 +104,12 @@ theorem yv_lt_tv (y : V k) (j : ℕ) : (yv y L j).val < (tv k L).val := by
 
 /-- A lower step: every child (the next spine variable or the bottom filler)
 is a source of strictly greater index. -/
-theorem lowerStepsN_fLe {x : V k} {ν : List (Fin n)}
+theorem lowerSteps_fLe {x : V k} {ν : List (Fin n)}
     {a : Fin n → V (k + (2 * ν.length + 2))} {c : V (k + (2 * ν.length + 2))}
-    (h : Lit.fLe a c ∈ lowerStepsN (xv x ν.length) (bv k ν.length) ν) :
+    (h : Lit.fLe a c ∈ lowerSteps (xv x ν.length) (bv k ν.length) ν) :
     (∀ i, Source k ν.length (a i) ∧ c.val < (a i).val) ∧ ¬ Sink k ν.length c := by
-  obtain ⟨j, hj, he⟩ := mem_lowerStepsN_iff.mp h
-  simp only [lowerLinkN, Lit.fLe.injEq] at he
+  obtain ⟨j, hj, he⟩ := mem_lowerSteps_iff.mp h
+  simp only [lowerLink, Lit.fLe.injEq] at he
   obtain ⟨rfl, rfl⟩ := he
   refine ⟨fun i => ?_, not_sink_xv _ _⟩
   rcases spineChildren_eq_or ν[j] i (xv x ν.length (j + 1)) (bv k ν.length) with h | h <;>
@@ -169,12 +119,12 @@ theorem lowerStepsN_fLe {x : V k} {ν : List (Fin n)}
 
 /-- An upper step: every child (the next spine variable or the top filler)
 is a sink of strictly greater index. -/
-theorem upperStepsN_leF {y : V k} {ν : List (Fin n)}
+theorem upperSteps_leF {y : V k} {ν : List (Fin n)}
     {c : V (k + (2 * ν.length + 2))} {b : Fin n → V (k + (2 * ν.length + 2))}
-    (h : Lit.leF c b ∈ upperStepsN (yv y ν.length) (tv k ν.length) ν) :
+    (h : Lit.leF c b ∈ upperSteps (yv y ν.length) (tv k ν.length) ν) :
     (∀ i, Sink k ν.length (b i) ∧ c.val < (b i).val) ∧ ¬ Source k ν.length c := by
-  obtain ⟨j, hj, he⟩ := mem_upperStepsN_iff.mp h
-  simp only [upperLinkN, Lit.leF.injEq] at he
+  obtain ⟨j, hj, he⟩ := mem_upperSteps_iff.mp h
+  simp only [upperLink, Lit.leF.injEq] at he
   obtain ⟨rfl, rfl⟩ := he
   refine ⟨fun i => ?_, not_source_yv _ _⟩
   rcases spineChildren_eq_or ν[j] i (yv y ν.length (j + 1)) (tv k ν.length) with h | h <;>
@@ -183,87 +133,87 @@ theorem upperStepsN_leF {y : V k} {ν : List (Fin n)}
   · exact ⟨sink_tv, yv_lt_tv y j⟩
 
 /-- Every lower constructor literal in this chain satisfies the rank contract. -/
-theorem noBotChainN_fLe {x : V k} {ν : List (Fin n)}
+theorem noBotChain_fLe {x : V k} {ν : List (Fin n)}
     {a : Fin n → V (k + (2 * ν.length + 2))} {c : V (k + (2 * ν.length + 2))}
-    (h : Lit.fLe a c ∈ noBotChainN x ν) :
+    (h : Lit.fLe a c ∈ noBotChain x ν) :
     (∀ i, Source k ν.length (a i) ∧ c.val < (a i).val) ∧ ¬ Sink k ν.length c := by
   rcases List.mem_append.mp h with h | h
-  · exact lowerStepsN_fLe h
+  · exact lowerSteps_fLe h
   · simp only [List.mem_cons, List.not_mem_nil, or_false, Lit.fLe.injEq,
       reduceCtorEq] at h
     obtain ⟨rfl, rfl⟩ := h
     exact ⟨fun _ => ⟨source_bv, xv_lt_bv x _⟩, not_sink_xv _ _⟩
 
 /-- Every lower constructor literal in this chain satisfies the rank contract. -/
-theorem topChainN_fLe {x : V k} {ν : List (Fin n)}
+theorem topChain_fLe {x : V k} {ν : List (Fin n)}
     {a : Fin n → V (k + (2 * ν.length + 2))} {c : V (k + (2 * ν.length + 2))}
-    (h : Lit.fLe a c ∈ topChainN x ν) :
+    (h : Lit.fLe a c ∈ topChain x ν) :
     (∀ i, Source k ν.length (a i) ∧ c.val < (a i).val) ∧ ¬ Sink k ν.length c := by
   rcases List.mem_append.mp h with h | h
-  · exact lowerStepsN_fLe h
+  · exact lowerSteps_fLe h
   · simp [reduceCtorEq] at h
 
 /-- Every upper constructor literal in this chain satisfies the rank contract. -/
-theorem noTopChainN_leF {y : V k} {ν : List (Fin n)}
+theorem noTopChain_leF {y : V k} {ν : List (Fin n)}
     {c : V (k + (2 * ν.length + 2))} {b : Fin n → V (k + (2 * ν.length + 2))}
-    (h : Lit.leF c b ∈ noTopChainN y ν) :
+    (h : Lit.leF c b ∈ noTopChain y ν) :
     (∀ i, Sink k ν.length (b i) ∧ c.val < (b i).val) ∧ ¬ Source k ν.length c := by
   rcases List.mem_append.mp h with h | h
-  · exact upperStepsN_leF h
+  · exact upperSteps_leF h
   · simp only [List.mem_cons, List.not_mem_nil, or_false, Lit.leF.injEq,
       reduceCtorEq] at h
     obtain ⟨rfl, rfl⟩ := h
     exact ⟨fun _ => ⟨sink_tv, yv_lt_tv y _⟩, not_source_yv _ _⟩
 
 /-- Every upper constructor literal in this chain satisfies the rank contract. -/
-theorem botChainN_leF {y : V k} {ν : List (Fin n)}
+theorem botChain_leF {y : V k} {ν : List (Fin n)}
     {c : V (k + (2 * ν.length + 2))} {b : Fin n → V (k + (2 * ν.length + 2))}
-    (h : Lit.leF c b ∈ botChainN y ν) :
+    (h : Lit.leF c b ∈ botChain y ν) :
     (∀ i, Sink k ν.length (b i) ∧ c.val < (b i).val) ∧ ¬ Source k ν.length c := by
   rcases List.mem_append.mp h with h | h
-  · exact upperStepsN_leF h
+  · exact upperSteps_leF h
   · simp [reduceCtorEq] at h
 
 /-- This chain contains no lower constructor literal. -/
-theorem fLe_not_mem_botChainN (y : V k) (ν : List (Fin n))
+theorem fLe_not_mem_botChain (y : V k) (ν : List (Fin n))
     (a : Fin n → V (k + (2 * ν.length + 2))) (c : V (k + (2 * ν.length + 2))) :
-    Lit.fLe a c ∉ botChainN y ν := by
+    Lit.fLe a c ∉ botChain y ν := by
   intro h
   rcases List.mem_append.mp h with h | h
-  · exact fLe_not_mem_upperStepsN _ _ _ _ _ h
+  · exact fLe_not_mem_upperSteps _ _ _ _ _ h
   · simp [reduceCtorEq] at h
 
 /-- This chain contains no lower constructor literal. -/
-theorem fLe_not_mem_noTopChainN (y : V k) (ν : List (Fin n))
+theorem fLe_not_mem_noTopChain (y : V k) (ν : List (Fin n))
     (a : Fin n → V (k + (2 * ν.length + 2))) (c : V (k + (2 * ν.length + 2))) :
-    Lit.fLe a c ∉ noTopChainN y ν := by
+    Lit.fLe a c ∉ noTopChain y ν := by
   intro h
   rcases List.mem_append.mp h with h | h
-  · exact fLe_not_mem_upperStepsN _ _ _ _ _ h
+  · exact fLe_not_mem_upperSteps _ _ _ _ _ h
   · simp [reduceCtorEq] at h
 
 /-- This chain contains no upper constructor literal. -/
-theorem leF_not_mem_noBotChainN (x : V k) (ν : List (Fin n))
+theorem leF_not_mem_noBotChain (x : V k) (ν : List (Fin n))
     (c : V (k + (2 * ν.length + 2))) (b : Fin n → V (k + (2 * ν.length + 2))) :
-    Lit.leF c b ∉ noBotChainN x ν := by
+    Lit.leF c b ∉ noBotChain x ν := by
   intro h
   rcases List.mem_append.mp h with h | h
-  · exact leF_not_mem_lowerStepsN _ _ _ _ _ h
+  · exact leF_not_mem_lowerSteps _ _ _ _ _ h
   · simp [reduceCtorEq] at h
 
 /-- This chain contains no upper constructor literal. -/
-theorem leF_not_mem_topChainN (x : V k) (ν : List (Fin n))
+theorem leF_not_mem_topChain (x : V k) (ν : List (Fin n))
     (c : V (k + (2 * ν.length + 2))) (b : Fin n → V (k + (2 * ν.length + 2))) :
-    Lit.leF c b ∉ topChainN x ν := by
+    Lit.leF c b ∉ topChain x ν := by
   intro h
   rcases List.mem_append.mp h with h | h
-  · exact leF_not_mem_lowerStepsN _ _ _ _ _ h
+  · exact leF_not_mem_lowerSteps _ _ _ _ _ h
   · simp [reduceCtorEq] at h
 
 /-- Each original literal belongs to the lifted constraint after renaming. -/
 theorem mem_lift_of_mem {ϕ : Constraint n k} {l : Lit n k} (hl : l ∈ ϕ) :
-    l.rename (Fin.castAdd m) ∈ DeciENSSE.Support.ConstraintN.lift ϕ m := List.mem_map.mpr ⟨l, hl,
-      rfl⟩
+    l.rename (Fin.castAdd m) ∈ DeciENSSE.Support.Spines.Constraint.lift ϕ m :=
+  List.mem_map.mpr ⟨l, hl, rfl⟩
 
 /-- Any fresh block whose constructor literals are classified like the chain
 literals extends the lifted constraint. -/
@@ -272,10 +222,13 @@ theorem extension_of_append {ϕ : Constraint n k} {A : Constraint n (k + (2 * L 
       (∀ i, Source k L (a i) ∧ c.val < (a i).val) ∧ ¬ Sink k L c)
     (hup : ∀ c b, Lit.leF c b ∈ A →
       (∀ i, Sink k L (b i) ∧ c.val < (b i).val) ∧ ¬ Source k L c) :
-    Ranked.ExtensionN ϕ (DeciENSSE.Support.ConstraintN.lift ϕ _ ++ A) (Source k L) (Sink k L)
+    DeciNSSE.Ranked.Extension (Fin.castAdd (2 * L + 2)) ϕ
+      (DeciENSSE.Support.Spines.Constraint.lift ϕ _ ++ A)
+      (Source k L) (Sink k L)
       Fin.val where
-  source_not_old := source_not_old
-  sink_not_old := sink_not_old
+  injective := Fin.castAdd_injective _ _
+  not_source_old := fun u h => source_not_old h u.isLt
+  not_sink_old := fun u h => sink_not_old h u.isLt
   source_not_sink := source_not_sink
   variable_cases := variable_cases
   old_mem := fun l hl => List.mem_append_left _ (mem_lift_of_mem hl)
@@ -291,4 +244,49 @@ theorem extension_of_append {ϕ : Constraint n k} {A : Constraint n (k + (2 * L 
     · exact Or.inr (hup c b h)
 
 end Spines
-end DeciENSSE.Support
+end DeciENSSE.Support.RankedExtension
+
+namespace DeciENSSE.Support.RankedExtension
+open DeciNSSE
+
+variable {n k m : ℕ}
+
+section Extension
+
+variable {ϕ : Constraint n k} {ψ : Constraint n (k + m)}
+  {Source Sink : V (k + m) → Prop} {rank : V (k + m) → ℕ}
+
+/-- The old block of a solution of an extension solves the base system. -/
+theorem extension_restrict_sat (e : DeciNSSE.Ranked.Extension (Fin.castAdd m) ϕ ψ Source Sink rank)
+    {ρ' : V (k + m) → DeciNSSE.Tree n} (h : Covariant.Sat ρ' ψ) :
+    Covariant.Sat (ρ' ∘ Fin.castAdd m) ϕ := by
+  intro l hl
+  exact (Lit.holds_rename _ _ _).mp (h _ (e.old_mem l hl))
+
+/-- A ranked extension has a cycle clash exactly when its base has one. -/
+theorem extension_cycleClash_iff
+    (e : DeciNSSE.Ranked.Extension (Fin.castAdd m) ϕ ψ Source Sink rank) :
+    DeciNSSE.CycleClash ψ ↔ DeciNSSE.CycleClash ϕ := by
+  constructor
+  · rintro ⟨π, a, b, hn, hl, hd, hu⟩
+    obtain ⟨u, v, hl', hd', hu'⟩ := e.cycle_reflect hn hl hd hu
+    exact ⟨π, u, v, hn, hl', hd', hu'⟩
+  · rintro ⟨π, u, v, hn, hl, hd, hu⟩
+    exact ⟨π, _, _, hn, hl.map _ e.old_mem, hd.map _ e.old_mem, hu.map _ e.old_mem⟩
+
+/-- A ranked extension is finitely satisfiable exactly when it is satisfiable and
+its base is finitely satisfiable. -/
+theorem extension_satFin_iff (e : DeciNSSE.Ranked.Extension (Fin.castAdd m) ϕ ψ Source Sink rank) :
+    (∃ σ : V (k + m) → FTree n, Covariant.Sat (FTree.toTree ∘ σ) ψ) ↔
+      (∃ ρ', Covariant.Sat ρ' ψ) ∧ ∃ σ : V k → FTree n, Covariant.Sat (FTree.toTree ∘ σ) ϕ := by
+  constructor
+  · rintro ⟨σ, hσ⟩
+    exact ⟨⟨_, hσ⟩, ⟨σ ∘ Fin.castAdd m, extension_restrict_sat e hσ⟩⟩
+  · rintro ⟨⟨ρ', hρ'⟩, hf⟩
+    apply DeciNSSE.satFin_iff.mpr
+    exact ⟨fun hl => hl.unsatisfiable ⟨ρ', hρ'⟩,
+      fun hc => (DeciNSSE.satFin_iff.mp hf).2 ((extension_cycleClash_iff e).mp hc)⟩
+
+end Extension
+
+end DeciENSSE.Support.RankedExtension

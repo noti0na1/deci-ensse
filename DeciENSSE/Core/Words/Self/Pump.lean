@@ -1,4 +1,4 @@
-import DeciENSSE.Core.Words.Self.SS2Self
+import DeciENSSE.Core.Words.Self.Basic
 import DeciENSSE.Core.Words.Pump
 
 /-! # Pumping with target self guards
@@ -8,22 +8,20 @@ the spine endpoint, with the same polynomial capacity.
 
 ## Main declarations
 
-- `SS2Self.selfGuardFree_delete`
-- `SS2Self.pumpGoodS_short`
-- `purelyPeriodicShortPreHoleS_capacity`
+- `SelfTwoWordInstance.selfGuardFree_delete`
+- `SelfTwoWordInstance.pumpGood_short`
+- `purelyPeriodicShortPreHole_capacity`
 -/
 
-set_option autoImplicit false
-
-namespace DeciENSSE.Core.SS2Self
+namespace DeciENSSE.Core.Words.Self.SelfTwoWordInstance
 
 variable {α : Type*}
-open DeciENSSE.Core.SS2
+open DeciENSSE.Core.Words.TwoWordInstance
 
 variable {SA SB SA' SB' : Type*} [Fintype SA] [Fintype SB]
   [Fintype SA'] [Fintype SB'] [DecidableEq SA] [DecidableEq SB]
   [DecidableEq SA'] [DecidableEq SB']
-variable (I : SS2Self α SA SB SA' SB')
+variable (I : SelfTwoWordInstance α SA SB SA' SB')
 
 /-- No strict target pair with equal infinite suffixes is self-guarded. -/
 def SelfGuardFree (ξ : ℕ → α) (t : Word α) : Prop :=
@@ -45,20 +43,20 @@ theorem selfSurvivorFree_iff [Inhabited α] {t : Word α} {ξ : ℕ → α}
       ((survives_iff_prepend_eq he.2.1.1 he.2.1.2.1 (by omega) ξ).mp
         ⟨he.2.1, hs⟩) he.2.2.2
 
-/-- The parent pump invariant, strengthened by self-freeness. -/
-def PumpGoodS (ξ : ℕ → α) (u t : Word α) : Prop :=
-  I.toSS2.PumpGood ξ u t ∧ I.SelfGuardFree ξ t
+/-- The `TwoWordInstance.PumpGood` invariant, strengthened by self-freeness. -/
+def PumpGood (ξ : ℕ → α) (u t : Word α) : Prop :=
+  I.toTwoWordInstance.PumpGood ξ u t ∧ I.SelfGuardFree ξ t
 
 /-- The self-aware pumping invariant retains both survivor conditions. -/
-theorem pumpGoodS_iff [Inhabited α] (ξ : ℕ → α) (u t : Word α) :
-    I.PumpGoodS ξ u t ↔
+theorem pumpGood_iff [Inhabited α] (ξ : ℕ → α) (u t : Word α) :
+    I.PumpGood ξ u t ↔
       I.IsPreHole u t ∧ I.SurvivorFree u t ξ ∧ I.SelfSurvivorFree t ξ := by
   constructor
   · rintro ⟨hg, hs⟩
-    obtain ⟨hp, hf⟩ := (I.toSS2.pumpGood_iff ξ u t).mp hg
+    obtain ⟨hp, hf⟩ := (I.toTwoWordInstance.pumpGood_iff ξ u t).mp hg
     exact ⟨hp, hf, (I.selfSurvivorFree_iff hp.2.1).mpr hs⟩
   · rintro ⟨hp, hf, hs⟩
-    exact ⟨(I.toSS2.pumpGood_iff ξ u t).mpr ⟨hp, hf⟩,
+    exact ⟨(I.toTwoWordInstance.pumpGood_iff ξ u t).mpr ⟨hp, hf⟩,
       (I.selfSurvivorFree_iff hp.2.1).mp hs⟩
 
 /-- The retained-cut map preserves strict order, states, and equal suffixes. -/
@@ -148,15 +146,15 @@ theorem selfGuardFree_delete_rest {ξ : ℕ → α} {x' w' y' : Word α}
     (self_delete_rest hX x' w').2
 
 /-- One deletion preserves both survivor conditions and the spine endpoint. -/
-def ShrinksS (ξ : ℕ → α) (u t : Word α) : Prop :=
-  ∃ u' t', I.PumpGoodS ξ u' t' ∧ I.A.run u' = I.A.run u ∧
+def Shrinks (ξ : ℕ → α) (u t : Word α) : Prop :=
+  ∃ u' t', I.PumpGood ξ u' t' ∧ I.A.run u' = I.A.run u ∧
     u'.length + t'.length < u.length + t.length
 
 /-- Parent deletion with a proof of self-freeness for its concrete output. -/
-theorem shrinkS_of_delete {ξ : ℕ → α} {u t x w y x' w' y' : Word α}
+theorem shrink_of_delete {ξ : ℕ → α} {u t x w y x' w' y' : Word α}
     (hu : x ++ w ++ y = u) (ht : x' ++ w' ++ y' = t) (hpos : w ≠ [] ∨ w' ≠ [])
     (hself : I.SelfGuardFree ξ (x' ++ y'))
-    (hg : I.toSS2.PumpGood ξ u t)
+    (hg : I.toTwoWordInstance.PumpGood ξ u t)
     (hA : I.A.runFrom (I.A.run x) w = I.A.run x)
     (hA' : I.A'.runFrom (I.A'.run x) w = I.A'.run x)
     (hB : I.B.runFrom (I.B.run x') w' = I.B.run x')
@@ -179,24 +177,24 @@ theorem shrinkS_of_delete {ξ : ℕ → α} {u t x w y x' w' y' : Word α}
       ((x.length + w.length ≤ s ∧ x'.length + w'.length ≤ e) ∨
         (s ≤ x.length ∧ e ≤ x'.length ∧ x.length - s = x'.length - e ∧
           w.length = w'.length))) :
-    I.ShrinksS ξ u t := by
+    I.Shrinks ξ u t := by
   subst hu ht
-  refine ⟨x ++ y, x' ++ y', ⟨I.toSS2.pumpGood_delete hg hA hA' hB hB' hDD hDS hSD hhead, hself⟩,
+  refine ⟨x ++ y, x' ++ y', ⟨I.toTwoWordInstance.pumpGood_delete hg hA hA' hB hB' hDD hDS hSD
+    hhead, hself⟩,
     (I.A.run_delete y hA).symm, ?_⟩
   simp only [List.length_append]
   rcases hpos with h | h
   · have := List.length_pos_iff.mpr h; omega
   · have := List.length_pos_iff.mpr h; omega
 
-
 variable {ξ : ℕ → α} {p : ℕ}
 
 /-- Joint deletion in the periodic ends preserves the self-aware invariant. -/
-theorem shrinkS_joint (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ}
-    (hg : I.PumpGoodS ξ u t) (hu : PeriodicSplit ξ p u ru) (ht : PeriodicSplit ξ p t rt)
+theorem shrink_joint (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ}
+    (hg : I.PumpGood ξ u t) (hu : PeriodicSplit ξ p u ru) (ht : PeriodicSplit ξ p t rt)
     (h : Fintype.card (SA × SA' × SB × SB' × Fin p × Bool) ≤ u.length - ru)
     (h' : Fintype.card (SA × SA' × SB × SB' × Fin p × Bool) ≤ t.length - rt) :
-    I.ShrinksS ξ u t := by
+    I.Shrinks ξ u t := by
   obtain ⟨hg, hself⟩ := hg
   classical
   have hul := hu.le_length
@@ -227,7 +225,7 @@ theorem shrinkS_joint (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ
       rw [show t.length - (t.length - d₂) = d₂ by omega,
         show t.length - (t.length - d₁) = d₁ by omega]
       exact hfm.symm)
-  refine I.shrinkS_of_delete hu' ht' (Or.inl (List.ne_nil_of_length_pos (by omega))) ?_ hg ?_ ?_
+  refine I.shrink_of_delete hu' ht' (Or.inl (List.ne_nil_of_length_pos (by omega))) ?_ hg ?_ ?_
     ?_ ?_ ?_ ?_ ?_ ?_
   · apply I.selfGuardFree_delete_absorbed (by rwa [ht'])
     · exact I.B.runFrom_of_atCut ht' hxl' (by omega) hfB.symm
@@ -262,10 +260,10 @@ theorem shrinkS_joint (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ
       exact ⟨s₀, e₀, hev₀, Or.inr ⟨by omega, by omega, by omega, by omega⟩⟩
 
 /-- The spine's periodic end is much longer: delete a factor of it alone. -/
-theorem shrinkS_soloU (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ}
-    (hg : I.PumpGoodS ξ u t) (hu : PeriodicSplit ξ p u ru) (ht : PeriodicSplit ξ p t rt)
+theorem shrink_soloU (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ}
+    (hg : I.PumpGood ξ u t) (hu : PeriodicSplit ξ p u ru) (ht : PeriodicSplit ξ p t rt)
     (h : t.length - rt + Fintype.card (SA × SA' × Fin p) ≤ u.length - ru) :
-    I.ShrinksS ξ u t := by
+    I.Shrinks ξ u t := by
   obtain ⟨hg, hself⟩ := hg
   have hul := hu.le_length
   have htl := ht.le_length
@@ -286,7 +284,7 @@ theorem shrinkS_soloU (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ
       rw [show u.length - (u.length - (t.length - rt + d₂)) = t.length - rt + d₂ by omega,
         show u.length - (u.length - (t.length - rt + d₁)) = t.length - rt + d₁ by omega]
       exact hfm.symm)
-  refine I.shrinkS_of_delete (x' := []) (w' := []) (y' := t) hu' (by simp)
+  refine I.shrink_of_delete (x' := []) (w' := []) (y' := t) hu' (by simp)
     (Or.inl (List.ne_nil_of_length_pos (by omega))) ?_ hg ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
   · simpa using hself
   · exact I.A.runFrom_of_atCut hu' hxl (by omega) hfA.symm
@@ -305,10 +303,10 @@ theorem shrinkS_soloU (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ
 
 /-- The target's periodic end is much longer: delete a factor of it alone,
 strictly beyond the spine's periodic end. -/
-theorem shrinkS_soloT (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ}
-    (hg : I.PumpGoodS ξ u t) (hu : PeriodicSplit ξ p u ru) (ht : PeriodicSplit ξ p t rt)
+theorem shrink_soloT (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ}
+    (hg : I.PumpGood ξ u t) (hu : PeriodicSplit ξ p u ru) (ht : PeriodicSplit ξ p t rt)
     (h : u.length - ru + 1 + Fintype.card (SB × SB' × Fin p) ≤ t.length - rt) :
-    I.ShrinksS ξ u t := by
+    I.Shrinks ξ u t := by
   obtain ⟨hg, hself⟩ := hg
   have hul := hu.le_length
   have htl := ht.le_length
@@ -332,7 +330,7 @@ theorem shrinkS_soloT (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ
         show t.length - (t.length - (u.length - ru + 1 + d₁)) = u.length - ru + 1 + d₁ by
           omega]
       exact hfm.symm)
-  refine I.shrinkS_of_delete (x := []) (w := []) (y := u) (by simp) ht'
+  refine I.shrink_of_delete (x := []) (w := []) (y := u) (by simp) ht'
     (Or.inr (List.ne_nil_of_length_pos (by omega))) ?_ hg ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
   · apply I.selfGuardFree_delete_absorbed (by rwa [ht'])
     · exact I.B.runFrom_of_atCut ht' hxl' (by omega) hfB.symm
@@ -360,11 +358,11 @@ theorem shrinkS_soloT (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ
     exact ⟨s₀, e₀, hev₀, Or.inl ⟨by simp, by omega⟩⟩
 
 /-- Many partnered rest cuts: delete a factor of the common rest suffix. -/
-theorem shrinkS_restSync (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ}
-    (hg : I.PumpGoodS ξ u t) (hu : PeriodicSplit ξ p u ru) (ht : PeriodicSplit ξ p t rt)
+theorem shrink_restSync (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ}
+    (hg : I.PumpGood ξ u t) (hu : PeriodicSplit ξ p u ru) (ht : PeriodicSplit ξ p t rt)
     (P : Finset ℕ)
     (hP : ∀ j ∈ P, j < ru ∧ ∃ e ≤ t.length, prepend (u.drop j) ξ = prepend (t.drop e) ξ)
-    (h : Fintype.card (SA × SA' × SB × SB' × Bool) < P.card) : I.ShrinksS ξ u t := by
+    (h : Fintype.card (SA × SA' × SB × SB' × Bool) < P.card) : I.Shrinks ξ u t := by
   obtain ⟨hg, hself⟩ := hg
   classical
   have hul := hu.le_length
@@ -394,7 +392,7 @@ theorem shrinkS_restSync (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : 
       exact hU₁
     rw [prepend_assoc, prepend_assoc, ← hU₂] at h1
     exact ((prepend_eq_iff_of_length_eq (by omega) _ _).mp h1).1
-  refine I.shrinkS_of_delete hu' ht' (Or.inl (List.ne_nil_of_length_pos (by omega))) ?_ hg ?_ ?_
+  refine I.shrink_of_delete hu' ht' (Or.inl (List.ne_nil_of_length_pos (by omega))) ?_ hg ?_ ?_
     ?_ ?_ ?_ ?_ ?_ ?_
   · apply I.selfGuardFree_delete_rest (by rwa [ht'])
     · exact I.B.runFrom_of_atCut ht' hxl' (by omega) hfB
@@ -442,10 +440,10 @@ theorem shrinkS_restSync (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : 
       exact ⟨s₀, e₀, hev₀, Or.inr ⟨by omega, by omega, by omega, by omega⟩⟩
 
 /-- Many unpartnered spine rest cuts: delete a factor of the spine alone. -/
-theorem shrinkS_restU (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru : ℕ}
-    (hg : I.PumpGoodS ξ u t) (hu : PeriodicSplit ξ p u ru) (P : Finset ℕ)
+theorem shrink_restU (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru : ℕ}
+    (hg : I.PumpGood ξ u t) (hu : PeriodicSplit ξ p u ru) (P : Finset ℕ)
     (hP : ∀ j ∈ P, j < ru ∧ ∀ e ≤ t.length, prepend (u.drop j) ξ ≠ prepend (t.drop e) ξ)
-    (h : Fintype.card (SA × SA') < P.card) : I.ShrinksS ξ u t := by
+    (h : Fintype.card (SA × SA') < P.card) : I.Shrinks ξ u t := by
   obtain ⟨hg, hself⟩ := hg
   have hul := hu.le_length
   obtain ⟨i, hi, j, hj, hlt, hf⟩ := exists_lt_map_eq_finset P
@@ -453,7 +451,7 @@ theorem shrinkS_restU (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru : ℕ}
   simp only [Prod.mk.injEq] at hf
   obtain ⟨hjr, hun⟩ := hP j hj
   obtain ⟨x, w, hu', hxl, hwl⟩ := exists_split3 u hlt.le (by omega : j ≤ u.length)
-  refine I.shrinkS_of_delete (x' := []) (w' := []) (y' := t) hu' (by simp)
+  refine I.shrink_of_delete (x' := []) (w' := []) (y' := t) hu' (by simp)
     (Or.inl (List.ne_nil_of_length_pos (by omega))) ?_ hg ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
   · simpa using hself
   · exact I.A.runFrom_of_atCut hu' hxl (by omega) hf.1
@@ -474,10 +472,10 @@ theorem shrinkS_restU (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru : ℕ}
     exact ⟨s₀, e₀, hev₀, Or.inl ⟨by omega, by simp⟩⟩
 
 /-- Many unpartnered target rest cuts: delete a factor of the target alone. -/
-theorem shrinkS_restT (hp : LeastStreamPeriod ξ p) {u t : Word α} {rt : ℕ}
-    (hg : I.PumpGoodS ξ u t) (ht : PeriodicSplit ξ p t rt) (P : Finset ℕ)
+theorem shrink_restT (hp : LeastStreamPeriod ξ p) {u t : Word α} {rt : ℕ}
+    (hg : I.PumpGood ξ u t) (ht : PeriodicSplit ξ p t rt) (P : Finset ℕ)
     (hP : ∀ e ∈ P, e < rt ∧ ∀ s ≤ u.length, prepend (t.drop e) ξ ≠ prepend (u.drop s) ξ)
-    (h : Fintype.card (SB × SB') < P.card) : I.ShrinksS ξ u t := by
+    (h : Fintype.card (SB × SB') < P.card) : I.Shrinks ξ u t := by
   obtain ⟨hg, hself⟩ := hg
   have htl := ht.le_length
   obtain ⟨i, hi, j, hj, hlt, hf⟩ := exists_lt_map_eq_finset P
@@ -485,7 +483,7 @@ theorem shrinkS_restT (hp : LeastStreamPeriod ξ p) {u t : Word α} {rt : ℕ}
   simp only [Prod.mk.injEq] at hf
   obtain ⟨hjr, hun⟩ := hP j hj
   obtain ⟨x', w', ht', hxl', hwl'⟩ := exists_split3 t hlt.le (by omega : j ≤ t.length)
-  refine I.shrinkS_of_delete (x := []) (w := []) (y := u) (by simp) ht'
+  refine I.shrink_of_delete (x := []) (w := []) (y := u) (by simp) ht'
     (Or.inr (List.ne_nil_of_length_pos (by omega))) ?_ hg ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
   · apply I.selfGuardFree_delete_rest (by rwa [ht'])
     · exact I.B.runFrom_of_atCut ht' hxl' (by omega) hf.1
@@ -510,12 +508,12 @@ theorem shrinkS_restT (hp : LeastStreamPeriod ξ p) {u t : Word α} {rt : ℕ}
 /-! ## Pigeonhole over the six cases and the induction -/
 
 /-- One deletion applies to every survivor-free pre-hole with a long word. -/
-theorem pump_stepS (hp : LeastStreamPeriod ξ p) {u t : Word α} (hg : I.PumpGoodS ξ u t)
+theorem pump_step (hp : LeastStreamPeriod ξ p) {u t : Word α} (hg : I.PumpGood ξ u t)
     (hlong : Fintype.card (SA × SA' × SB × SB' × Fin p × Bool) +
         Fintype.card (SA × SA' × Fin p) + Fintype.card (SB × SB' × Fin p) +
         Fintype.card (SA × SA' × SB × SB' × Bool) + Fintype.card (SA × SA') +
         Fintype.card (SB × SB') ≤ max u.length t.length) :
-    I.ShrinksS ξ u t := by
+    I.Shrinks ξ u t := by
   classical
   obtain ⟨ru, hu⟩ := periodicSplit_exists hp.2.1 u
   obtain ⟨rt, ht⟩ := periodicSplit_exists hp.2.1 t
@@ -523,21 +521,21 @@ theorem pump_stepS (hp : LeastStreamPeriod ξ p) {u t : Word α} (hg : I.PumpGoo
   have htl := ht.le_length
   by_cases h1 : Fintype.card (SA × SA' × SB × SB' × Fin p × Bool) ≤ u.length - ru ∧
       Fintype.card (SA × SA' × SB × SB' × Fin p × Bool) ≤ t.length - rt
-  · exact I.shrinkS_joint hp hg hu ht h1.1 h1.2
+  · exact I.shrink_joint hp hg hu ht h1.1 h1.2
   by_cases h2 : t.length - rt + Fintype.card (SA × SA' × Fin p) ≤ u.length - ru
-  · exact I.shrinkS_soloU hp hg hu ht h2
+  · exact I.shrink_soloU hp hg hu ht h2
   by_cases h3 : u.length - ru + 1 + Fintype.card (SB × SB' × Fin p) ≤ t.length - rt
-  · exact I.shrinkS_soloT hp hg hu ht h3
+  · exact I.shrink_soloT hp hg hu ht h3
   set Pu := (Finset.range ru).filter
     (fun j => ∃ e ≤ t.length, prepend (u.drop j) ξ = prepend (t.drop e) ξ) with hPu
   by_cases h4 : Fintype.card (SA × SA' × SB × SB' × Bool) < Pu.card
-  · refine I.shrinkS_restSync hp hg hu ht Pu (fun j hj => ?_) h4
+  · refine I.shrink_restSync hp hg hu ht Pu (fun j hj => ?_) h4
     simp only [hPu, Finset.mem_filter, Finset.mem_range] at hj
     exact hj
   set Uu := (Finset.range ru).filter
     (fun j => ¬ ∃ e ≤ t.length, prepend (u.drop j) ξ = prepend (t.drop e) ξ) with hUu
   by_cases h5 : Fintype.card (SA × SA') < Uu.card
-  · refine I.shrinkS_restU hp hg hu Uu (fun j hj => ?_) h5
+  · refine I.shrink_restU hp hg hu Uu (fun j hj => ?_) h5
     simp only [hUu, Finset.mem_filter, Finset.mem_range, not_exists, not_and] at hj
     exact ⟨hj.1, fun e he heq => hj.2 e he heq⟩
   set Pt := (Finset.range rt).filter
@@ -545,7 +543,7 @@ theorem pump_stepS (hp : LeastStreamPeriod ξ p) {u t : Word α} (hg : I.PumpGoo
   set Ut := (Finset.range rt).filter
     (fun e => ¬ ∃ s ≤ u.length, prepend (t.drop e) ξ = prepend (u.drop s) ξ) with hUt
   by_cases h6 : Fintype.card (SB × SB') < Ut.card
-  · refine I.shrinkS_restT hp hg ht Ut (fun e he => ?_) h6
+  · refine I.shrink_restT hp hg ht Ut (fun e he => ?_) h6
     simp only [hUt, Finset.mem_filter, Finset.mem_range, not_exists, not_and] at he
     exact ⟨he.1, fun s hs heq => he.2 s hs heq⟩
   exfalso
@@ -574,13 +572,13 @@ theorem pump_stepS (hp : LeastStreamPeriod ξ p) {u t : Word α} (hg : I.PumpGoo
   omega
 
 /-- Repeated deletion, by induction on the total length. -/
-theorem pumpGoodS_short (hp : LeastStreamPeriod ξ p) {K : ℕ}
+theorem pumpGood_short (hp : LeastStreamPeriod ξ p) {K : ℕ}
     (hK : Fintype.card (SA × SA' × SB × SB' × Fin p × Bool) +
         Fintype.card (SA × SA' × Fin p) + Fintype.card (SB × SB' × Fin p) +
         Fintype.card (SA × SA' × SB × SB' × Bool) + Fintype.card (SA × SA') +
         Fintype.card (SB × SB') ≤ K) :
-    ∀ N, ∀ u t : Word α, u.length + t.length ≤ N → I.PumpGoodS ξ u t →
-      ∃ u' t', I.PumpGoodS ξ u' t' ∧ I.A.run u' = I.A.run u ∧
+    ∀ N, ∀ u t : Word α, u.length + t.length ≤ N → I.PumpGood ξ u t →
+      ∃ u' t', I.PumpGood ξ u' t' ∧ I.A.run u' = I.A.run u ∧
         u'.length < K ∧ t'.length < K := by
   intro N
   induction N with
@@ -589,132 +587,47 @@ theorem pumpGoodS_short (hp : LeastStreamPeriod ξ p) {K : ℕ}
     by_cases hs : u.length < K ∧ t.length < K
     · exact ⟨u, t, hg, rfl, hs⟩
     · rw [not_and_or] at hs
-      obtain ⟨u', t', -, -, hlt⟩ := I.pump_stepS hp hg (by omega)
+      obtain ⟨u', t', -, -, hlt⟩ := I.pump_step hp hg (by omega)
       omega
   | succ N ih =>
     intro u t hN hg
     by_cases hs : u.length < K ∧ t.length < K
     · exact ⟨u, t, hg, rfl, hs⟩
     · rw [not_and_or] at hs
-      obtain ⟨u', t', hg', hrun, hlt⟩ := I.pump_stepS hp hg (by omega)
+      obtain ⟨u', t', hg', hrun, hlt⟩ := I.pump_step hp hg (by omega)
       obtain ⟨u'', t'', hg'', hrun', hl⟩ := ih u' t' (by omega) hg'
       exact ⟨u'', t'', hg'', hrun'.trans hrun, hl⟩
 
-/-- The self-aware pump has exactly the parent's polynomial capacity. -/
-theorem purelyPeriodicShortPreHoleS_pump [Inhabited α] :
-    I.PurelyPeriodicShortPreHoleS
+/-- Self guards preserve the polynomial capacity of the deletion toolkit. -/
+theorem purelyPeriodicShortPreHole_pump [Inhabited α] :
+    I.PurelyPeriodicShortPreHole
       (pumpCapacity (Fintype.card SA) (Fintype.card SB) (Fintype.card SA')
         (Fintype.card SB')) := by
   rintro q ξ - hl hper ⟨u, t, hph, hq, hsf, hself⟩
   obtain ⟨p, hp⟩ := leastPeriod_exists hper
-  have hpa := I.toSS2.lasso_leastPeriod_le hl hp
+  have hpa := I.toTwoWordInstance.lasso_leastPeriod_le hl hp
   obtain ⟨u', t', hg, hrun, hu', ht'⟩ :=
-    I.pumpGoodS_short hp (SS2.pumpSize_le hpa) _ u t le_rfl
-      ((I.pumpGoodS_iff ξ u t).mpr ⟨hph, hsf, hself⟩)
-  obtain ⟨hph', hsf', hself'⟩ := (I.pumpGoodS_iff ξ u' t').mp hg
+    I.pumpGood_short hp (TwoWordInstance.pumpSize_le hpa) _ u t le_rfl
+      ((I.pumpGood_iff ξ u t).mpr ⟨hph, hsf, hself⟩)
+  obtain ⟨hph', hsf', hself'⟩ := (I.pumpGood_iff ξ u' t').mp hg
   exact ⟨u', t', hph', hrun.trans hq, hsf', hself', hu', ht'⟩
 
-end DeciENSSE.Core.SS2Self
+end DeciENSSE.Core.Words.Self.SelfTwoWordInstance
 
-namespace DeciENSSE.Core
+namespace DeciENSSE.Core.Words.Self
 
 variable {α : Type*}
 
 /-- The periodic shortening premise with the maximum-form capacity. -/
-theorem purelyPeriodicShortPreHoleS_capacity [Inhabited α] (a b c d : ℕ)
-    (I : SS2Self α (Fin a) (Fin b) (Fin c) (Fin d)) :
-    I.PurelyPeriodicShortPreHoleS (max (12 * a * b * c * d) (pumpCapacity a b c d)) := by
-  have h := I.purelyPeriodicShortPreHoleS_pump
+theorem purelyPeriodicShortPreHole_capacity [Inhabited α] (a b c d : ℕ)
+    (I : SelfTwoWordInstance α (Fin a) (Fin b) (Fin c) (Fin d)) :
+    I.PurelyPeriodicShortPreHole (max (12 * a * b * c * d) (pumpCapacity a b c d)) := by
+  have h := I.purelyPeriodicShortPreHole_pump
   simp only [Fintype.card_fin] at h
   intro q ξ hq hl hper hex
   obtain ⟨u, t, h1, h2, h3, h4, h5, h6⟩ := h q ξ hq hl hper hex
   exact ⟨u, t, h1, h2, h3, h4,
     h5.trans_le (le_max_right _ _), h6.trans_le (le_max_right _ _)⟩
 
-end DeciENSSE.Core
+end DeciENSSE.Core.Words.Self
 
-namespace DeciENSSE.Core.PumpSExamples
-open SS2Self
-
-/-- Non-vacuity with an actual pending self event and a periodic continuation
-that destroys it. The nonempty self guard is checked by the stronger invariant. -/
-theorem pending_pumpGoodS :
-    SS2SelfExamples.pending.PumpGoodS (fun _ => true) [false] [false] := by
-  apply (SS2SelfExamples.pending.pumpGoodS_iff _ _ _).mpr
-  refine ⟨SS2SelfExamples.pending_preHole, ?_, ?_⟩
-  · intro s e he
-    simpa [SS2SelfExamples.pending] using he.2.2
-  · apply (SS2SelfExamples.pending.selfSurvivorFree_iff
-      SS2SelfExamples.pending_preHole.2.1).mpr
-    intro i j hij hj heq
-    have hi : i = 0 := by simp only [List.length_singleton] at hj; omega
-    have hj' : j = 1 := by simp only [List.length_singleton] at hj; omega
-    subst i j
-    have h := congrFun heq 0
-    simp [prepend] at h
-
-/-- The stronger invariant has inputs of arbitrarily large total length. -/
-theorem periodicGuard_long (k : ℕ) :
-    NonMortalExamples.periodicGuardInstance.toSelf.PumpGoodS (fun _ => false)
-      (true :: List.replicate k false) [] := by
-  refine ⟨NonMortalExamples.periodicGuard_long k, ?_⟩
-  intro i j hij hj
-  simp only [List.length_nil] at hj
-  omega
-
-/-- An inhabited thin, purely periodic input shortens with the unchanged capacity 68. -/
-theorem periodicGuard_long_short (k : ℕ) :
-    ∃ u t, NonMortalExamples.periodicGuardInstance.toSelf.IsPreHole u t ∧
-      NonMortalExamples.periodicGuardInstance.A.run u = 1 ∧
-      NonMortalExamples.periodicGuardInstance.toSelf.SurvivorFree u t (fun _ => false) ∧
-      NonMortalExamples.periodicGuardInstance.toSelf.SelfSurvivorFree t (fun _ => false) ∧
-      u.length < 68 ∧ t.length < 68 := by
-  let I := NonMortalExamples.periodicGuardInstance.toSelf
-  obtain ⟨hph, hsf, hself⟩ := (I.pumpGoodS_iff _ _ _).mp (periodicGuard_long k)
-  have hrun : I.A.run (true :: List.replicate k false) = 1 := by
-    have h := NonMortalExamples.periodicGuard_atCut k (k + 1) (by omega)
-    rwa [LDFA.atCut, List.take_of_length_le (by simp)] at h
-  have h := I.purelyPeriodicShortPreHoleS_pump 1 (fun _ => false)
-    NonMortalExamples.periodicGuard_thin NonMortalExamples.periodicGuard_lasso
-    ⟨1, by decide, fun _ => rfl⟩ ⟨_, _, hph, hrun, hsf, hself⟩
-  simpa [I, SS2.toSelf, pumpCapacity] using h
-
-/-- The ternary pump family also satisfies the self-aware invariant. -/
-theorem ternaryPump_long (k : ℕ) :
-    NonMortalExamples.ternaryPumpInstance.toSelf.PumpGoodS (fun _ => 1)
-      (2 :: List.replicate k 1) [] := by
-  refine ⟨NonMortalExamples.ternaryPump_long k, ?_⟩
-  intro i j hij hj
-  simp only [List.length_nil] at hj
-  omega
-
-/-- Arbitrarily long ternary inputs shorten with both survivor conditions and
-exactly the same capacity 68 as the parent pump. -/
-theorem ternaryPump_long_short (k : ℕ) :
-    ∃ u t, NonMortalExamples.ternaryPumpInstance.toSelf.IsPreHole u t ∧
-      NonMortalExamples.ternaryPumpInstance.A.run u = 1 ∧
-      NonMortalExamples.ternaryPumpInstance.toSelf.SurvivorFree u t (fun _ => 1) ∧
-      NonMortalExamples.ternaryPumpInstance.toSelf.SelfSurvivorFree t (fun _ => 1) ∧
-      u.length < 68 ∧ t.length < 68 := by
-  let I := NonMortalExamples.ternaryPumpInstance.toSelf
-  have hp : LeastStreamPeriod (fun _ => (1 : Fin 3)) 1 :=
-    ⟨by decide, fun _ => rfl, fun _ hq _ => hq⟩
-  have hsize := SS2.pumpSize_le (SA := Fin 3) (SB := Fin 1)
-    (SA' := Fin 1) (SB' := Fin 2) (p := 1) (by decide)
-  obtain ⟨u, t, hg, hrun, hu, ht⟩ := I.pumpGoodS_short hp hsize _ _ _
-    le_rfl (ternaryPump_long k)
-  obtain ⟨hph, hsf, hself⟩ := (I.pumpGoodS_iff _ _ _).mp hg
-  have hend : I.A.run (2 :: List.replicate k 1) = 1 := by
-    have h := NonMortalExamples.ternaryPump_atCut k (k + 1) (by omega)
-    rwa [LDFA.atCut, List.take_of_length_le (by simp)] at h
-  exact ⟨u, t, hph, hrun.trans hend, hsf, hself,
-    by simpa [pumpCapacity] using hu, by simpa [pumpCapacity] using ht⟩
-
-/-- Exercise the exact max-form endpoint at a ternary alphabet. -/
-theorem ternary_max_capacity :
-    NonMortalExamples.ternaryPumpInstance.toSelf.PurelyPeriodicShortPreHoleS 72 := by
-  simpa [pumpCapacity] using
-    (purelyPeriodicShortPreHoleS_capacity 3 1 1 2
-      NonMortalExamples.ternaryPumpInstance.toSelf)
-
-end DeciENSSE.Core.PumpSExamples

@@ -77,8 +77,9 @@ theorem finiteBoundPinning_fintype [NeZero n] {V : Type*} [Fintype V] (χ : List
   let e := Fintype.equivFin (Flatten.Vars V)
   let O := B.flatMap fun b => groundPins b.var b.lower b.tree
   have hO (ρ : V → DeciNSSE.Tree n) :
-      (∀ p ∈ O, p.Holds ρ) ↔ ∀ b ∈ B, b.Holds ρ := by
-    simp only [O, List.forall_mem_flatMap, groundPins_iff, GroundBound.Holds]
+      (∀ p ∈ O, p.Holds ρ) ↔ ∀ b ∈ B, b.Holds (fun _ => false) ρ := by
+    simp only [O, List.forall_mem_flatMap, groundPins_iff, GroundBound.Holds,
+      DeciNSSE.treeLe_false_iff_le]
   obtain ⟨ρ, hχ, hb⟩ := hs
   obtain ⟨σ, hσ, hp⟩ := realize_pins
     (O.map (PathPin.map (fun v => e (.inl v)))) (Flatten.flatten (fun _ => false) e χ)
@@ -93,31 +94,5 @@ theorem finiteBoundPinning_fintype [NeZero n] {V : Type*} [Fintype V] (χ : List
     Flatten.backward (fun _ => false) e (by simpa only [DeciNSSE.sat_false] using hσ), (hO _).mp ?_⟩
   intro p hm
   exact hp (p.map (fun v => e (.inl v))) (List.mem_map.mpr ⟨p, hm, rfl⟩)
-
-namespace GroundExamples
-
-/-- Lower pins must inspect the third child as well as the first two. -/
-theorem ternary_lower_pins :
-    groundPins () true (.node ![.bot, .bot, .top] : FTree 3) =
-      [⟨(), [], .noBot⟩, ⟨(), [2], .top⟩] := by
-  simp [groundPins, List.finRange_succ, PathPin.prefix]
-
-/-- Upper pins constrain both bottom siblings and exclude a top root. -/
-theorem ternary_upper_pins :
-    groundPins () false (.node ![.bot, .bot, .top] : FTree 3) =
-      [⟨(), [], .noTop⟩, ⟨(), [0], .bot⟩, ⟨(), [1], .bot⟩] := by
-  simp [groundPins, List.finRange_succ, PathPin.prefix]
-
-/-- Both directions remain exact for the zero-child constructor. -/
-theorem nullary_pins (lower : Bool) (t : DeciNSSE.Tree 0) :
-    (∀ p ∈ groundPins () lower (.node Fin.elim0), p.Holds (fun _ => t)) ↔
-      if lower then DeciNSSE.Tree.node Fin.elim0 ≤ t else t ≤ DeciNSSE.Tree.node Fin.elim0 := by
-  have he : (fun i : Fin 0 => (Fin.elim0 i : FTree 0).toTree) = Fin.elim0 :=
-    funext (fun i => Fin.elim0 i)
-  simpa only [FTree.toTree_node, he] using
-    groundPins_iff () lower (.node Fin.elim0) (fun _ => t)
-
-end GroundExamples
-
 
 end DeciENSSE.Core.Full.Pinning

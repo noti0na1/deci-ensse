@@ -1,4 +1,4 @@
-import DeciENSSE.Core.Words.SS2
+import DeciENSSE.Core.Words.TwoWordInstance
 import DeciNSSE.Holes.CoAlignment
 
 /-! # Separator words and anchored comparisons
@@ -17,10 +17,10 @@ equal. Words with exactly one separator are exactly the separator words.
 - `separator_unique`, `exists_sepWord`: the separator position, and words with one
   separator.
 
-The declarations are in the namespace `DeciENSSE.Core.Mortal`.
+The declarations are in the namespace `DeciENSSE.Core.Words.Mortal`.
 -/
 
-namespace DeciENSSE.Core.Mortal
+namespace DeciENSSE.Core.Words.Mortal
 
 variable {α : Type*}
 open DeciNSSE.CoAlignment
@@ -208,4 +208,4 @@ theorem exists_sepWord [DecidableEq α] (w : List (Option α)) (h : w.count none
       obtain ⟨u,t,rfl⟩ := ih (by simpa using h)
       exact ⟨a :: u, t, rfl⟩
 
-end DeciENSSE.Core.Mortal
+end DeciENSSE.Core.Words.Mortal

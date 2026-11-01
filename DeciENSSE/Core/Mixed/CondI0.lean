@@ -12,6 +12,7 @@ condition, giving a finite decision procedure at every arity.
 -/
 
 namespace DeciENSSE.Core.Mixed
+open DeciENSSE.Core.Words
 
 variable {n : ℕ}
 open DeciENSSE.Core.Full
@@ -84,52 +85,5 @@ def decideCondI0 : Decidable (CondI0 c φ ψ) :=
 theorem decideCondI0_true_iff :
     @decide (CondI0 c φ ψ) (decideCondI0 c φ ψ) = true ↔ CondI0 c φ ψ :=
   @decide_eq_true_iff _ (decideCondI0 c φ ψ)
-
-namespace CondIExamples
-open LeafHornExamples
-
-/-- The successful condition already has a mixed, nonempty consequent. -/
-theorem mixed_positive :
-    @decide (CondI0 arrow [] ConditionsExamples.separate)
-      (decideCondI0 arrow [] ConditionsExamples.separate) = true :=
-  (decideCondI0_true_iff _ _ _).mpr ConditionsExamples.separate_condI0
-
-/-- A consequent forcing a visible positive root unit. -/
-def forcedVisible : List (LitT 3 (Unit ⊕ Empty)) := [.top (.inl ())]
-
-/-- A new visible positive unit witnesses failure at cut zero. -/
-theorem forced_failure : FailureI0 arrow [] forcedVisible ((), false) [] := by
-  apply (failureI0_iff _ _ _ _ _).mpr
-  constructor
-  · exact mem_mu.mpr ⟨(.inl (), false, []), .top (by simp [forcedVisible]), .refl⟩
-  · intro hm
-    obtain ⟨f, hf, _⟩ := mem_mu.mp hm
-    cases hf <;> simp_all
-
-/-- The positive-unit decision rejects an unforced visible consequent unit. -/
-theorem forced_negative :
-    @decide (CondI0 arrow [] forcedVisible) (decideCondI0 arrow [] forcedVisible) = false := by
-  rw [decide_eq_false_iff_not, not_condI0_iff]
-  exact ⟨((), false), [], forced_failure⟩
-
-/-- A forced visible root hit persists along the third child. -/
-theorem third_child_failure : FailureI0 arrow [] forcedVisible ((), false) [2] := by
-  decide +kernel
-
-/-- There are no visible atoms when X is empty, even if ψ forces hidden facts. -/
-theorem no_visible (c : Fin n → Bool) (ψ : List (LitT n (Empty ⊕ Unit))) :
-    @decide (CondI0 c [] ψ) (decideCondI0 c [] ψ) = true := by
-  rw [decideCondI0_true_iff]
-  intro a
-  exact a.1.elim
-
-/-- Empty visible variables and an empty alphabet still admit the decision. -/
-theorem nullary_no_visible :
-    @decide (CondI0 (fun i : Fin 0 => i.elim0) []
-      ([.top (.inr ())] : List (LitT 0 (Empty ⊕ Unit))))
-      (decideCondI0 (fun i : Fin 0 => i.elim0) [] [.top (.inr ())]) = true :=
-  no_visible _ _
-
-end CondIExamples
 
 end DeciENSSE.Core.Mixed

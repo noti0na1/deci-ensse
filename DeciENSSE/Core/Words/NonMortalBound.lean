@@ -2,30 +2,37 @@ import Mathlib.Tactic.Ring
 import Mathlib.Tactic.FinCases
 import DeciENSSE.Core.Words.NonMortalLasso
 
-/-! # Finite pre-hole automata and non-mortal bounds
+/-! # Finite pre-hole automata
 
-A finite two-tape graph bounds branching and aperiodic witnesses. The remaining
-purely periodic case is exposed as an explicit premise.
+A finite two-tape graph recognizes pre-holes with a prescribed set of spine endpoints.
+Loop erasure bounds the lengths of accepted words, yielding a finite pre-hole search.
 
 ## Main declarations
 
-- `TwoTape.short_accepts`
-- `SS2.short_preHole`
-- `nonMortalShortHoleBound_of_periodic`
+- `TwoTapeGraph.short_accepts`: bound an accepted pair by the vertex count.
+- `TwoWordInstance.preHoleGraph_correct`: characterize accepted pairs.
+- `TwoWordInstance.short_preHole`: shorten a pre-hole while retaining its endpoint set.
+- `TwoWordInstance.preHoleExistsDecidable`: decide existence by bounded search.
 -/
 
-namespace DeciENSSE.Core
+namespace DeciENSSE.Core.Words
 
 variable {α : Type*}
 
-/-- A forward two-tape graph reads right-aligned word pairs. -/
-structure TwoTape (α : Type*) (V : Type*) where
+/-- A directed graph whose edges read at most one letter on each tape.
+`none` reads no letter, so an edge may be silent on either or both tapes. The graph
+itself imposes no alignment condition: `TwoWordInstance.preHoleGraph` uses a phase
+in its vertices to enforce right alignment of accepted word pairs. -/
+structure TwoTapeGraph (α : Type*) (V : Type*) where
+  /-- Labeled directed edges; `none` is a silent tape action. -/
   edge : V → V → Option α → Option α → Prop
+  /-- Permitted initial vertices. -/
   initial : V → Prop
+  /-- Accepting vertices. -/
   final : V → Prop
 
-namespace TwoTape
-variable {V : Type*} (G : TwoTape α V)
+namespace TwoTapeGraph
+variable {V : Type*} (G : TwoTapeGraph α V)
 
 /-- A finite walk through labeled two-tape edges. -/
 inductive Walk (a : V) : V → Type _
@@ -98,7 +105,7 @@ def Accepts (u t : Word α) : Prop :=
   ∃ a b, G.initial a ∧ G.final b ∧
     ∃ p : G.Walk a b, p.left = u ∧ p.right = t
 
-/-- The finite graph bound following def:nm-twotape. -/
+/-- If some pair is accepted, a pair with both words shorter than the vertex count is accepted. -/
 theorem short_accepts [Fintype V] {u t : Word α} (h : G.Accepts u t) :
     ∃ v w, G.Accepts v w ∧ v.length < Fintype.card V ∧ w.length < Fintype.card V := by
   classical
@@ -110,9 +117,9 @@ theorem short_accepts [Fintype V] {u t : Word α} (h : G.Accepts u t) :
     lt_of_lt_of_le q.length_bounds.1 hcard,
     lt_of_lt_of_le q.length_bounds.2 hcard⟩
 
-end TwoTape
+end TwoTapeGraph
 
-namespace SS2
+namespace TwoWordInstance
 
 /-- Aligned cuts carrying an arbitrary relation on a pair of automata. -/
 def AlignedHit {S T : Type*} (M : LDFA α S) (N : LDFA α T)
@@ -197,7 +204,7 @@ structure PreNode (SA SB SA' SB' : Type*) where
 variable {SA SB SA' SB' : Type*} [Fintype SA] [Fintype SB]
   [Fintype SA'] [Fintype SB'] [DecidableEq SA] [DecidableEq SB]
   [DecidableEq SA'] [DecidableEq SB']
-variable (I : SS2 α SA SB SA' SB')
+variable (I : TwoWordInstance α SA SB SA' SB')
 
 /-- The target has not rejected at any proper cut. -/
 def TargetOpen (t : Word α) : Prop := ∀ i < t.length, I.B.atCut t i ∉ I.Rej
@@ -333,7 +340,7 @@ theorem preBoth_node (u t : Word α) (c d : α) (phase : Fin 3) :
 
 /-- A computable two-tape graph recognizing pre-holes with endpoint in `E`.
 Only one tape may run ahead initially; thereafter both tapes move together. -/
-def preHoleGraph (E : Finset SA) : TwoTape α (PreNode SA SB SA' SB') where
+def preHoleGraph (E : Finset SA) : TwoTapeGraph α (PreNode SA SB SA' SB') where
   edge p q x y := match x, y with
     | some c, none => p.phase = 0 ∧ q = I.preLeft p c ∧ q.a ∉ I.Bad
     | none, some d => p.phase = 1 ∧ q = I.preRight p d ∧ p.b ∉ I.Rej
@@ -410,8 +417,8 @@ theorem preValid_walk (E : Finset SA) {a b : PreNode SA SB SA' SB'}
     I.PreValid b p.left p.right := by
   induction p with
   | nil =>
-    exact ⟨a.phase, ha.1, by simpa [SafeFrom, TwoTape.Walk.left] using ha.2,
-      by simp [TargetOpen, TwoTape.Walk.right], fun _ => rfl, fun _ => rfl⟩
+    exact ⟨a.phase, ha.1, by simpa [SafeFrom, TwoTapeGraph.Walk.left] using ha.2,
+      by simp [TargetOpen, TwoTapeGraph.Walk.right], fun _ => rfl, fun _ => rfl⟩
   | snoc p x y h ih => exact I.preValid_step E ih h
 
 /-- Soundness of the pre-hole graph. -/
@@ -439,8 +446,8 @@ theorem preHoleGraph_leftWalk (E : Finset SA) {u : Word α}
     have he : (I.preHoleGraph E).edge (I.preNode u [] 0)
         (I.preNode (u ++ [c]) [] 0) (some c) none :=
       ⟨rfl, (I.preLeft_node u c 0).symm, by simpa only [preNode, run_snoc] using hc⟩
-    exact ⟨p.snoc _ _ he, by simp [TwoTape.Walk.left, hp],
-      by simp [TwoTape.Walk.right, ht]⟩
+    exact ⟨p.snoc _ _ he, by simp [TwoTapeGraph.Walk.left, hp],
+      by simp [TwoTapeGraph.Walk.right, ht]⟩
 
 /-- The initial target-only phase reads any target with no proper rejection. -/
 theorem preHoleGraph_rightWalk (E : Finset SA) {t : Word α} (ht : I.TargetOpen t) :
@@ -454,8 +461,8 @@ theorem preHoleGraph_rightWalk (E : Finset SA) {t : Word α} (ht : I.TargetOpen 
     have he : (I.preHoleGraph E).edge (I.preNode [] t 1)
         (I.preNode [] (t ++ [d]) 1) none (some d) :=
       ⟨rfl, (I.preRight_node t d 1).symm, hd⟩
-    exact ⟨p.snoc _ _ he, by simp [TwoTape.Walk.left, hp],
-      by simp [TwoTape.Walk.right, ht]⟩
+    exact ⟨p.snoc _ _ he, by simp [TwoTapeGraph.Walk.left, hp],
+      by simp [TwoTapeGraph.Walk.right, ht]⟩
 
 /-- Every safe pair with no proper target rejection has its canonical
 right-aligned convolution run. -/
@@ -482,7 +489,7 @@ theorem preHoleGraph_run (E : Finset SA) {u t : Word α}
         ⟨(I.preBoth_node u t c d phase).symm,
           by simpa only [preNode, run_snoc] using hc, hd⟩
       exact ⟨a, 2, ha, p.snoc _ _ he,
-        by simp [TwoTape.Walk.left, hp], by simp [TwoTape.Walk.right, hq]⟩
+        by simp [TwoTapeGraph.Walk.left, hp], by simp [TwoTapeGraph.Walk.right, hq]⟩
 
 /-- Completeness of the pre-hole graph. -/
 theorem preHoleGraph_complete (E : Finset SA) {u t : Word α}
@@ -532,240 +539,6 @@ def preHoleExistsDecidable [Fintype α] (E : Finset SA) :
         exact ⟨v, (mem_wordsUpTo _ _).mpr (Nat.le_of_lt hv),
           w, (mem_wordsUpTo _ _).mpr (Nat.le_of_lt hw), hp, he⟩)
 
-variable [Inhabited α]
+end TwoWordInstance
 
-/-- A branching pre-hole gives a bounded hole. -/
-theorem short_branching_hole {u t : Word α} (hp : I.IsPreHole u t)
-    (hb : I.Branching (I.A.run u)) :
-    ∃ v w, I.IsHole v w ∧ v.length + w.length ≤
-      4 * (12 * Fintype.card SA * Fintype.card SB * Fintype.card SA' * Fintype.card SB') +
-        6 * Fintype.card SA := by
-  obtain ⟨v, w, hvw, he, hv, hw⟩ := I.short_preHole {I.A.run u} hp (by simp)
-  have heq : I.A.run v = I.A.run u := Finset.mem_singleton.mp he
-  obtain ⟨θ, hθ, hlen⟩ := I.preHole_breaker hvw (heq ▸ hb)
-  refine ⟨v ++ θ, w ++ θ, I.preHole_complete hvw hθ, ?_⟩
-  simp only [List.length_append]
-  omega
-
-omit [DecidableEq α] in
-/-- Completion of any short, survivor-free lasso pre-hole. -/
-theorem short_hole_of_lasso {u t : Word α} {ξ : ℕ → α} {K : ℕ}
-    (hp : I.IsPreHole u t) (hl : I.Lasso (I.A.run u) ξ)
-    (hf : I.SurvivorFree u t ξ) (hu : u.length < K) (ht : t.length < K) :
-    ∃ v w, I.IsHole v w ∧ v.length + w.length ≤ 4 * K + 2 * Fintype.card SA := by
-  let θ := streamPrefix ξ (u.length + Fintype.card SA - 1)
-  refine ⟨u ++ θ, t ++ θ, I.preHole_complete hp (I.lasso_completes hl hf), ?_⟩
-  simp only [List.length_append, θ, length_streamPrefix]
-  omega
-
-/-- An aperiodic safe lasso gives a bounded hole from any pre-hole at its endpoint. -/
-theorem short_aperiodic_hole {u t : Word α} {ξ : ℕ → α}
-    (hp : I.IsPreHole u t) (hl : I.Lasso (I.A.run u) ξ)
-    (hn : ¬ ∃ p, 0 < p ∧ StreamPeriod ξ p) :
-    ∃ v w, I.IsHole v w ∧ v.length + w.length ≤
-      4 * (12 * Fintype.card SA * Fintype.card SB * Fintype.card SA' * Fintype.card SB') +
-        2 * Fintype.card SA := by
-  obtain ⟨v, w, hvw, he, hv, hw⟩ := I.short_preHole {I.A.run u} hp (by simp)
-  have heq : I.A.run v = I.A.run u := Finset.mem_singleton.mp he
-  exact I.short_hole_of_lasso hvw (heq ▸ hl) (I.aperiodic_survivorFree hvw hn) hv hw
-
-/-- The shortening premise for a purely periodic lasso. It asks only for a short pre-hole,
-retaining its endpoint
-and survivor-free stream, not for a hole or the final hole bound. -/
-def PurelyPeriodicShortPreHole (K : ℕ) : Prop :=
-  ∀ q ξ, I.Thin q → I.Lasso q ξ → (∃ p, 0 < p ∧ StreamPeriod ξ p) →
-    (∃ u t, I.IsPreHole u t ∧ I.A.run u = q ∧ I.SurvivorFree u t ξ) →
-    ∃ u t, I.IsPreHole u t ∧ I.A.run u = q ∧ I.SurvivorFree u t ξ ∧
-      u.length < K ∧ t.length < K
-
-/-- A non-vacuous class discharging the periodic premise: empty Guard.
-The periodic stream and thinness hypotheses need no strengthening. -/
-theorem purelyPeriodicShortPreHole_of_guard_empty (hg : I.Guard = ∅) {K : ℕ}
-    (hK : 12 * Fintype.card SA * Fintype.card SB * Fintype.card SA' * Fintype.card SB' ≤ K) :
-    I.PurelyPeriodicShortPreHole K := by
-  intro q ξ _ _ _ h
-  obtain ⟨u, t, hp, he, _⟩ := h
-  obtain ⟨v, w, hp, hv, hl, hr⟩ := I.short_preHole {q} hp (by simp [he])
-  refine ⟨v, w, hp, Finset.mem_singleton.mp hv, ?_, hl.trans_le hK, hr.trans_le hK⟩
-  intro s e h
-  exact (by simpa [hg] using h.2.2 : False).elim
-
-end SS2
-
-/-- Capacity used in the final theorem. The first term covers the proved
-pre-hole graph; the second is the periodic graph capacity C_I. -/
-def nonMortalPreHoleCapacity (a b c d : ℕ) : ℕ :=
-  max (12 * a * b * c * d) (2 ^ (a * a + 11) * a ^ 3 * b * c * d)
-
-/-- An explicit, executable HoleBound. -/
-def nonMortalHoleBound : HoleBound := fun a b c d =>
-  4 * nonMortalPreHoleCapacity a b c d + 6 * a
-
-variable [Fintype α] [DecidableEq α] [Inhabited α]
-
-/-- The non-mortal bound, conditional on purely periodic shortening. -/
-theorem nonMortalShortHoleBound_of_periodic
-    (hperiodic : ∀ a b c d, ∀ I : SS2 α (Fin a) (Fin b) (Fin c) (Fin d),
-      I.PurelyPeriodicShortPreHole (nonMortalPreHoleCapacity a b c d)) :
-    NonMortalShortHoleBound α nonMortalHoleBound := by
-  intro a b c d I _ hcase
-  obtain ⟨u, t, hp, hb | ⟨hthin, ξ, hs, hf⟩⟩ := hcase
-  · obtain ⟨v, w, hv, hlen⟩ := I.short_branching_hole hp hb
-    refine ⟨v, w, hv, ?_⟩
-    simp only [Fintype.card_fin] at hlen
-    have hK := le_max_left (12 * a * b * c * d) (2 ^ (a * a + 11) * a ^ 3 * b * c * d)
-    change v.length + w.length ≤ 4 * max _ _ + 6 * a
-    omega
-  · have hl := I.thin_lasso hthin hs
-    by_cases hper : ∃ p, 0 < p ∧ StreamPeriod ξ p
-    · obtain ⟨v, w, hp, he, hf, hv, hw⟩ :=
-        hperiodic a b c d I (I.A.run u) ξ hthin hl hper ⟨u, t, hp, rfl, hf⟩
-      obtain ⟨v', w', hh, hlen⟩ := I.short_hole_of_lasso hp (he ▸ hl) hf hv hw
-      refine ⟨v', w', hh, ?_⟩
-      simp only [Fintype.card_fin] at hlen
-      unfold nonMortalHoleBound
-      omega
-    · obtain ⟨v, w, hv, hlen⟩ := I.short_aperiodic_hole hp hl hper
-      refine ⟨v, w, hv, ?_⟩
-      simp only [Fintype.card_fin] at hlen
-      have hK := le_max_left (12 * a * b * c * d) (2 ^ (a * a + 11) * a ^ 3 * b * c * d)
-      change v.length + w.length ≤ 4 * max _ _ + 6 * a
-      omega
-
-namespace NonMortalExamples
-
-/-- The open periodic premise is satisfied by the zero-loop example. -/
-theorem thin_periodic_bound :
-    thinInstance.PurelyPeriodicShortPreHole (nonMortalPreHoleCapacity 2 1 1 2) := by
-  apply thinInstance.purelyPeriodicShortPreHole_of_guard_empty rfl
-  simp only [Fintype.card_fin]
-  exact le_max_left _ _
-
-/-- Its periodic branch has an actual trigger, so the preceding example
-is not satisfied merely because there are no thin periodic witnesses. -/
-theorem thin_periodic_trigger :
-    thinInstance.Thin 0 ∧ thinInstance.Lasso 0 (periodicStream [false]) ∧
-    (∃ p, 0 < p ∧ StreamPeriod (periodicStream [false]) p) ∧
-    (∃ u t, thinInstance.IsPreHole u t ∧ thinInstance.A.run u = 0 ∧
-      thinInstance.SurvivorFree u t (periodicStream [false])) := by
-  exact ⟨thin_state, thin_lasso, ⟨1, by decide, periodicStream_period [false]⟩,
-    [], [], thin_preHole, rfl, thin_survivorFree⟩
-
-/-- Positive recognition example for the pre-hole graph. -/
-theorem thin_preHole_accepted : (thinInstance.preHoleGraph {0}).Accepts [] [] :=
-  thinInstance.preHoleGraph_complete {0} thin_preHole (by decide)
-
-/-- One transient letter followed by the zero-loop; all other moves are bad. -/
-def aperiodicDFA : LDFA Bool (Fin 3) :=
-  ⟨0, fun q c => if (q = 0 ∧ c = true) ∨ (q = 1 ∧ c = false) then 1 else 2⟩
-
-/-- An instance whose safe stream has a one-letter stem followed by a zero-loop. -/
-def aperiodicInstance : SS2 Bool (Fin 3) (Fin 1) (Fin 1) (Fin 2) :=
-  CoreExamples.smallInstance aperiodicDFA {2}
-
-/-- The concrete starting state is thin. -/
-theorem aperiodic_thin : aperiodicInstance.Thin 0 := by
-  refine ⟨by decide, ?_, ?_⟩
-  · intro h
-    exact h.2 (by decide +kernel : aperiodicInstance.Viable 0)
-  · rintro ⟨_, r, _, _, a, b, hab, ha, hb⟩
-    fin_cases r <;> cases a <;> cases b <;>
-      simp_all [aperiodicInstance, CoreExamples.smallInstance, aperiodicDFA]
-
-/-- The concrete safe stream has a bounded lasso representation. -/
-theorem aperiodic_lasso :
-    aperiodicInstance.Lasso 0 (prepend [true] (periodicStream [false])) := by
-  exact ⟨[true], [false], by decide, by decide, by decide, rfl, rfl⟩
-
-/-- The concrete lasso stream has no positive period. -/
-theorem aperiodic_no_period :
-    ¬ ∃ p, 0 < p ∧ StreamPeriod (prepend [true] (periodicStream [false])) p := by
-  rintro ⟨p, hp, h⟩
-  have he := h 0
-  simp [prepend, periodicStream, Nat.mod_one, show ¬ p < 1 by omega] at he
-
-/-- An actual witness of the aperiodic thin branch, with FH. -/
-theorem aperiodic_trigger :
-    aperiodicInstance.FH ∧ aperiodicInstance.IsPreHole [] [] ∧
-      aperiodicInstance.Thin (aperiodicInstance.A.run []) ∧
-      aperiodicInstance.Lasso (aperiodicInstance.A.run [])
-        (prepend [true] (periodicStream [false])) ∧
-      ¬ ∃ p, 0 < p ∧ StreamPeriod (prepend [true] (periodicStream [false])) p := by
-  exact ⟨CoreExamples.smallInstance_fh _ _, by decide +kernel,
-    aperiodic_thin, aperiodic_lasso, aperiodic_no_period⟩
-
-/-- Concrete use of the proved aperiodic bound, not of the open premise. -/
-theorem aperiodic_short_hole :
-    ∃ u t, aperiodicInstance.IsHole u t ∧ u.length + t.length ≤ 294 := by
-  simpa using aperiodicInstance.short_aperiodic_hole aperiodic_trigger.2.1
-    aperiodic_lasso aperiodic_no_period
-
-/-- The graph reads a genuinely ternary safe spine and retains its endpoint. -/
-theorem ternary_preHole_accepted :
-    (CoreExamples.ternaryBranch.preHoleGraph {0}).Accepts [1, 2] [] := by
-  exact CoreExamples.ternaryBranch.preHoleGraph_complete {0}
-    (by decide +kernel) (by decide +kernel)
-
-/-- Unsafe spines, premature rejection, and a wrong endpoint are all rejected. -/
-theorem ternary_preHole_rejected :
-    ¬ (CoreExamples.ternaryBranch.preHoleGraph {0}).Accepts [0] [] ∧
-    ¬ (CoreExamples.ternaryBranch.preHoleGraph {0}).Accepts [] [1] ∧
-    ¬ (CoreExamples.ternaryBranch.preHoleGraph {1}).Accepts [1, 2] [] := by
-  simp only [CoreExamples.ternaryBranch.preHoleGraph_correct]
-  decide +kernel
-
-/-- Both stored bits persist on equal letters and reset on unequal letters.
-The freshly reached head and guard pairs in this example are absent. -/
-theorem ternary_preBoth_flags :
-    let I := CoreExamples.ternaryBranch
-    let p := { I.preNode [] [] 0 with gd := true }
-    (I.preBoth p 1 1).hd = true ∧ (I.preBoth p 1 1).gd = true ∧
-    (I.preBoth p 1 2).hd = false ∧ (I.preBoth p 1 2).gd = false := by
-  decide +kernel
-
-/-- The branching bound applies with the two safe letters one and two. -/
-theorem ternary_short_branching_hole :
-    ∃ u t, CoreExamples.ternaryBranch.IsHole u t ∧ u.length + t.length ≤ 204 := by
-  simpa using CoreExamples.ternaryBranch.short_branching_hole
-    CoreExamples.ternary_preHole CoreExamples.ternary_branching
-
-/-- A ternary instance with exactly one safe outgoing letter at its live state. -/
-def ternaryThinInstance : SS2 (Fin 3) (Fin 2) (Fin 1) (Fin 1) (Fin 2) :=
-  CoreExamples.smallInstance ⟨0, fun q c => if q = 0 ∧ c = 1 then 0 else 1⟩ {1}
-
-/-- The periodic interface has an actual ternary trigger, including FH. -/
-theorem ternary_periodic_trigger :
-    ternaryThinInstance.FH ∧ ternaryThinInstance.Thin 0 ∧
-    ternaryThinInstance.Lasso 0 (periodicStream [1]) ∧
-    (∃ p, 0 < p ∧ StreamPeriod (periodicStream ([1] : Word (Fin 3))) p) ∧
-    (∃ u t, ternaryThinInstance.IsPreHole u t ∧ ternaryThinInstance.A.run u = 0 ∧
-      ternaryThinInstance.SurvivorFree u t (periodicStream [1])) := by
-  refine ⟨CoreExamples.smallInstance_fh _ _, ?_, ?_,
-    ⟨1, by decide, periodicStream_period [1]⟩, [], [], by decide +kernel, rfl, ?_⟩
-  · exact @of_decide_eq_true _ (ternaryThinInstance.thinDecidable 0) (by decide +kernel)
-  · refine ⟨[], [1], by decide, by decide, by decide, rfl, ?_⟩
-    simp
-  · intro s e he
-    exact (Finset.notMem_empty _ he.2.2).elim
-
-/-- The periodic shortening premise is satisfied by the ternary trigger. -/
-theorem ternary_periodic_bound :
-    ternaryThinInstance.PurelyPeriodicShortPreHole (nonMortalPreHoleCapacity 2 1 1 2) := by
-  apply ternaryThinInstance.purelyPeriodicShortPreHole_of_guard_empty rfl
-  simp only [Fintype.card_fin]
-  exact le_max_left _ _
-
-/-- Empty alphabets still admit the finite pre-hole search. -/
-def emptyAlphabetInstance : SS2 (Fin 0) (Fin 1) (Fin 1) (Fin 1) (Fin 2) :=
-  CoreExamples.smallInstance CoreExamples.oneDFA ∅
-
-/-- Execute both outcomes of the search without requiring an inhabited alphabet. -/
-theorem emptyAlphabet_search :
-    @decide _ (emptyAlphabetInstance.preHoleExistsDecidable {0}) = true ∧
-    @decide _ (emptyAlphabetInstance.preHoleExistsDecidable ∅) = false := by
-  decide +kernel
-
-end NonMortalExamples
-
-
-end DeciENSSE.Core
+end DeciENSSE.Core.Words

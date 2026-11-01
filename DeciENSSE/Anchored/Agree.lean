@@ -6,7 +6,8 @@ import DeciNSSE.Holes.Agree
 Agreement of two monitors on a support is extended to channels: the monitors agree, the
 monitors carrying `F`, `R` and `S` as target and admissions agree, and `S'` and `Φ` are
 preserved on the labels and letters of the support. Such an agreement preserves positive
-holes over the support, composes, and passes through derivation.
+holes over the support, composes, and passes through derivation. It extends the agreement
+`DeciNSSE.BoundedDepth.Agree` of `DeciNSSE/Holes/Agree.lean`, whose lemmas the proofs use.
 
 ## Main declarations
 
@@ -140,6 +141,5 @@ theorem PosAgree.derive (F : List (List Γ)) (hF : ∀ X ∈ F, ∀ a ∈ X, a �
     exact h.at_block_map hℓ (hF X hX) 0
 
 end Derive
-
 
 end DeciENSSE.Anchored

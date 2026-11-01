@@ -1,5 +1,5 @@
 import DeciENSSE.Core.Full.Basic
-import DeciENSSE.Support.VarianceReg.RegularSat
+import DeciENSSE.Support.Graphs
 import DeciNSSE.Constraints.Basic
 import DeciNSSE.Satisfiability.FiniteVariance
 import DeciNSSE.Semantics.Finite
@@ -7,10 +7,12 @@ import DeciNSSE.Semantics.Order
 import DeciNSSE.Semantics.Regular
 import DeciNSSE.Semantics.Tree
 
-/-! # Flattening constraints and finite bounds
+/-! # Eliminating variable inequalities by constructor sandwiches
 
-Fresh variables flatten comparisons and ground trees into flat constraints.
-Regular and finite satisfiability transfer through this translation.
+The input is already a flat conjunction. This translation eliminates each
+variable inequality using two constructor bounds with a shared fresh witness;
+it does not flatten nested input terms. The distinguished child requires
+`NeZero n`. Finite and regular solutions transfer through these sandwiches.
 
 ## Main declarations
 
@@ -24,11 +26,6 @@ namespace DeciENSSE.Core.Full
 open DeciNSSE
 
 variable {n : ℕ}
-
-/-- Existence of a solution whose values belong to the specified tree class. -/
-def SatisfiableIn {V : Type*} (C : DeciNSSE.Tree n → Prop) (c : Fin n → Bool)
-    (χ : List (LitT n V)) : Prop :=
-  ∃ ρ, (∀ v, C (ρ v)) ∧ SatT c ρ χ
 
 namespace Flatten
 
@@ -170,7 +167,7 @@ theorem satisfiable_regular [NeZero n] {V : Type*} [Fintype V] (c : Fin n → Bo
     SatisfiableIn (fun t => ∃ g : RGraph n, g.unfold = t) c χ := by
   let e := Fintype.equivFin (Flatten.Vars V)
   obtain ⟨ρ, hρ⟩ := h
-  obtain ⟨τ, hτ⟩ := (Support.satRegGen_iff_satGen c (Flatten.flatten c e χ)).mpr
+  obtain ⟨τ, hτ⟩ := (Support.Graphs.satReg_iff_sat c (Flatten.flatten c e χ)).mpr
     ⟨_, Flatten.forward c e hρ⟩
   exact ⟨fun v => (τ (e (.inl v))).unfold, fun v => ⟨_, rfl⟩,
     Flatten.backward c e hτ⟩
@@ -185,65 +182,5 @@ def decideSatFin [NeZero n] {V : Type*} [Fintype V] [DecidableEq V]
   (Fintype.truncEquivFin (Flatten.Vars V)).recOnSubsingleton fun e =>
     decidable_of_iff (DeciNSSE.satFinB c (Flatten.flatten c e χ) = true)
       ((DeciNSSE.satFinB_iff c _).trans (Flatten.finite_iff c e χ).symm)
-
-namespace FlattenExamples
-
-/-- Unary negative variance needs no off-spine fillers. -/
-theorem unary_sandwich (u v : DeciNSSE.Tree 1) :
-    DeciNSSE.Tree.Le (fun _ => true) (DeciNSSE.Tree.node (fun _ => v)) (DeciNSSE.Tree.node (fun _ =>
-      u)) ↔
-      DeciNSSE.Tree.Le (fun _ => true) u v := by
-  have hv : Flatten.sandwichArgs (n := 1) v u = fun _ => v := by
-    funext i; fin_cases i; rfl
-  have hu : Flatten.sandwichArgs (n := 1) u u = fun _ => u := by
-    funext i; fin_cases i; rfl
-  simpa only [Bool.true_eq, ↓reduceIte, hv, hu] using
-    Flatten.sandwich_iff (fun _ => true) u v
-
-/-- Both off-spine slots remain equal, including the negative third slot. -/
-theorem ternary_sandwich (u v : DeciNSSE.Tree 3) :
-    DeciNSSE.Tree.Le ![true, false, true] (DeciNSSE.Tree.node ![v, u, u]) (DeciNSSE.Tree.node ![u,
-      u, u]) ↔
-      DeciNSSE.Tree.Le ![true, false, true] u v := by
-  have hv : Flatten.sandwichArgs (n := 3) v u = ![v, u, u] := by
-    funext i; fin_cases i <;> rfl
-  have hu : Flatten.sandwichArgs (n := 3) u u = ![u, u, u] := by
-    funext i; fin_cases i <;> rfl
-  simpa only [Matrix.cons_val_zero, Bool.true_eq, ↓reduceIte, hv, hu] using
-    Flatten.sandwich_iff ![true, false, true] u v
-
-/-- A finite witness using all five literal forms and a strict inequality. -/
-def sample (n : ℕ) : List (LitT n Bool) :=
-  [.bot false, .top true, .le false true,
-    .fle (fun _ => false) true, .lef false (fun _ => true)]
-
-/-- The example constraint has a finite solution. -/
-theorem sample_finite (c : Fin n → Bool) : SatFin c (sample n) := by
-  refine ⟨fun b => if b then DeciNSSE.Tree.top else DeciNSSE.Tree.bot, ?_, ?_⟩
-  · intro b
-    cases b
-    · exact ⟨FTree.bot, rfl⟩
-    · exact ⟨FTree.top, rfl⟩
-  · simp [sample, SatT, HoldsT]
-
-/-- The sample example satisfies the finite realization conclusion. -/
-theorem sample_flattened [NeZero n] (c : Fin n → Bool) {k : ℕ}
-    (e : Flatten.Vars Bool ≃ Fin k) :
-    ∃ τ : Fin k → FTree n,
-      DeciNSSE.Sat c (FTree.toTree ∘ τ) (Flatten.flatten c e (sample n)) :=
-  (Flatten.finite_iff c e _).mp (sample_finite c)
-
-/-- The unary example satisfies the finite realization conclusion. -/
-theorem unary_flattened {k : ℕ} (e : Flatten.Vars Bool ≃ Fin k) :
-    ∃ τ : Fin k → FTree 1, DeciNSSE.Sat (fun _ => true) (FTree.toTree ∘ τ)
-      (Flatten.flatten (fun _ => true) e (sample 1)) := sample_flattened _ e
-
-/-- The ternary example satisfies the finite realization conclusion. -/
-theorem ternary_flattened {k : ℕ} (e : Flatten.Vars Bool ≃ Fin k) :
-    ∃ τ : Fin k → FTree 3, DeciNSSE.Sat ![true, false, true] (FTree.toTree ∘ τ)
-      (Flatten.flatten ![true, false, true] e (sample 3)) := sample_flattened _ e
-
-end FlattenExamples
-
 
 end DeciENSSE.Core.Full

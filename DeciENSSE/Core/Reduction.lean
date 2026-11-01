@@ -1,28 +1,34 @@
 import DeciENSSE.Core.Automata
 import DeciENSSE.Core.Words.Transport
 
-/-! # Extracted suffix-sharing instances
+/-! # Covariant closure failures as two-word holes
 
-Upper and lower automata extract suffix-sharing instances. Their holes capture
-failures of the third Horn condition and supply countermodels.
+For two visible variables, four upper/lower automata form a two-word instance:
+its spine word names a live antecedent seed, and its target word names an atom
+outside that seed's antecedent closure. A head event witnesses consequent
+reachability, while a guarded event would put the target back in the closure.
+`extract_isHole_iff` identifies holes with precisely these closure failures.
+
+This is the reduction step from condition (II) to the word problem. The theorem
+`ss2_reduction` combines it with (I0) and liveness preservation; (I0) also gives
+the forced target heads required by the short-hole bound.
 
 ## Main declarations
 
-- `extract`
-- `extract_fh`
-- `extract_isHole_iff`
-- `condIII_iff_no_holes`
-- `ss2_reduction`
-- `hole_countermodel`
+- `extract`: the four-automaton two-word instance for a visible variable pair.
+- `extract_forcedHeads`: (I0) supplies forced target heads.
+- `extract_isHole_iff`, `condII_iff_no_holes`: holes characterize closure failure.
+- `ss2_reduction`: entailment is (I0), liveness, and absence of extracted holes.
 -/
 
 namespace DeciENSSE.Core
-open DeciENSSE.Core.Bound
+open DeciENSSE.Core.Words
+open DeciENSSE.Core.Automata
 variable {n : ℕ} {X Z : Type*} [Fintype X] [DecidableEq X] [Fintype Z] [DecidableEq Z]
 
-/-- The suffix-sharing instance extracted from two visible variables. -/
+/-- The two-word instance extracted from two visible variables. -/
 def extract (φ : List (Lit n X)) (ψ : List (Lit n (X ⊕ Z))) (x y : X) :
-    SS2 (Fin n) (Finset X) (Finset X) (Finset (X ⊕ Z)) (Finset (X ⊕ Z)) where
+    TwoWordInstance (Fin n) (Finset X) (Finset X) (Finset (X ⊕ Z)) (Finset (X ⊕ Z)) where
   A := upper φ x
   B := lower φ y
   A' := upper ψ (.inl x)
@@ -36,20 +42,21 @@ variable {φ : List (Lit n X)} {ψ : List (Lit n (X ⊕ Z))}
 
 /-- The extracted instance has the same first rejection index. -/
 @[simp] theorem extract_J (x y : X) (t : List (Fin n)) :
-    (extract φ ψ x y).J t = Bound.J φ y t := by
-  simp [SS2.J, Bound.J, extract]
+    (extract φ ψ x y).J t = Automata.J φ y t := by
+  simp [TwoWordInstance.J, Automata.J, extract]
 
 /-- Safety of the extracted instance agrees with upper-automaton safety. -/
 @[simp] theorem extract_safe (x y : X) (u : List (Fin n)) :
     (extract φ ψ x y).SafeFrom (extract φ ψ x y).A.start u ↔ Safe φ x u := by
-  simp [SS2.SafeFrom, extract, Safe, P, LDFA.run]
+  simp [TwoWordInstance.SafeFrom, extract, Safe, P, LDFA.run]
 
 /-- A head event in the extracted instance witnesses consequent reachability. -/
 @[simp] theorem extract_head (x y : X) (u t : List (Fin n)) :
     (extract φ ψ x y).HasHeadEvent u t ↔
       Moves ψ (.inl x, u) (.inl y, t) := by
   rw [lowest_point]
-  simp only [SS2.HasHeadEvent, SS2.HeadEvent, SS2.Aligned, extract,
+  simp only [TwoWordInstance.HasHeadEvent, TwoWordInstance.HeadEvent, TwoWordInstance.Aligned,
+    extract,
     upper_atCut, lower_atCut, mem_overlapStates, Finset.mem_range, Nat.lt_succ_iff]
   constructor
   · rintro ⟨s, hs, e, he, ⟨_, _, hst⟩, hm⟩
@@ -63,10 +70,10 @@ theorem extract_rejected (x y : X) (t : List (Fin n)) :
   rw [extract_J]
   constructor
   · intro hj hm
-    cases hJ : Bound.J φ y t with
+    cases hJ : Automata.J φ y t with
     | none => simp [hJ] at hj
     | some j =>
-      have hd := ((Bound.J_eq_some_iff φ y t j).mp hJ).1
+      have hd := ((Automata.J_eq_some_iff φ y t j).mp hJ).1
       have hp := Q_fact_prefix (List.take_prefix j t) (mu_membership.mp hm)
       exact (Finset.not_disjoint_iff_nonempty_inter.mpr hp) hd
   · intro hm
@@ -76,7 +83,7 @@ theorem extract_rejected (x y : X) (t : List (Fin n)) :
     obtain ⟨j, hj⟩ := J_defined hd
     simp [hj]
 
-/-- Under first rejection, every possible closure overlap is an SS2 event. -/
+/-- Under first rejection, every possible closure overlap is a two-word event. -/
 theorem extract_no_events (x y : X) (u t : List (Fin n))
     (hj : ((extract φ ψ x y).J t).isSome = true) :
     (∀ s ∈ Finset.range (u.length + 1), ∀ e ∈ Finset.range (t.length + 1),
@@ -84,7 +91,7 @@ theorem extract_no_events (x y : X) (u t : List (Fin n))
     ¬ ∃ s ≤ u.length, ∃ e ≤ t.length,
       (P φ x (u.take s) ∩ Q φ y (t.take e)).Nonempty ∧
       (t.drop e).IsPrefix (u.drop s) := by
-  cases hJ : Bound.J φ y t with
+  cases hJ : Automata.J φ y t with
   | none => simp [extract_J, hJ] at hj
   | some j =>
     constructor
@@ -118,8 +125,8 @@ theorem extract_isHole_iff (hφ : ∃ ρ, Sat ρ φ) (x y : X) (u t : List (Fin 
       (extract_no_events x y u t hj).mpr ?_, (extract_head x y u t).mpr hm⟩
     exact fun h => hc (cl_membership.mpr (Or.inr h))
 
-/-- The first Horn condition supplies the extracted head-closure property. -/
-theorem extract_fh (hi : CondI φ ψ) (x y : X) : (extract φ ψ x y).FH := by
+/-- The forced-atom condition (I0) supplies the extracted head-closure property. -/
+theorem extract_forcedHeads (hi : CondI0 φ ψ) (x y : X) : (extract φ ψ x y).ForcedHeads := by
   intro p q hp _ γ hγ i hiγ
   have hn : (Q ψ (.inl y) γ).Nonempty := by
     have hm : (p ∩ q).Nonempty := by simpa [extract] using hp
@@ -130,10 +137,10 @@ theorem extract_fh (hi : CondI φ ψ) (x y : X) : (extract φ ψ x y).FH := by
   have hφ := mu_membership.mp (hi (a := (y, γ.take i)) hψ)
   simpa [extract, ← Finset.not_disjoint_iff_nonempty_inter] using hφ
 
-/-- The third Horn condition excludes all extracted holes. Full reachability is handled by
+/-- The closure condition (II) excludes all extracted holes. Full reachability is handled by
 postponing truncations and using prefix closure of the antecedent closure. -/
-theorem condIII_iff_no_holes (hφ : ∃ ρ, Sat ρ φ) :
-    CondIII φ ψ ↔ ∀ x y, ¬ (extract φ ψ x y).HasHole := by
+theorem condII_iff_no_holes (hφ : ∃ ρ, Sat ρ φ) :
+    CondII φ ψ ↔ ∀ x y, ¬ (extract φ ψ x y).HasHole := by
   classical
   constructor
   · intro h x y ⟨u, t, hh⟩
@@ -147,32 +154,10 @@ theorem condIII_iff_no_holes (hφ : ∃ ρ, Sat ρ φ) :
       exact h x y ⟨u, W, (extract_isHole_iff hφ x y u W).mpr ⟨hl, hm, hn⟩⟩
     exact (cl_closed (x, u)).prefixClosed y t v (by simpa [hv] using hc)
 
-/-- Failure of the third Horn condition gives an extracted hole. -/
-theorem not_condIII_iff_hole (hφ : ∃ ρ, Sat ρ φ) :
-    ¬ CondIII φ ψ ↔ ∃ x y, (extract φ ψ x y).HasHole := by
-  classical
-  simp only [condIII_iff_no_holes hφ, not_forall, not_not]
-
-/-- Entailment is equivalent to the first two conditions and absence of extracted holes. -/
+/-- Entailment is equivalent to (I0), liveness preservation, and absence of extracted holes. -/
 theorem ss2_reduction (hφ : ∃ ρ, Sat ρ φ) (hψ : ∃ ρ, Sat ρ ψ) :
-    ExistsEntails φ ψ ↔ CondI φ ψ ∧ CondII φ ψ ∧
+    ExistsEntailsTopFree φ ψ ↔ CondI0 φ ψ ∧ CondLive φ ψ ∧
       ∀ x y, ¬ (extract φ ψ x y).HasHole := by
-  rw [three_conditions hφ hψ, condIII_iff_no_holes hφ]
-
-/-- The least solution containing the seed is a countermodel, stated in the Horn representation of
-assignments. -/
-theorem hole_countermodel (hφ : ∃ ρ, Sat ρ φ) {x y : X} {u t : List (Fin n)}
-    (hh : (extract φ ψ x y).IsHole u t) :
-    Sol φ (Cl φ (x, u)) ∧ Cl φ (x, u) ∉ Projected ψ := by
-  obtain ⟨hl, hm, hc⟩ := (extract_isHole_iff hφ x y u t).mp hh
-  refine ⟨cl_sol hl, ?_⟩
-  rintro ⟨T, hT, hres⟩
-  have ha : visible (x, u) ∈ T := by
-    change (x, u) ∈ restrict T
-    rw [hres]; exact mem_cl _
-  have hb := hm.reach.mem_of_closed hT.closed ha
-  apply hc
-  rw [← hres]
-  exact hb
+  rw [three_conditions hφ hψ, condII_iff_no_holes hφ]
 
 end DeciENSSE.Core

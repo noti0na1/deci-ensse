@@ -2,14 +2,17 @@ import DeciENSSE.Core.Mixed.Leaf
 
 /-! # Leaf Horn presentation and the least extension
 
-Literal moves, right extensions, and exclusions form a Horn presentation
-of tree assignments. Its least closure characterizes existential extensions.
+Atoms record a variable, a sign, and a path in its leaf cone. Constructor
+literals induce push and pop moves, variable inequalities induce copy moves,
+and extreme labels supply positive and negative units. Closing the positive
+units and the visible seeds under these moves and path extension gives the
+least candidate extension. Exclusions detect incompatible opposite leaf atoms.
 
 ## Main declarations
 
 - `Move`, `Clause`, `Fact`, `Neg`, `Sol`, `sat_iff_sol`,
   `sol_iff_assignment`, `sol_sInter`, `projected_sInter`, `Hull`,
-  `extends_iff_hull`, `least_extension`, `sat_J`.
+  `extends_iff_hull`, `least_extension`, `sat_infoInter`.
 -/
 
 namespace DeciENSSE.Core.Mixed
@@ -97,19 +100,19 @@ theorem sat_iff_sol (ρ : V → Tree n) : SatT c ρ χ ↔ Sol c χ (configSet c
       | extend v s w i => exact leaf_extension c (ρ v) s w [i] hp
       | move hm =>
         cases hm with
-        | copyPlus hl => exact ((leGen_iff_leaf _ _ _).mp (h _ hl)).1 hp
-        | copyMinus hl => exact ((leGen_iff_leaf _ _ _).mp (h _ hl)).2 hp
+        | copyPlus hl => exact ((treeLe_iff_leaf _ _ _).mp (h _ hl)).1 hp
+        | copyMinus hl => exact ((treeLe_iff_leaf _ _ _).mp (h _ hl)).2 hp
         | flePush i hl =>
-          apply ((leGen_iff_leaf _ _ _).mp (h _ hl)).1
+          apply ((treeLe_iff_leaf _ _ _).mp (h _ hl)).1
           simpa [configSet] using hp
         | flePop i hl =>
-          have hh := ((leGen_iff_leaf _ _ _).mp (h _ hl)).2 hp
+          have hh := ((treeLe_iff_leaf _ _ _).mp (h _ hl)).2 hp
           simpa [configSet] using hh
         | lefPop i hl =>
-          have hh := ((leGen_iff_leaf _ _ _).mp (h _ hl)).1 hp
+          have hh := ((treeLe_iff_leaf _ _ _).mp (h _ hl)).1 hp
           simpa [configSet] using hh
         | lefPush i hl =>
-          apply ((leGen_iff_leaf _ _ _).mp (h _ hl)).2
+          apply ((treeLe_iff_leaf _ _ _).mp (h _ hl)).2
           simpa [configSet] using hp
     · intro p hp
       cases hp with
@@ -118,17 +121,17 @@ theorem sat_iff_sol (ρ : V → Tree n) : SatT c ρ χ ↔ Sol c χ (configSet c
     · intro p hp hn
       cases hn with
       | fle hl =>
-          exact leaf_node_nil c _ true (((leGen_iff_leaf _ _ _).mp (h _ hl)).2 hp)
+          exact leaf_node_nil c _ true (((treeLe_iff_leaf _ _ _).mp (h _ hl)).2 hp)
       | lef hl =>
-          exact leaf_node_nil c _ false (((leGen_iff_leaf _ _ _).mp (h _ hl)).1 hp)
+          exact leaf_node_nil c _ false (((treeLe_iff_leaf _ _ _).mp (h _ hl)).1 hp)
   · intro h l hl
     cases l with
     | le u v =>
-      exact (leGen_iff_leaf _ _ _).mpr
+      exact (treeLe_iff_leaf _ _ _).mpr
         ⟨fun _ hw => h.closed (.move (.copyPlus hl)) hw,
          fun _ hw => h.closed (.move (.copyMinus hl)) hw⟩
     | fle a u =>
-      apply (leGen_iff_leaf _ _ _).mpr
+      apply (treeLe_iff_leaf _ _ _).mpr
       constructor
       · intro w hw
         cases w with
@@ -143,7 +146,7 @@ theorem sat_iff_sol (ρ : V → Tree n) : SatT c ρ χ ↔ Sol c χ (configSet c
           have hh := h.closed (.move (.flePop i hl)) hw
           simpa [configSet] using hh
     | lef u a =>
-      apply (leGen_iff_leaf _ _ _).mpr
+      apply (treeLe_iff_leaf _ _ _).mpr
       constructor
       · intro w hw
         cases w with
@@ -225,15 +228,15 @@ theorem sol_inter {S T : Set (Config n V)} (hs : Sol c χ S) (ht : Sol c χ T) :
   · intro p q h hp hq; exact hs.consistent h hp.1 hq.1
 
 /-- Pointwise information intersection intersects assignment atoms. -/
-@[simp] theorem configSet_J (ρ τ : V → Tree n) :
-    configSet c (fun v => J c (ρ v) (τ v)) = configSet c ρ ∩ configSet c τ := by
-  ext ⟨v, s, w⟩; exact Set.ext_iff.mp (leaf_J c (ρ v) (τ v) s) w
+@[simp] theorem configSet_infoInter (ρ τ : V → Tree n) :
+    configSet c (fun v => infoInter c (ρ v) (τ v)) = configSet c ρ ∩ configSet c τ := by
+  ext ⟨v, s, w⟩; exact Set.ext_iff.mp (leaf_infoInter c (ρ v) (τ v) s) w
 
 /-- Information intersection preserves satisfaction. -/
-theorem sat_J {ρ τ : V → Tree n} (hρ : SatT c ρ χ) (hτ : SatT c τ χ) :
-    SatT c (fun v => J c (ρ v) (τ v)) χ := by
+theorem sat_infoInter {ρ τ : V → Tree n} (hρ : SatT c ρ χ) (hτ : SatT c τ χ) :
+    SatT c (fun v => infoInter c (ρ v) (τ v)) χ := by
   apply (sat_iff_sol _).mpr
-  rw [configSet_J]
+  rw [configSet_infoInter]
   exact sol_inter ((sat_iff_sol _).mp hρ) ((sat_iff_sol _).mp hτ)
 
 /-- Finite derivations; extension edges are genuine steps in this relation. -/
@@ -333,7 +336,8 @@ theorem projected_sInter (ψ : List (LitT n (X ⊕ Z)))
 def visibleSeeds (c : Fin n → Bool) (ρ : X → Tree n) : Set (Config n (X ⊕ Z)) :=
   visible '' configSet c ρ
 
-/-- Repaired Corollary 2.2: all three checks on the literal-and-extension closure. -/
+/-- Extension is equivalent to consistency, avoidance of negative units,
+and no new visible atoms. -/
 theorem extends_iff_hull (ρ : X → Tree n) (ψ : List (LitT n (X ⊕ Z))) :
     (∃ σ, SatT c (Sum.elim ρ σ) ψ) ↔
       Avoids ψ (Hull c ψ (visibleSeeds c ρ)) ∧
@@ -385,209 +389,5 @@ theorem least_extension (ρ : X → Tree n) (ψ : List (LitT n (X ⊕ Z)))
   apply hull_least hsol.closed hsol.facts
   rintro _ ⟨a, ha, rfl⟩
   exact ha
-
-/-- The canonical closure is also the intersection of all full extensions. -/
-theorem hull_eq_sInter_extensions (ρ : X → Tree n) (ψ : List (LitT n (X ⊕ Z)))
-    (he : ∃ σ, SatT c (Sum.elim ρ σ) ψ) :
-    Hull c ψ (visibleSeeds c ρ) =
-      ⋂₀ {T | Sol c ψ T ∧ restrict T = configSet c ρ} := by
-  obtain ⟨σ, hs, heq, _⟩ := least_extension ρ ψ he
-  apply Set.Subset.antisymm
-  · intro p hp T ht
-    apply hull_least ht.1.closed ht.1.facts (S := T) ?_ hp
-    rintro _ ⟨a, ha, rfl⟩
-    change a ∈ restrict T
-    rwa [ht.2]
-  · intro p hp
-    rw [← heq]
-    exact hp _ ⟨(sat_iff_sol _).mp hs, rfl⟩
-
-/-- An explicit assignment form of arbitrary nonempty solution intersection. -/
-theorem solutions_intersection {F : Set (V → Tree n)} (hne : F.Nonempty)
-    (hF : ∀ ρ ∈ F, SatT c ρ χ) :
-    ∃ ρ, SatT c ρ χ ∧ configSet c ρ = ⋂₀ (configSet c '' F) := by
-  apply sol_iff_assignment.mp
-  apply sol_sInter (hne.image _)
-  rintro S ⟨ρ, hρ, rfl⟩
-  exact (sat_iff_sol _).mp (hF ρ hρ)
-
-/-- Corollary 2.1, over arbitrary trees: swapped witnesses yield a diagonal. -/
-theorem symmetric_diagonal (ψ : List (LitT n (Bool ⊕ Z))) (a b : Tree n)
-    (hab : ∃ σ, SatT c (Sum.elim (fun i : Bool => if i then b else a) σ) ψ)
-    (hba : ∃ σ, SatT c (Sum.elim (fun i : Bool => if i then a else b) σ) ψ) :
-    ∃ σ, SatT c (Sum.elim (fun _ => J c a b) σ) ψ := by
-  obtain ⟨σ, hσ⟩ := hab
-  obtain ⟨τ, hτ⟩ := hba
-  have h := sat_J hσ hτ
-  refine ⟨fun z => J c (σ z) (τ z), ?_⟩
-  have he : (fun v => J c
-      (Sum.elim (fun i : Bool => if i then b else a) σ v)
-      (Sum.elim (fun i : Bool => if i then a else b) τ v)) =
-      Sum.elim (fun _ => J c a b) (fun z => J c (σ z) (τ z)) := by
-    funext v
-    cases v with
-    | inl i => cases i <;> simp [J_comm]
-    | inr z => rfl
-  rwa [he] at h
-
-namespace LeafHornExamples
-
-/-- Two contravariant children and one covariant child. -/
-def arrow : Fin 3 → Bool := ![true, false, true]
-
-/-- `false` names y and `true` names z; the child variable is repeated. -/
-def mixed : List (LitT 3 Bool) := [.lef false (fun _ => true)]
-
-/-- Exactly two implications for each of the three children. -/
-def ArrowMoves (p q : Config 3 Bool) : Prop := ∃ (i : Fin 3) (w : List (Fin 3)),
-  (p = (false, false, i :: w) ∧ q = (true, arrow i, w)) ∨
-  (p = (true, !(arrow i), w) ∧ q = (false, true, i :: w))
-
-/-- The ternary example has exactly the displayed literal moves. -/
-theorem mixed_moves_iff (p q : Config 3 Bool) : Move arrow mixed p q ↔ ArrowMoves p q := by
-  constructor
-  · intro h
-    cases h with
-    | copyPlus hl => simp [mixed] at hl
-    | copyMinus hl => simp [mixed] at hl
-    | flePush i hl => simp [mixed] at hl
-    | flePop i hl => simp [mixed] at hl
-    | @lefPop u a w i hl =>
-      simp only [mixed, List.mem_singleton, LitT.lef.injEq] at hl
-      rcases hl with ⟨rfl, rfl⟩
-      exact ⟨i, w, Or.inl ⟨rfl, rfl⟩⟩
-    | @lefPush u a w i hl =>
-      simp only [mixed, List.mem_singleton, LitT.lef.injEq] at hl
-      rcases hl with ⟨rfl, rfl⟩
-      exact ⟨i, w, Or.inr ⟨rfl, rfl⟩⟩
-  · rintro ⟨i, w, ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩⟩
-    · exact .lefPop (a := fun _ => true) i (by simp [mixed])
-    · exact .lefPush (a := fun _ => true) i (by simp [mixed])
-
-/-- Its clauses are literal moves or right extensions. -/
-theorem mixed_clause_iff (p q : Config 3 Bool) : Clause arrow mixed p q ↔
-    ArrowMoves p q ∨ ∃ v s w i, p = (v, s, w) ∧ q = (v, s, w ++ [i]) := by
-  constructor
-  · intro h
-    cases h with
-    | move hm => exact Or.inl ((mixed_moves_iff _ _).mp hm)
-    | extend v s w i => exact Or.inr ⟨v, s, w, i, rfl, rfl⟩
-  · rintro (hm | ⟨v, s, w, i, rfl, rfl⟩)
-    · exact .move ((mixed_moves_iff _ _).mpr hm)
-    · exact .extend v s w i
-
-/-- The ternary example forbids exactly the displayed root atom. -/
-theorem mixed_neg_iff (p : Config 3 Bool) : Neg mixed p ↔ p = (false, false, []) := by
-  constructor
-  · intro h
-    cases h with
-    | fle hl => simp [mixed] at hl
-    | lef hl =>
-      simp only [mixed, List.mem_singleton, LitT.lef.injEq] at hl
-      rcases hl with ⟨rfl, rfl⟩; rfl
-  · rintro rfl; exact .lef (a := fun _ => true) (by simp [mixed])
-
-/-- The ternary constructor example has no positive units. -/
-theorem mixed_no_facts (p : Config 3 Bool) : ¬ Fact mixed p := by
-  intro h
-  cases h with
-  | bot hl => simp [mixed] at hl
-  | top hl => simp [mixed] at hl
-
-/-- The exact parity equations for this literal are inconsistent. -/
-theorem mixed_no_parity : ¬ ∃ s : Bool → Bool, ∀ i : Fin 3,
-    s true = Bool.xor (s false) (arrow i) := by
-  rintro ⟨s, hs⟩
-  have h0 := hs 0
-  have h1 := hs 1
-  change s true = Bool.xor (s false) true at h0
-  change s true = Bool.xor (s false) false at h1
-  have h := h0.symm.trans h1
-  cases hy : s false <;> simp [hy] at h
-
-/-- The empty antecedent cannot repair the consequent's parity equations. -/
-theorem mixed_no_joint : ¬ ∃ s : Bool ⊕ Unit → Bool, ∀ i : Fin 3,
-    s (.inl true) = Bool.xor (s (.inl false)) (arrow i) := by
-  rintro ⟨s, hs⟩
-  exact mixed_no_parity ⟨s ∘ Sum.inl, hs⟩
-
-/-- The constant bottom assignment. -/
-def low : Bool → Tree 3 := fun _ => DeciNSSE.Tree.bot
-
-/-- A bottom assignment with one constructor root. -/
-def branch : Bool → Tree 3 :=
-  fun i => if i then DeciNSSE.Tree.bot else DeciNSSE.Tree.node (fun _ => DeciNSSE.Tree.bot)
-
-/-- The constant bottom assignment solves the mixed example. -/
-theorem low_solution : SatT arrow low mixed := by simp [SatT, HoldsT, mixed, low]
-
-/-- The constructor assignment solves the mixed example. -/
-theorem branch_solution : SatT arrow branch mixed := by
-  simp [SatT, HoldsT, mixed, branch, Function.comp_def, treeLe_refl]
-
-/-- Two distinct solutions and their information intersection. -/
-theorem mixed_J_solution : SatT arrow (fun v => J arrow (low v) (branch v)) mixed :=
-  sat_J low_solution branch_solution
-
-/-- The mixed example's information intersection has intersected cones. -/
-theorem mixed_J_coordinates (v s : Bool) :
-    leaf arrow (J arrow (low v) (branch v)) s =
-      leaf arrow (low v) s ∩ leaf arrow (branch v) s := leaf_J ..
-
-/-- The two displayed satisfying assignments differ. -/
-theorem solutions_distinct : low ≠ branch := by
-  intro h
-  have he := congrFun h false
-  exact DeciNSSE.Tree.node_ne_bot _ he.symm
-
-/-- Non-vacuity of all five forms and both sorts of negative root units. -/
-theorem all_forms_sol (c : Fin n → Bool) :
-    Sol c [.le 0 1, .fle (fun _ => 0) 1, .lef 0 (fun _ => 1), .bot 0, .top 1]
-      (configSet c (fun x : Fin 2 => if x = 0 then DeciNSSE.Tree.bot
-        else DeciNSSE.Tree.top : Fin 2 → Tree n)) := by
-  apply (sat_iff_sol _).mp
-  simp [SatT, HoldsT]
-
-/-- Non-vacuity of the three least-extension checks, without joint parity. -/
-theorem mixed_extension_checks :
-    let ψ : List (LitT 3 (Bool ⊕ Unit)) := [.lef (.inl false) (fun _ => .inl true)]
-    let S := Hull arrow ψ (visibleSeeds arrow low)
-    Avoids ψ S ∧ Consistent S ∧ restrict S ⊆ configSet arrow low := by
-  apply (extends_iff_hull _ _).mp
-  exact ⟨fun _ => DeciNSSE.Tree.bot, by simp [SatT, HoldsT, low]⟩
-
-/-- All four constructor rule forms act on child 2, with the correct flipped signs. -/
-theorem third_child_rules (w : List (Fin 3)) :
-    Move arrow [.fle (fun _ => true) false]
-      (true, true, w) (false, false, 2 :: w) ∧
-    Move arrow [.fle (fun _ => true) false]
-      (false, true, 2 :: w) (true, false, w) ∧
-    Move arrow mixed (false, false, 2 :: w) (true, true, w) ∧
-    Move arrow mixed (true, false, w) (false, true, 2 :: w) := by
-  exact ⟨.flePush (a := fun _ => true) 2 (by simp),
-    .flePop (a := fun _ => true) 2 (by simp),
-    .lefPop (a := fun _ => true) 2 (by simp [mixed]),
-    .lefPush (a := fun _ => true) 2 (by simp [mixed])⟩
-
-/-- With no children, constructor literals contribute only their root exclusions. -/
-theorem nullary_no_moves (c : Fin 0 → Bool) (p q : Config 0 Unit) :
-    ¬ Move c [.fle Fin.elim0 (), .lef () Fin.elim0] p q := by
-  intro h
-  cases h with
-  | copyPlus hl => simp at hl
-  | copyMinus hl => simp at hl
-  | flePush i _ => exact Fin.elim0 i
-  | flePop i _ => exact Fin.elim0 i
-  | lefPop i _ => exact Fin.elim0 i
-  | lefPush i _ => exact Fin.elim0 i
-
-/-- Nullary constructor literals have a satisfying Horn presentation. -/
-theorem nullary_constructor_solution (c : Fin 0 → Bool) :
-    Sol c [.fle Fin.elim0 (), .lef () Fin.elim0]
-      (configSet c (fun _ : Unit => DeciNSSE.Tree.node Fin.elim0)) := by
-  apply (sat_iff_sol _).mp
-  simp [SatT, HoldsT, treeLe_refl]
-
-end LeafHornExamples
 
 end DeciENSSE.Core.Mixed
