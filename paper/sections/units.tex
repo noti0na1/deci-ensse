@@ -1,0 +1,321 @@
+%% units.tex -- condition (U) as a plain single-word hole problem: the source
+%% automaton, the unit reader with the rejected-path property, the reduced unit
+%% reader and the antecedent rejection clock, and the decision of (U) by the
+%% tail, depth, and search theorems of Zhao26, with witnesses of length at
+%% most E_3(5v+3s+16). Proofs: appendix-summaries.tex (app:sm).
+
+\section{Condition (U)}\label{sec:un}
+
+From now on, $\varphi$ is a system over the visible variables $X$ and $\psi$ a
+system over $X\cup Z$, as in \cref{sec:ch}. Condition \CondU\ of
+\cref{def:ch-conditions} asks that $\Reach_\psi(a)$ contain no forbidden root of
+$\psi$ for every visible atom $a$ that is live in $\varphi$. In the terms of
+\cref{def:sm-deadu}, this reads as follows.
+
+\begin{lemma}[Condition (U)]\label{lem:un-dead}
+Condition \CondU\ holds iff no $p\in X^\pm$ and no word $w$ satisfy
+$\DeadU_\psi(p,w)$ while $(p,w)$ is live in $\varphi$.
+\end{lemma}
+
+The words $w$ with $\DeadU_\psi(p,w)$ form a regular language
+(\cref{lem:sm-dead-states}), but the words $w$ with $(p,w)$ live in $\varphi$
+need not (\cref{ex:sm-arrow}), so \CondU\ is not an inclusion of regular
+languages. When $\varphi$ is satisfiable, however, \cref{thm:sm-dead}
+identifies liveness with the absence of $\DeadT_\varphi$, which is regular,
+and of self events, which are comparisons of a single word whose two cuts are
+tested by a pair of automaton states. A failure of \CondU\ is therefore a hole of a reader in the sense of
+\citet{Zhao26} (\cref{def:bg-reader,def:bg-hole}), and the reader has the
+rejected-path property (\cref{def:bg-rpp}). The bounded rejected tail, depth,
+and bounded-depth search theorems of that paper then decide \CondU.
+
+\subsection{The Source Automaton}\label{sec:un-automaton}
+
+One automaton reads the word of a visible seed for both systems. The two-word
+instances of \cref{sec:ex} use it again, on the seed word.
+
+\begin{definition}[Source automaton]\label{def:un-source}
+Let $p\in X^\pm$. The \emph{source automaton} $\Bsrc_p$ is the deterministic
+automaton over $\Sigma$ whose states are the triples $\zeta=(P,b,P')$ with
+$P\subseteq X^\pm$, $b\in\{0,1\}$, and $P'\subseteq(X\cup Z)^\pm$, with start
+state $\bigl(\upc\varphi p,\ [\overline{\upc\varphi p}\cap\Fup\varphi\ne
+\varnothing],\ \upc\psi p\bigr)$ and transitions
+\[
+ \delta\bigl((P,b,P'),i\bigr)=\bigl(\pstep i(P),\
+ b\lor[\overline{\pstep i(P)}\cap\Fup\varphi\ne\varnothing],\
+ \pstep i(P')\bigr),
+\]
+where the first component uses the transitions of the upper automata of
+$\varphi$ and the third those of $\psi$, and $[\,\cdot\,]$ is $1$ for a true
+condition and $0$ otherwise. For a state $\zeta=(P,b,P')$ put
+\[
+ \mathrm{dt}(\zeta)\iff b=1\ \text{or}\ P\cap\DeadT^\eps_\varphi\ne\varnothing,
+ \qquad
+ \mathrm{du}(\zeta)\iff P'\cap\DeadU^\eps_\psi\ne\varnothing,
+\]
+and let the \emph{self guard} $\GuardS$ consist of the pairs of states
+$((P_1,b_1,P'_1),(P_2,b_2,P'_2))$ with $P_1\cap\overline{P_2}\ne\varnothing$.
+\end{definition}
+
+\begin{lemma}[Runs of the source automaton]\label{lem:un-source}
+Let $p\in X^\pm$, let $w$ be a word, and let $\zeta_j$ be the state of
+$\Bsrc_p$ after $\wpre wj$. Then:
+\begin{enumerate}[leftmargin=*]
+\item $\zeta_j=\bigl(P^\varphi_{p,j}(w),\ [(\bar p,\wpre wj)\in\mu_\varphi],\
+  P^\psi_{p,j}(w)\bigr)$;
+\item $\mathrm{dt}(\zeta_j)$ iff $\DeadT_\varphi(p,\wpre wj)$, and
+  $\mathrm{du}(\zeta_j)$ iff $\DeadU_\psi(p,\wpre wj)$; if
+  $\mathrm{dt}(\zeta_j)$ fails, it fails at every later cut, and if
+  $\mathrm{du}(\zeta_j)$ holds, it holds at every earlier cut;
+\item for $i<j\le\len w$, the pair $(i,j)$ is a self event of $(p,w)$ in
+  $\varphi$ iff it is a comparison of $w$ and $(\zeta_i,\zeta_j)\in\GuardS$.
+\end{enumerate}
+The automaton $\Bsrc_p$ has $N_{\mathrm U}=2^{4\len X+2\len Z+1}$ states.
+\end{lemma}
+
+Item (1) holds by induction on $j$, using \cref{lem:sm-dead-states}(2) for
+the bit; item (2) is \cref{lem:sm-dead-states}(1,3) together with
+\cref{lem:sm-roots}(4) and \cref{lem:sm-dead-states}(4); and item (3) is
+\cref{def:sm-dead}. The sets $\Fup\varphi$, $\DeadT^\eps_\varphi$, and
+$\DeadU^\eps_\psi$ are computable in polynomial time
+(\cref{lem:sm-mu,lem:sm-dead-states}), so $\Bsrc_p$, $\mathrm{dt}$,
+$\mathrm{du}$, and $\GuardS$ are computable.
+
+\subsection{The Unit Reader}\label{sec:un-reader}
+
+\begin{definition}[Unit reader]\label{def:un-reader}
+For $p\in X^\pm$, the \emph{unit reader} is the reader
+$\RU(p)=(\Bsrc_p,\GuardS,\Rej_{\mathrm U})$ with the source automaton, the
+self guard as its admission relation, and the rejected states
+\[
+ \Rej_{\mathrm U}=\{\zeta:\ \mathrm{dt}(\zeta)\text{ fails and }
+ \mathrm{du}(\zeta)\text{ holds}\}.
+\]
+\end{definition}
+
+\begin{lemma}[Holes of the unit reader]\label{lem:un-holes}
+Let $\varphi$ be satisfiable and $p\in X^\pm$. A word $w$ is a hole of
+$\RU(p)$ iff $(p,w)$ is live in $\varphi$ and $\DeadU_\psi(p,w)$.
+Consequently, \CondU\ holds iff none of the $2\len X$ unit readers has a hole.
+\end{lemma}
+
+\begin{proof}
+By \cref{lem:un-source}, $w$ is rejected iff $\DeadT_\varphi(p,w)$ fails and
+$\DeadU_\psi(p,w)$ holds, and a comparison of $w$ is admitted iff it is a self
+event of $(p,w)$ in $\varphi$. So $w$ is a hole iff $\DeadU_\psi(p,w)$ holds
+and $(p,w)$ is neither dead by support nor has a self event in $\varphi$, that
+is, by \cref{thm:sm-dead}, iff $\DeadU_\psi(p,w)$ holds and $(p,w)$ is live in
+$\varphi$. The second claim follows by \cref{lem:un-dead}.
+\end{proof}
+
+\begin{lemma}[Rejected paths]\label{lem:un-rejected-path}
+Every unit reader $\RU(p)$ has the rejected-path property: it satisfies
+betweenness and the admission cone. No satisfiability assumption is needed.
+\end{lemma}
+
+\begin{proof}
+\emph{Betweenness.} Let $\wpre wa$ and $\wpre wb$ be rejected, with $a<k<b$.
+Since $\mathrm{dt}$ fails at $a$, it fails at $k$, and since $\mathrm{du}$
+holds at $b$, it holds at $k$ (\cref{lem:un-source}(2)). So $\wpre wk$ is
+rejected.
+
+\emph{Admission cone.} Let $w$ be rejected, with first rejected cut $J$, and
+let $(i,j)$ be an admitted comparison of $w$. The guard
+$P^\varphi_{p,i}(w)\cap\overline{P^\varphi_{p,j}(w)}\ne\varnothing$ requires
+$P^\varphi_{p,j}(w)\ne\varnothing$. At the cut $J$, $\mathrm{dt}$ fails, so
+$\DeadT_\varphi(p,\wpre wJ)$ fails, and in particular
+$\DeadU_\varphi(p,\wpre wJ)$ fails. The pop bound (\cref{lem:sm-roots}(2)) gives
+$P^\varphi_{p,j'}(w)=\varnothing$ for every $j'>J$. Hence $j\le J$.
+\end{proof}
+
+The proof gives more than the admission cone: no admission, comparison or not, has its
+second cut after $J$.
+
+\begin{example}[Shift closure: condition (U)]\label{ex:un-running}
+Let $\psi=\{x\le z,\ z\le y,\ z\le f(z,z)\}$ as in \cref{ex:sm-running}, with
+$f$ binary and covariant, and let $\varphi_1=\{x\le y\}$. Over $\BFT$,
+condition \CondU\ fails. Indeed, $\DeadU^\eps_\psi=\{x^0,z^0\}$ and
+$z^0\in P^\psi_{x^0}(w)$ for every $w$, so $\DeadU_\psi(x^0,w)$ holds for every
+word $w$. On the other side, $\varphi_1$ has neither facts nor
+forbidden roots, so $\DeadT_{\varphi_1}$ never holds, and it has no upper
+constructor literal, so $P^{\varphi_1}_{x^0}(w)=\varnothing$ for $w\ne\eps$ and
+no comparison is admitted. Every word is a hole of $\RU(x^0)$, the empty word
+included. Its countermodel is the least model $\Cl_{\varphi_1}(x^0,\eps)$, the
+solution $x=y=\Top$: no $z$ satisfies $\Top\le z\le f(z,z)$.
+
+Over $\BF$, the variables cannot take the value $\Top$. Within $\BFT$, this
+can be expressed by a variable $g$ with $y\le g$ and $g\le f(g,g)$, which
+allow exactly the trees $y$ without leaves $\Top$; \cref{sec:tc} turns this
+observation into a reduction. That reduction puts such a gadget on every
+variable, but for this example one on $y$ suffices: since $x\le y$, it also
+keeps $x$ free of $\Top$, and $z\le f(z,z)$ already keeps $z$ free of $\Top$.
+So let $\varphi'_1=\{x\le y,\ y\le g,\ g\le f(g,g)\}$, with $g$ visible. Its only
+forbidden root is $(g^0,\eps)$, and $x^0\to y^0\to g^0$ by copies, after which
+$g^0$ pops every word. So $\DeadT_{\varphi'_1}(x^0,w)$ holds for every $w$, and
+$\RU(x^0)$ rejects no word. For the other signed variables
+$p\in\{x^1,y^0,y^1,g^0,g^1\}$, the set $P^\psi_p(w)$ never meets
+$\DeadU^\eps_\psi$, so $\RU(p)$ rejects no word either. Thus \CondU\ holds for
+$\varphi'_1$; \cref{ex:ex-running} shows that the entailment fails by
+condition \CondII.
+\end{example}
+
+\begin{example}[Admitted self events are needed]\label{ex:un-arrow}
+Let $\varphi=\{x\le x\to x\}$ as in \cref{ex:sm-arrow}, and let
+$\psi=\{x\le a\to x,\ c\to y\le a\}$ with $a,c$ hidden. The antecedent is that
+of \cref{ex:ch-arrow}, but the consequent is new. For $x\le z\to z$,
+\CondU\ holds because its only root-dead atom, $(x^0,\eps)$, is a forbidden
+root of $\varphi$ as well; this consequent is chosen so that \CondU\ holds only
+because of admitted self events. The signed system of
+$\psi$ has the upper constructor literals $x^0\le f(a^1,x^0)$ and
+$a^1\le f(c^0,y^1)$ and the lower ones $f(a^0,x^1)\le x^1$ and
+$f(c^1,y^0)\le a^0$; its closure is the identity, and
+$\DeadU^\eps_\psi=\{x^0,a^1\}$. Reading from $x^0$,
+\[
+ P^\psi_{x^0}(1^k)=\{x^0\},\quad P^\psi_{x^0}(1^k0)=\{a^1\},\quad
+ P^\psi_{x^0}(1^k00)=\{c^0\},\quad P^\psi_{x^0}(1^k01)=\{y^1\},
+\]
+and the empty set after longer words. So $\DeadU_\psi(x^0,w)$ holds iff
+$w\in1^*\cup1^*0$, and $\RU(x^0)$ rejects exactly the words $1^k0$, which are
+not dead by support in $\varphi$. Each of them has the admitted comparison
+$(0,k+1)$: $P^\varphi_{x^0}(\eps)=\{x^0\}$ meets
+$\overline{P^\varphi_{x^0}(1^k0)}=\{x^0\}$. So $\RU(x^0)$ has no hole. The other
+unit readers reject no word, because $x^1$, $y^0$, and $y^1$ have no root-dead
+atoms in $\psi$. Hence \CondU\ holds. Without the admitted self events, the
+word $0$ would be a hole: $(x^0,0)$ is dead in $\varphi$ only through its self event
+(\cref{ex:sm-arrow}).
+\end{example}
+
+\Cref{fig:un-reader} draws this reader. The admission relation acts as a
+rescue: a rejected word, a candidate failure of \CondU, is discarded as soon
+as two of its cuts form a comparison with an admitted pair of states, because
+the seed is then dead in $\varphi$. A small change of the consequent, also
+shown there, leaves a rejected word that no comparison rescues, a hole.
+
+\input{figures/un-reader}
+
+\subsection{Deciding Condition (U)}\label{sec:un-decide}
+
+\Citet{Zhao26} decides the hole problem for every reader with the
+rejected-path property (\cref{cor:bg-hole-decision}): a reader with $N$ states
+over a finite alphabet that has this property has a hole iff it has a hole of
+length at most $\holeBound(N,d_N)$, where $d_N=2N(4N-1)-1$. The proof selects a
+hole with rejected tail at most $4N-2$ (\cref{thm:bg-brt}), bounds its depth
+(\cref{thm:bg-depth}), and shortens it (\cref{thm:bg-search}). Applied to the
+unit reader, with its $N_{\mathrm U}$ states, this already decides \CondU. Two
+observations give a much smaller bound. First, most states of the source
+automaton can never occur on a rejected word, so they can be merged into one
+sink. Second, the depth bound needs only the first rejected cut, and on the
+words that the unit reader rejects this cut is determined by the antecedent
+alone, which is read by a much smaller automaton.
+
+\begin{lemma}[The reduced unit reader]\label{lem:un-reduced}
+Let $p\in X^\pm$, $v=\len X$ and $s=\len X+\len Z$. Let $\widehat{\mathcal R}_p$
+arise from the reachable part of $\RU(p)$ by replacing every state
+$\zeta=(P,b,P')$ with $b=1$ or with $\mathrm{du}(\zeta)$ false by one new
+absorbing state $\bot\notin\Rej$: every transition into a replaced state is
+redirected to $\bot$, and no pair that involves $\bot$ is admitted. Then:
+\begin{enumerate}[leftmargin=*]
+\item a word is rejected by $\widehat{\mathcal R}_p$ iff it is rejected by
+  $\RU(p)$, and then both readers have the same state at every cut, so they
+  have the same holes;
+\item $\widehat{\mathcal R}_p$ has the rejected-path property;
+\item $\widehat{\mathcal R}_p$ has at most $1+2^{v+1}(2^s-1)<2^{v+s+1}$ states.
+\end{enumerate}
+No satisfiability assumption is needed.
+\end{lemma}
+
+The replaced states are closed under transitions, because the bit $b$ never
+returns to $0$ and $\mathrm{du}$, once false, stays false
+(\cref{lem:un-source}(2)); so a rejected word never meets them. The count uses
+sign coherence: on a kept state, $P'$ is nonempty and fixes the common sign of
+all elements of $P$ and $P'$. The proof is in \cref{app:sm}.
+
+\begin{lemma}[Antecedent rejection clock]\label{lem:un-clock}
+Let $p\in X^\pm$ and $v=\len X$, and let $\mathcal A_p$ be the reader whose
+automaton is the reachable part of the upper automaton of $p$ in $\varphi$,
+whose admission relation is empty, and whose rejected states are the sets $P$
+with $P\cap\DeadT^\eps_\varphi=\varnothing$. It has at most $2^{v+1}-1$
+states. If $w$ is rejected by $\RU(p)$, then $w$ is rejected by $\mathcal A_p$
+with the same first rejected cut, and if moreover $w\ne\eps$, then
+$\depth(w)\le2(2^{v+1}-1)(r(w)+1)-1$.
+\end{lemma}
+
+On a word rejected by $\RU(p)$, the bit and $\mathrm{du}$ are constant, so only
+the first component of the source automaton decides rejection; the depth bound
+is then \cref{thm:bg-depth} for $\mathcal A_p$, which uses neither admissions
+nor holes. The proof is in \cref{app:sm}.
+
+\begin{theorem}[Condition (U) is decidable]\label{thm:un-decidable}
+Let $\varphi$ be satisfiable. If $X=\varnothing$, then \CondU\ holds.
+Otherwise let $v=\len X\ge1$ and $s=\len X+\len Z$, and put
+\[
+ A_{\mathrm U}=2^{v+1},\qquad K_{\mathrm U}=2^{v+s+1},\qquad
+ D_{\mathrm U}=2A_{\mathrm U}(4K_{\mathrm U}-1)-1 .
+\]
+Condition \CondU\ fails iff there are $p\in X^\pm$ and a word $w$ with
+$\len w\le\holeBound(K_{\mathrm U},D_{\mathrm U})$ such that $(p,w)$ is live in
+$\varphi$ and $\DeadU_\psi(p,w)$. Moreover
+$\holeBound(K_{\mathrm U},D_{\mathrm U})\le E_3(5v+3s+16)\le E_3(8s+16)$, where
+$E_3(x)=2^{2^{2^x}}$. Hence \CondU\ is decidable. The bound depends neither on
+the arity nor on the variance.
+\end{theorem}
+
+\begin{proof}
+If $X$ is empty, there is no visible atom, and \CondU\ holds vacuously. Let
+$X\ne\varnothing$. If \CondU\ fails, some $\RU(p)$ has a hole
+(\cref{lem:un-holes}), hence so does
+$\widehat{\mathcal R}_p$, which has $m\le K_{\mathrm U}$ states and the
+rejected-path property (\cref{lem:un-reduced}). By \cref{thm:bg-brt} it has a
+hole $w_0$ with $r(w_0)\le4m-2$; if $w_0=\eps$, we are done. Otherwise $w_0$ is
+rejected by $\RU(p)$, and \cref{lem:un-clock} gives
+$\depth(w_0)\le2(2^{v+1}-1)(4m-1)-1\le D_{\mathrm U}$. \Cref{thm:bg-search}
+for $\widehat{\mathcal R}_p$ with $d=D_{\mathrm U}$ gives a hole of length at
+most $\holeBound(m,D_{\mathrm U})\le\holeBound(K_{\mathrm U},D_{\mathrm U})$,
+since $\holeBound$ is nondecreasing in each argument
+(\cref{app:bg-constants}). This is a hole of $\RU(p)$ by
+\cref{lem:un-reduced}(1), hence a word as stated by \cref{lem:un-holes}. The
+converse is \cref{lem:un-dead}.
+
+For the estimate, write $A=A_{\mathrm U}$, $K=K_{\mathrm U}$ and
+$D=D_{\mathrm U}$. Then $D+1\le8AK$ and $K+D\le9AK$, so the quantity $\Xi$ of
+\cref{lem:bg-estimate} satisfies
+$\Xi(K,D)\le3K^2+288A^2K^3+3K+24AK+4\le322A^2K^3$, and
+$5\Xi(K,D)+3\le1613A^2K^3<2^{11}A^2K^3=2^{5v+3s+16}$. By
+\cref{lem:bg-estimate}, $\holeBound(K,D)\le2^{2^{5\Xi(K,D)+3}}\le
+E_3(5v+3s+16)$, and $v\le s$ gives the second inequality.
+
+For the decision, enumerate the $2\len X$ signed variables and the finitely
+many words up to this length, and test each pair by \cref{lem:un-source}: the
+states of $\Bsrc_p$ along $w$ are computable, and so are rejection and the
+admission of each of the finitely many comparisons of $w$.
+\end{proof}
+
+\begin{remark}[Singly exponential cases]\label{rem:un-single}
+In two cases the witnesses of \cref{thm:un-decidable} are much shorter. Let
+$\varphi$ be satisfiable and $p\in X^\pm$.
+\begin{itemize}[leftmargin=*]
+\item \emph{No self events.} If $\varphi$ has a parity assignment
+  (\cref{rem:ch-parity}), in particular if $f$ is covariant, then no pair of
+  reachable states of $\Bsrc_p$ is admitted (\cref{rem:sm-parity}). The holes
+  of $\RU(p)$ are then exactly its rejected words, and a shortest one visits no
+  state of $\widehat{\mathcal R}_p$ twice, so it is shorter than
+  $2^{v+s+1}$.
+\item \emph{Arity one.} If $n=1$, every pair of cuts $i<j$ of a word is a
+  comparison. If $w$ is a hole of $\RU(p)$, then so is its prefix
+  $w_J=\wpre w{J(w)}$, because the comparisons of $w_J$ are comparisons of
+  $w$ with the same states. By \cref{lem:un-clock}, $w_J$ is rejected by
+  $\mathcal A_p$ with the first rejected cut $J(w)$, and no two of its cuts
+  $i<j\le J(w)$ have the same state of $\mathcal A_p$: the unary word would
+  then repeat the run of $\mathcal A_p$ with period $j-i$, and the cut
+  $J(w)-(j-i)$ would already be rejected. Hence $J(w)<2^{v+1}-1$, and \CondU,
+  if it fails, fails at a word of length at most $2^{v+1}-2$.
+\end{itemize}
+\end{remark}
+
+A different route reduces \CondU\ to plain entailment: the words $w$ with
+$\DeadU_\psi(p,w)$ form a regular language $W_p$, and \CondU\ says that in
+every solution of $\varphi$ the leaf cone of $p$ avoids $W_p$, which is a
+comparison of the normalized value of the variable of $p$ with a regular
+ground tree determined by $W_p$. This alternative proves decidability by
+naming a finite graph for the regular ground tree; the direct unit-reader
+construction gives an explicit witness bound without introducing those
+additional variables. \Cref{sec:ex} turns to condition \CondII.

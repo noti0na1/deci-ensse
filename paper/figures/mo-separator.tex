@@ -1,0 +1,58 @@
+\begin{figure}[tbp]
+\centering
+\begin{tikzpicture}[>=Stealth,font=\small,x=0.8cm,y=1cm,
+    every node/.style={inner sep=1.5pt},
+    cell/.style={draw,minimum width=0.8cm,minimum height=0.5cm,inner sep=0pt},
+    lb/.style={font=\scriptsize,inner sep=1pt},
+    side/.style={font=\footnotesize,anchor=west,align=left}]
+  % the word w = u # t
+  \foreach \l/\f [count=\i from 0] in {0/white,1/black!12,0/black!12,\sep/white,1/black!12,0/black!12}
+    \node[cell,fill=\f] (c\i) at (\i+0.5,0) {$\l$};
+  \node[cell,very thick] at (3.5,0) {$\sep$};
+  \foreach \i in {0,...,6}
+    \node[lb,anchor=south] at (\i,0.27) {$\i$};
+  \node[lb,anchor=east] at (-0.15,0.42) {cuts of $w$};
+  \foreach \i in {0,...,3}
+    \node[lb,anchor=north] at (\i,-0.27) {$\i$};
+  \foreach \e in {0,1,2}
+    \node[lb,anchor=north] at (4+\e,-0.27) {$\e$};
+  \node[lb,anchor=east] at (-0.15,-0.42) {cuts of $u$, of $t$};
+  \draw[decorate,decoration={brace,amplitude=3pt,mirror}] (0.05,-0.62) -- (2.95,-0.62)
+    node[midway,below=3pt,lb]{$u$};
+  \draw[decorate,decoration={brace,amplitude=3pt,mirror}] (4.05,-0.62) -- (5.95,-0.62)
+    node[midway,below=3pt,lb]{$t$};
+  % the anchored comparison (1,4)
+  \draw[very thick,->] (1,0.72) .. controls (1.6,1.5) and (3.4,1.5) .. (4,0.72);
+  % the cross comparison (0,5) and the self comparison (4,6)
+  \draw[densely dashed,->] (0,0.72) .. controls (0.8,2.1) and (4.2,2.1) .. (5,0.72);
+  \draw[densely dotted,thick,->] (4,0.72) .. controls (4.4,1.2) and (5.6,1.2) .. (6,0.72);
+  % legend
+  \draw[very thick] (7.0,1.55) -- (7.6,1.55);
+  \node[side] at (7.7,1.55) {$(1,4)$: anchored, the aligned cross\\ comparison $(1,0)$: $\wsuf u1=t=10$};
+  \draw[densely dashed] (7.0,0.6) -- (7.6,0.6);
+  \node[side] at (7.7,0.6) {$(0,5)$: the cross comparison $(0,1)$:\\ $\wsuf t1=0\pre u$; continuation letter $1$};
+  \draw[densely dotted,thick] (7.0,-0.35) -- (7.6,-0.35);
+  \node[side] at (7.7,-0.35) {$(4,6)$: the self comparison\\ $(0,2)$ of $t$};
+\end{tikzpicture}
+\caption{The separator word $w=u\sep t$ for $u=010$ and $t=10$, the word of
+\cref{ex:mo-loses-tower}; each arrow points from the first cut of a
+comparison to its second. The cut $x\le3$ of $w$ is the cut $x$ of $u$, and the
+cut $4+e$ is the cut $e$ of $t$. Every comparison of $w$ joins a cut of $u$ to
+a cut of $t$, as the cross comparison $(0,5)$ does, or two cuts of $t$, as
+$(4,6)$ does (\cref{lem:mo-sep}). The comparison $(1,4)$ is anchored: its
+matched factor $\wsub w13=10$ (shaded) ends right before the separator and
+equals the suffix $\wsuf w4$. This is how a head event, an equality of two
+suffixes, appears in $w$; a cross comparison that is not aligned, such as
+$(0,5)$, has a continuation letter inside $u$. The anchored comparisons of $w$
+are $(1,4)$, $(2,5)$ and $(3,6)$.}
+\Description{The word 0 1 0 separator 1 0 in six cells, the separator cell
+framed thickly, with the cuts 0 to 6 of the word written above and, below,
+the cuts 0 to 3 of u and 0 to 2 of t, with braces marking u and t. The two
+cells 1 0 before the separator and the last two cells 1 0 are shaded. A thick
+arrow goes from the cut 1 to the cut 4, a dashed arrow from the cut 0 to the
+cut 5, and a dotted arrow from the cut 4 to the cut 6. A legend explains them:
+the thick arrow is anchored and is the aligned cross comparison 1, 0; the
+dashed arrow is the cross comparison 0, 1 with continuation letter 1; the
+dotted arrow is the self comparison 0, 2 of t.}
+\label{fig:mo-separator}
+\end{figure}

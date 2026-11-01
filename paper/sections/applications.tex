@@ -1,0 +1,259 @@
+%% applications -- subsumption of constrained type schemes, correctness of
+%% simplification, classes that reduce directly to plain entailment, and
+%% examples: identity schemes, Pottier's missed simplification, and a merge of
+%% self-application types that is incorrect. Proofs: appendix-applications.tex.
+
+\providecommand{\parity}{\operatorname{par}}
+
+\section{Constrained Types and Simplification}\label{sec:ap}
+
+This section states the subsumption of constrained type schemes as an
+existential entailment, separates the simplifications that need existential
+entailment from those that need only plain entailment, lists classes of
+consequents for which existential entailment reduces directly to plain
+entailments, and ends with examples, all of which involve variables that occur
+both co- and contravariantly. Proofs omitted here are in \cref{app:ap}.
+
+The signature is $\BFT$ with an arity $n$ and a variance $c$, or $\BF$ with $f$
+covariant, and $\mathcal D$ is a tree class. For arrow types, $n=2$, $c(0)=1$,
+$c(1)=0$, and we write $a\to b$ for $f(a,b)$. Constraints are inequalities
+between finite terms; by \cref{lem:bg-flattening} they are flattened, with the
+names of the subterms of the antecedent visible and those of the consequent
+hidden. Plain entailments are taken in the same signature and tree class.
+
+\subsection{Subsumption}\label{sec:ap-subsumption}
+
+A \emph{type scheme} $S=\forall\bar a.\,C\Rightarrow(\Gamma\Rightarrow\tau)$
+consists of a finite set $\bar a$ of bound type variables, a finite
+conjunction $C$ of inequalities between terms, a \emph{context} $\Gamma$, that
+is, a finite map from program variables to terms, and a term $\tau$. Its other
+type variables are \emph{free}. For a valuation $\eta$ of the free variables
+in $\mathcal D$, the \emph{instances} of $S$ under $\eta$ are the pairs
+$(\rho\circ\Gamma,\rho(\tau))$, where $\rho$ extends $\eta$ to $\bar a$ with
+values in $\mathcal D$, satisfies $C$, and $\rho\circ\Gamma$ maps each $v$ in
+$\operatorname{Dom}\Gamma$ to $\rho(\Gamma(v))$. Following
+\citet[Section~4.2]{TrifonovSmith96}, an instance $(\Delta,T)$ is below an
+instance $(\Delta',T')$ if $T\le_c T'$,
+$\operatorname{Dom}\Delta\subseteq\operatorname{Dom}\Delta'$, and
+$\Delta'(v)\le_c\Delta(v)$ for every $v\in\operatorname{Dom}\Delta$; contexts
+are compared contravariantly. Then $S_1\le S_2$ if, under every valuation of
+the free variables, every instance of $S_2$ is above some instance of $S_1$.
+
+\begin{proposition}[Subsumption formula]\label{prop:ap-subsumption}
+Let $S_i=\forall\bar a_i.\,C_i\Rightarrow(\Gamma_i\Rightarrow\tau_i)$ for
+$i=1,2$, where the bound variables are renamed so that $\bar a_1$ and $\bar a_2$
+are disjoint from each other and from the free variables of both schemes. Let
+the visible variables be $\bar a_2$ and the free variables, and let $\bar a_1$
+be hidden.
+\begin{enumerate}[leftmargin=*]
+\item If $\operatorname{Dom}\Gamma_1\subseteq\operatorname{Dom}\Gamma_2$, then
+  \[
+   S_1\le S_2\iff C_2\models_{\mathcal D}\exists\bar a_1\,(C_1\wedge R_{12}),
+   \qquad
+   R_{12}=(\tau_1\le\tau_2)\wedge
+   \bigwedge_{v\in\operatorname{Dom}\Gamma_1}\Gamma_2(v)\le\Gamma_1(v).
+  \]
+\item If $\operatorname{Dom}\Gamma_1\not\subseteq\operatorname{Dom}\Gamma_2$,
+  then $S_1\le S_2$ iff $C_2$ has no solution in $\mathcal D$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+A valuation of the visible variables that satisfies $C_2$ is the same as a
+valuation $\eta$ of the free variables together with an instance of $S_2$
+under $\eta$. Since $\bar a_1$ is disjoint from the visible variables, an
+extension of this valuation to $\bar a_1$ that satisfies $C_1$ is the same as
+an instance of $S_1$ under $\eta$, and $R_{12}$ together with the domain
+condition says that this instance is below the given instance of $S_2$. This
+proves (1). If the domain condition fails, no instance of $S_1$ is below an
+instance of $S_2$, so $S_1\le S_2$ holds iff $S_2$ has no instance.
+\end{proof}
+
+Both renamings are needed. For $S_1=b$, with $b$ free, and $S_2=\forall b.\,b$,
+with empty contexts, the formula read without renaming $\bar a_2$ would be the
+valid entailment $\mathrm{true}\models b\le b$; but at $b=\Top$ the instance
+$\Bot$ of $S_2$ lies above no instance of $S_1$, so $S_1\not\le S_2$.
+
+This is \cref{eq:intro-subsumption} with contexts. The formula has no
+restriction on the occurrences of variables: in a scheme for a higher-order
+program, a type variable typically occurs in the domain and in the codomain of
+arrows, and then at both polarities.
+
+\begin{corollary}[Deciding subsumption]\label{cor:ap-decidable}
+For $\BFT$ with any arity and variance, in particular for arrow types over
+$\Bot$, $\to$ and $\Top$, and for $\BF$ with $f$ covariant, subsumption of type
+schemes is decidable in each tree class, in 2-EXPSPACE. Over regular trees,
+the setting of \citet{TrifonovSmith96}, it agrees with subsumption over
+arbitrary trees.
+\end{corollary}
+
+\begin{proof}
+By \cref{prop:ap-subsumption} and \cref{lem:bg-flattening}, subsumption is an
+existential entailment between flat systems of linear size, or a
+satisfiability test. The first is decided by \cref{thm:as-main}, within the
+bound of \cref{thm:cx-upper}, and the second in polynomial time (proof of
+\cref{thm:cx-upper}). Regular and arbitrary trees agree for both questions
+(\cref{thm:tc-regular}).
+\end{proof}
+
+\subsection{Simplification}\label{sec:ap-simplification}
+
+A system $C(\bar x,\bar h)$ may be replaced by $C'(\bar x,\bar k)$, where
+$\bar x$ remain observable, if $\exists\bar h\,C\iff\exists\bar k\,C'$. The
+forward implication is the existential entailment $C\models\exists\bar k\,C'$
+with $\bar h$ visible, and the reverse one exchanges the systems; equivalence
+of type schemes is subsumption in both directions
+(\cref{prop:ap-subsumption}) and need not preserve the solutions on every type
+variable. These are the correctness conditions of constraint simplification
+and minimization \citep{Pottier96,Pottier01,TrifonovSmith96,EifrigSmithTrifonov95},
+and by \cref{thm:as-main} they are decidable, for arrow types without any
+restriction on polarity.
+
+Some simplifications need only plain entailment. Deleting a literal from a
+system preserves its full solution set iff the remaining literals entail it,
+since the other inclusion holds trivially; replacing a term under an entailed
+equality, or checking a conjunction without hidden variables, likewise reduces
+to one plain entailment per literal. For the equivalence of projections above,
+plain entailment of the deleted literal is a sufficient test but not a
+necessary one: deleting $h=\Bot$, for a hidden $h$ that occurs nowhere else,
+preserves the projection, although $\mathrm{true}\not\models h=\Bot$. Existential entailment is needed when a
+transformation changes the hidden variables: eliminating or merging internal
+variables, or replacing a scheme by one with different bound variables
+(\cref{ex:ap-selfapp}).
+
+\subsection{Direct Reductions to Plain Entailment}\label{sec:ap-plain}
+
+For the following classes of consequents, existential entailment reduces to
+satisfiability tests and finitely many plain entailments, for every variance
+and in each tree class, without the machinery of
+\cref{sec:sm,sec:un,sec:ex,sec:nm,sec:mo}. Visible terms may be arbitrary,
+including terms in which a variable occurs at both polarities. Plain entailment
+is decided over $\BFT$ by \citet{Zhao26} (\cref{thm:bg-nsse}) and over $\BF$
+by \cref{thm:as-main}. \Cref{app:ap} states the precise conditions,
+with the caveats for finite trees, and gives the proofs.
+\begin{itemize}[leftmargin=*]
+\item \emph{Flat bound witnesses} (\cref{prop:ap-flat}). The hidden variables
+  occur only in inequalities among themselves and with terms over $X$. The
+  entailment holds iff $\varphi$ entails the other literals and $s\le_c t$ for
+  every lower bound $s$ and upper bound $t$ joined by a chain of hidden
+  variables; joins of lower bounds are witnesses.
+\item \emph{Unipolar witnesses} (\cref{prop:ap-unipolar}). A hidden variable
+  all of whose occurrences are negative can be replaced by $\Bot$, and one all
+  of whose occurrences are positive by $\Top$; over $\BF$ the greatest tree
+  $\Omega$ replaces $\Top$, except over finite trees.
+\item \emph{Functional witnesses} (\cref{prop:ap-functional}). The consequent
+  defines every hidden variable by an equation, and every cycle of definitions
+  passes through a constructor. The hidden variables are then determined by the
+  visible ones, and the entailment is a plain entailment with the hidden
+  variables universally quantified; over finite trees a cycle of definitions
+  instead makes it equivalent to the absence of a finite solution of
+  $\varphi$.
+\item \emph{Mixed sandwich} (\cref{prop:ap-sandwich}). For the arrow, the
+  entailment of $\exists z\,[\,x\le(z\to z)\wedge(z\to z)\le y\,]$, whose
+  hidden variable occurs at both polarities, reduces by a case split on the
+  shapes of $x$ and $y$ to two satisfiability tests and six plain entailments.
+\end{itemize}
+The running example (\cref{ex:intro-shift}) lies outside all these classes.
+Its hidden variable $z$ occurs in $z\le f(z,z)$, so it is bounded by a term
+that is not over $X$; it occurs negatively in $z\le y$ and positively in
+$x\le z$, so it is not unipolar; $\psi$ defines $z$ by no equation; and the
+mixed sandwich concerns the arrow. The procedure of
+\cref{sec:sm,sec:un,sec:ex,sec:nm,sec:mo} handles it
+(\cref{ex:sm-running,ex:un-running,ex:ex-running}).
+
+\subsection{Examples}\label{sec:ap-examples}
+
+\begin{example}[Two identity schemes]\label{ex:ap-identity}
+Let $S_1=\forall\alpha.\,\alpha\to\alpha$ and
+$S_2=\forall\beta\gamma.\,(\beta\le\gamma)\Rightarrow\beta\to\gamma$, with empty
+contexts. By \cref{prop:ap-subsumption}, $S_1\le S_2$ iff
+$\beta\le\gamma\models\exists\alpha\,(\alpha\to\alpha\le\beta\to\gamma)$. Both
+sides of the inequality are arrows, so it says $\beta\le_c\alpha$ and
+$\alpha\le_c\gamma$, and $\alpha=\beta$ is a witness. Conversely, $S_2\le S_1$
+iff $\models\exists\beta\gamma\,(\beta\le\gamma\wedge
+\beta\to\gamma\le\alpha\to\alpha)$, with $\alpha$ visible, that is, iff some
+$\beta,\gamma$ satisfy $\alpha\le\beta\le\gamma\le\alpha$, and
+$\beta=\gamma=\alpha$ is a witness. So the two schemes are equivalent. The
+hidden variable $\alpha$ of the first entailment occurs in the domain and in
+the codomain of the same arrow, so it has both polarities, and after
+flattening the literal $f(\alpha,\alpha)\le u$ admits no parity assignment
+(\cref{rem:ch-parity}), which would need $\pi(\alpha)=\pi(u)\oplus1$ and
+$\pi(\alpha)=\pi(u)$.
+\end{example}
+
+\citet{TrifonovSmith96} decide subsumption by a sound approximation through
+canonical bounds, and simplifiers prove entailments by syntactic reasoning
+about the bounds of variables; such tests are incomplete \citep{Pottier01}. The
+following example of \citet[Section~8.5]{Pottier98thesis} shows a correct
+simplification that reasoning through lower bounds misses.
+
+\begin{example}[A missed redundant constraint]\label{ex:ap-pottier}
+For arrow types put
+\[
+ g=\Bot\to\Top,\qquad k=g\to\Bot,\qquad C(a)=(a\to\Bot\le a).
+\]
+Then $C\models k\le a$ in each tree class. Indeed $a\ne\Bot$, since
+$a\to\Bot\le_c\Bot$ is false. If $a=\Top$, then $k\le_c a$. Otherwise $a$ is an
+arrow $a_0\to a_1$, so $a\le_c g$, because $g$ is the greatest arrow
+(\cref{ex:lf-arrow}); by contravariance $k=g\to\Bot\le_c a\to\Bot\le_c a$. Thus
+adding or deleting the literal $k\le a$ is an exact simplification, and
+equivalently $C\models\exists z\,(k\le z\wedge z\le a)$, with the witness $z=k$
+(\cref{prop:ap-flat}). The variable $a$ has the single lower bound $a\to\Bot$
+and the upper bound $\Top$ in $C$. Proving $k\le a$ through this lower bound
+requires $k\le a\to\Bot$, that is, $a\le g$, and this is not entailed:
+$a=\Top$ satisfies $C$. A test that proves an inequality $k\le a$ only through a
+lower bound of $a$ therefore fails on this true simplification.
+
+The antecedent mentions $a$ at both polarities, and it admits no parity
+assignment. The example also shows why the signed system cannot be read on its
+own. The signed literals of $C$ (\cref{tab:bg-signed}) are
+$f(a^-,\Bot)\le a^+$ and $a^-\le f(a^+,\Top)$, read covariantly. Put
+$F=f(\Bot,\Bot)$. The covariant values $a^+=F$ and $a^-=\Bot$ satisfy them, but
+they violate $a^-=(a^+)^\partial$, the condition of \cref{lem:bg-signed}. The
+signed form of $k\le a$ requires $\nu_0k\le a^+$
+(\cref{lem:bg-normalization}(2)), and $\nu_0k=f(\nu_1g,\Bot)=f(F,\Bot)$ by
+\cref{lem:bg-normalization}(1). Since $f(F,\Bot)\not\le F$, a test that drops
+the coupling between $a^+$ and $a^-$ reports a countermodel of a true
+entailment. The leaf cones of \cref{sec:lf} keep this coupling: the two cones
+of $a$ are the cones of one tree, and the exclusions and duality of
+\cref{sec:lf-duality} enforce it.
+\end{example}
+
+The last example concerns a merge of type variables, which changes the bound
+variables of a scheme and so needs existential entailment.
+
+\begin{example}[Merging the variables of self-application]\label{ex:ap-selfapp}
+The term $\lambda x.\,x\,x$ has the inferred scheme
+\[
+ S=\forall\alpha\beta.\,(\alpha\le\alpha\to\beta)\Rightarrow\alpha\to\beta,
+\]
+in which $\alpha$ is both a function and its own argument. A simplifier might
+merge $\beta$ into $\alpha$ and propose
+$S'=\forall\gamma.\,(\gamma\le\gamma\to\gamma)\Rightarrow\gamma\to\gamma$.
+By \cref{prop:ap-subsumption}, $S\le S'$ iff
+\[
+ \gamma\le\gamma\to\gamma\ \models\ \exists\alpha\beta\,
+ (\alpha\le\alpha\to\beta\ \wedge\ \alpha\to\beta\le\gamma\to\gamma),
+\]
+which holds with the witness $\alpha=\beta=\gamma$. But $S'\le S$ iff
+\[
+ \alpha\le\alpha\to\beta\ \models\ \exists\gamma\,
+ (\gamma\le\gamma\to\gamma\ \wedge\ \gamma\to\gamma\le\alpha\to\beta),
+\]
+and the second literal says $\alpha\le_c\gamma\le_c\beta$. The values
+$\alpha=\Top\to\Bot$ and $\beta=\Bot$ satisfy the antecedent: the domain $\Top$
+of $\alpha$ lies above $\alpha$, and its codomain $\Bot$ below $\beta$. No
+$\gamma$ lies between the arrow $\alpha$ and $\Bot$, so the entailment fails, and
+the instance $(\Top\to\Bot)\to\Bot$ of $S$, the type of $\lambda x.\,x\,x$ applied
+to arguments that accept everything and return $\Bot$, lies above no instance
+of $S'$. The merge loses generality. In both entailments every hidden variable
+has both occurrence signs in the consequent, and a hidden variable is bounded
+by an arrow in which it occurs itself, $\alpha\le\alpha\to\beta$ and
+$\gamma\le\gamma\to\gamma$; so none of the classes of \cref{sec:ap-plain}
+applies, and \cref{thm:as-main} decides both.
+\end{example}
+
+The semantics matters as well: \cref{app:ap-closed} gives a covariant
+entailment over $\BFT$ that holds for trees but fails in an extensible
+constructor algebra, so a test that is sound for such algebras cannot certify
+the corresponding simplification of tree constraints.

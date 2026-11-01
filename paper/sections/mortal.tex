@@ -1,0 +1,709 @@
+%% mortal -- mortal holes of the two-word problem with self events:
+%% where they come from (facts of phi) and an example, anchored comparisons,
+%% the separator word and its reader, which admits self events, the coarse
+%% depth bound, positive channels and their derivatives with the witness in
+%% the tower, the anchored compression theorem, short mortal holes, and
+%% decidability of the two-word problem under (FH). Proofs and constants are
+%% in appendix-mortal.tex.
+
+\section{Mortal Holes}\label{sec:mo}
+
+Let $I=(A,\Bad,B,\Rej,\Guard,\GuardS,A',B',\Head)$ be an instance of the
+two-word hole problem with self events (\cref{def:ex-ss2self}), with the
+notation of \cref{def:ex-ss2self,def:ex-events}. A \emph{mortal hole} of $I$
+is a hole $(u,t)$ whose spine ends in a mortal state and whose target ends
+fewer than $N_A$ letters after its first rejected cut
+(\cref{def:nm-mortal-hole}). By \cref{thm:nm-three-cases}, an instance with
+forced target heads has a hole iff it has a short hole or a mortal hole. This
+section bounds the length of a shortest mortal hole and thereby decides the
+hole problem under (FH) (\cref{thm:mo-decide}).
+
+\paragraph{Where mortal holes come from}
+In an extracted instance $I_{pq}$, mortality depends on $\varphi$ alone. The
+spine automaton is the lower automaton of $q$ in $\varphi$, and its bad states
+are those that meet $\Fup\varphi$, so a spine $u$ is safe iff
+$(q,u)\notin\mu_\varphi$ (\cref{tab:ex-instance}): the derived atom is not one
+of the atoms that every solution of $\varphi$ contains. Facts come only from
+extreme literals (\cref{tab:lf-clauses}). Hence, if $\varphi$ has no extreme
+literal, then $\mu_\varphi$, $\Fup\varphi$ and $\Bad$ are empty, and for
+$n\ge1$ no state is mortal, so $I_{pq}$ has no mortal hole
+(\cref{rem:nm-nonblocking}). Mortal holes arise only when $\varphi$ forces
+atoms. Since every safe run from a mortal state dies within $N_A$ letters
+(\cref{lem:nm-thin}), a safe spine $u$ ends in a mortal state iff
+$(q,uv)\in\mu_\varphi$ for every word $v$ of length $N_A$: the derived atom is
+not forced, but all its long extensions are. A mortal hole therefore admits no
+arbitrarily long safe continuation. The argument of \cref{sec:nm}, which replaces the continuation of a
+hole by a new one taken from the infinite safe continuations of the spine,
+does not apply, and the pair has to be shortened as it stands.
+
+\begin{example}[A mortal hole]
+Let $n=2$ with $f$ covariant, let $X=\{x,y,a,b,c\}$ and $Z=\varnothing$, and
+\[
+ \varphi=\{x\le f(x,b),\ b\le f(a,a),\ a=\Bot,\ f(y,c)\le y\},\qquad
+ \psi=\{x\le f(y,y)\}.
+\]
+Both systems are satisfiable. Condition \CondI\ holds, since $\psi$ has no
+facts, and so does \CondU: the only atom that is root-dead in $\psi$ is its
+forbidden root $(x^0,\eps)$, which is also a forbidden root of $\varphi$ and
+hence dead in $\varphi$. Consider $I_{y^1x^1}$.
+\begin{itemize}[leftmargin=*]
+\item The only fact of $\varphi$ is $(a^1,\eps)$, and $\Fup\varphi=\{a^1\}$.
+  The spine automaton starts at $\downc\varphi{x^1}=\{x^1\}$, loops there on
+  $0$, moves to $\{b^1\}$ on $1$, and from $\{b^1\}$ to the bad state
+  $\{a^1\}$ on either letter; so $\{b^1\}$ is mortal. In terms of trees,
+  $x\le f(x,b)$, $b\le f(a,a)$ and $a=\Bot$ force a leaf $\Bot$ of $x$ at a
+  prefix of every word $0^k1i$.
+\item The $\varphi$-component of the target automaton is $\{y^1\}$ along
+  $0^*$, $\{c^1\}$ after the first letter $1$, and empty afterwards. The atoms
+  $(y^1,0^k)$ are dead by support, because $(y^1,\eps)$ is a forbidden root of
+  $\varphi$ and $(y^1,0^k)$ pops to it, while no atom $(y^1,w)$ is root-dead
+  in $\psi$. So $J(t)$ is defined iff $t$ contains the letter $1$, and it is
+  then the cut after the first $1$.
+\item The guard and the self guard never apply, because the sets that they
+  intersect are disjoint.
+\item The pop head is empty: $\psi$ derives $(x^1,0\sigma)$ from
+  $(y^1,\sigma)$ by a single push, and the head events are the pairs $(1,0)$
+  with $\wsuf u1=t$.
+\end{itemize}
+Hence the holes of $I_{y^1x^1}$ are exactly the pairs $(0^{j+1}1,0^j1)$ with
+$j\ge0$, all of them mortal, with $J(t)=\len t$; the spine and the common
+suffix $0^j1$ are unbounded. These pairs are also the only pre-holes, and their
+spines end in the mortal state, so the instance has holes, but only in case~(3)
+of \cref{thm:nm-three-cases}. In the corresponding failure of \CondII, $\psi$
+derives $(x^1,0^{j+1}1)$ from the live seed $(y^1,0^j1)$, but the least model
+of $\varphi$ that contains the seed does not contain $(x^1,0^{j+1}1)$. For
+$j=0$, the solution $a=c=\Bot$, $b=f(\Bot,\Bot)$, $x=f(f(\Bot,b),b)$,
+$y=f(\Top,\Bot)$ of $\varphi$ is not a solution of $\psi$: $x\le f(y,y)$ would
+require $f(\Bot,b)\le f(\Top,\Bot)$, hence $b\le\Bot$.
+\end{example}
+
+In a mortal hole the target ends shortly after its first rejected cut, but the
+spine and the common suffix of a head event can be arbitrarily long, as in the
+example. They cannot be shortened independently: events relate cuts of the
+spine to cuts of the target, self events relate two cuts of the target, and a
+head event demands that two suffixes be \emph{equal}. We proceed in four steps.
+\begin{enumerate}[leftmargin=*]
+\item We pack the pair into the \emph{separator word} $u\sep t$ over
+  $\Sigma\sqcup\{\sep\}$. Events and self events become comparisons of this
+  word, and a head event becomes an \emph{anchored} comparison, one whose
+  matched factor is followed by the separator. Mortal holes are then exactly
+  the \emph{$\Pi$-holes} of one reader, its holes with an anchored comparison
+  whose state pair lies in a relation $\Pi$. Mortality and the short rejected
+  tail enter through the reader itself, and self events enter through its
+  admission relation (\cref{sec:mo-anchored,sec:mo-separator}).
+\item The short rejected tail bounds the depth of the separator word, by the
+  depth theorem of \citet{Zhao26} (\cref{sec:mo-depth}).
+\item We attach to each level of the hierarchy a \emph{positive channel},
+  which records the anchored witness in the form in which it appears at that
+  level, and show that channels have derivatives exactly as lettered monitors
+  do (\cref{sec:mo-channels}). The bounded-depth search of that paper does not
+  look at the channel and can lose the witness (\cref{ex:mo-loses}); once its
+  exchange types, its shortening of the top level and its column summaries
+  record the channel, it gives the anchored compression theorem
+  (\cref{sec:mo-compression}).
+\item Combining the three steps bounds the length of a shortest mortal hole by
+  a doubly exponential function of the automaton state counts, hence a triply
+  exponential function of $s$ for extracted instances, which decides the hole
+  problem (\cref{sec:mo-short}).
+\end{enumerate}
+Condition (FH) is used only in the last theorem (\cref{rem:mo-fh}). The proofs
+are in \cref{app:mo}.
+
+\subsection{Anchored Comparisons}\label{sec:mo-anchored}
+
+Fix a letter $\sep$, the \emph{separator}. Comparisons in this section are
+comparisons of one word, in the end the separator word $u\sep t$ of
+\cref{sec:mo-separator}, which is a different word from the pair $(u,t)$; we
+therefore write them $(x,y)$ (here $x$ and $y$ are cuts, not variables),
+whereas the cross comparisons $(s,e)$ of \cref{def:ex-events} relate cuts of
+the two words of the pair. For a comparison $(x,y)$ of a word $w$, the factor $\wsub wx{x+\len w-y}=\wsuf wy$ is its \emph{matched factor},
+and the letter $w[x+\len w-y]$ that follows the matched factor inside
+$\wsuf wx$ is its \emph{continuation letter}; it exists because $x<y$. For a
+terminal comparison $(x,\len w)$ the matched factor is empty and the
+continuation letter is $w[x]$.
+
+\begin{definition}[Anchored comparison, $\Pi$-hole]\label{def:mo-anchored}
+A comparison of a word $w$ is \emph{anchored} if its continuation letter is
+$\sep$. Let $(\mathcal M,\Adm,\Rej)$ be a reader with states $Q$ over a finite
+alphabet $\Gamma\ni\sep$ (\cref{def:bg-reader}), and let $\Pi\subseteq Q\times
+Q$. A \emph{$\Pi$-hole} of the reader is a nonempty hole $w$
+(\cref{def:bg-hole}) that has an anchored comparison $(x,y)$ with
+$(q_x,q_y)\in\Pi$.
+\end{definition}
+
+If $w$ contains $\sep$ exactly once, at the position $m$, then a pair of cuts
+$(x,y)$ is an anchored comparison iff
+\[
+ x\le m,\qquad y=x+\len w-m,\qquad \wsuf wy=\wsub wxm .
+\]
+Indeed, the continuation letter of a comparison $(x,y)$ is $\sep$ iff
+$x+\len w-y=m$, and then the matched factor $\wsuf wy$ has length $m-x$, so the
+prefix relation $\wsuf wy\pre\wsuf wx$ says $\wsuf wy=\wsub wxm$; conversely
+these three conditions make $(x,y)$ a comparison, since $x<y$ and $\wsub wxm$
+is a prefix of $\wsuf wx$. The terminal pair $(m,\len w)$ is always anchored,
+with empty matched factor. Every other anchored comparison matches a nonempty
+factor that ends immediately before the separator with a suffix of the whole
+word.
+
+The equation $y=x+\len w-m$ is what matters. A comparison $(x,y)$ with $y>m$
+only says that the suffix after $y$ is a \emph{prefix} of the suffix after
+$x$; the equation forces the two matched factors to have the same length, and
+the prefix relation becomes an equality. In the separator word this is exactly
+the difference between an event, a prefix relation $\wsuf te\pre\wsuf ux$, and
+a head event, an equality $\wsuf te=\wsuf ux$ (\cref{lem:mo-sep}). A
+compression that preserves only ``some comparison with a state pair in $\Pi$''
+is therefore not enough.
+
+\begin{example}[An unanchored positive comparison]\label{ex:mo-unanchored}
+Over $\Gamma=\{0,1,\sep\}$ take the reader whose states $0,\ldots,4$ form the
+prefix chain of $01\sep0$, that is, $\delta(0,0)=1$, $\delta(1,1)=2$,
+$\delta(2,\sep)=3$ and $\delta(3,0)=4$, with all other transitions into a
+sink $5$. Let $\Rej=\{4\}$, $\Adm=\varnothing$ and $\Pi=\{(0,3)\}$. The only
+rejected word is $w=01\sep0$, so it is the only hole. It has the comparison
+$(0,3)$, since $\wsuf w3=0\pre w$, with state pair $(0,3)\in\Pi$, but the
+continuation letter of $(0,3)$ is $w[1]=1$. The only anchored comparison of
+$w$ is the terminal pair $(2,4)$, whose state pair $(2,4)$ is not in $\Pi$.
+Hence the reader has no $\Pi$-hole, although its only hole has a comparison
+labeled by $\Pi$.
+\end{example}
+
+\subsection{The Separator Word}\label{sec:mo-separator}
+
+For words $u,t\in\Sigma^*$ put $w=u\sep t$, a word over
+$\Gamma=\Sigma\sqcup\{\sep\}$, and $m=\len u$, so that $\len w=\len u+\len t+1$.
+The cuts $x\le m$ of $w$ are the cuts of $u$, and the cut $m+1+e$ of $w$ is the
+cut $e$ of $t$.
+
+\begin{lemma}[Comparisons of the separator word]\label{lem:mo-sep}
+Let $u,t\in\Sigma^*$, $w=u\sep t$ and $m=\len u$.
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+\item No pair $(x,y)$ with $y\le m$ is a comparison of $w$.
+\item For $x\le m$ and $e\le\len t$, the pair $(x,m+1+e)$ is a comparison of
+  $w$ iff $(x,e)$ is a cross comparison of $(u,t)$.
+\item For $i<j\le\len t$, the pair $(m+1+i,m+1+j)$ is a comparison of $w$ iff
+  $(i,j)$ is a comparison of $t$.
+\item For $x\le m$ and $e\le\len t$, the pair $(x,m+1+e)$ is an anchored
+  comparison of $w$ iff $(x,e)$ is an aligned cross comparison of $(u,t)$, that
+  is, iff $\wsuf ux=\wsuf te$.
+\end{enumerate}
+\end{lemma}
+
+So every comparison of $w$ either joins a cut of the spine to a cut of the
+target, and is then a cross comparison, or joins two cuts of the target
+(\cref{fig:mo-separator}). The separator keeps the two words apart: every
+matched factor is a suffix of $t$, so none runs across the separator, and a
+matched factor that starts in $u$ stops either inside $u$ or right before the
+separator; the comparisons of the second kind are the anchored ones. The proof
+is in \cref{app:mo-separator}. All conditions of a mortal hole, mortality
+included, are therefore read by one reader, which we now construct.
+
+\input{figures/mo-separator}
+
+\paragraph{The reader $\RPi$}
+Mortality of a safe state is decided by reachability in the safe graph of $A$
+(\cref{def:nm-kinds}). The reader $\RPi$ over $\Gamma=\Sigma\sqcup\{\sep\}$
+reads $u\sep t$ in three phases.
+\begin{itemize}[leftmargin=*]
+\item On the spine, its states $\sPre(q,q')$, with $q\in S_A\setminus\Bad$
+  and $q'\in S_{A'}$, follow $A$ and $A'$.
+\item On the target up to its first rejected cut, its states
+  $\sAct(r,r')$, with $r\in S_B$ and $r'\in S_{B'}$, follow $B$ and $B'$.
+\item After the first rejected cut, its states $\sDone(r',k)$, with
+  $r'\in S_{B'}$ and $1\le k\le N_A$, follow $B'$ and count the letters read,
+  capped at $N_A$.
+\end{itemize}
+A state $\sSink$ absorbs every failure. The automata $A$, $B$, $A'$, $B'$
+start in their state $0$ (\cref{def:ex-ss2self}); the start state of $\RPi$ is
+$\sPre(0,0)$, or $\sSink$ if $0\in\Bad$. For a letter $i\in\Sigma$ the
+transitions are
+\[
+\begin{aligned}
+ \sPre(q,q')&\xrightarrow{i}\sPre(A(q,i),A'(q',i))
+   \ \text{if }A(q,i)\notin\Bad,\text{ else }\sSink,\\
+ \sPre(q,q')&\xrightarrow{\sep}\sAct(0,0)
+   \ \text{if $q$ is mortal},\text{ else }\sSink,\\
+ \sAct(r,r')&\xrightarrow{i}\sDone(B'(r',i),1)
+   \ \text{if }r\in\Rej,\text{ else }\sAct(B(r,i),B'(r',i)),\\
+ \sDone(r',k)&\xrightarrow{i}\sDone(B'(r',i),\min(k+1,N_A)),
+\end{aligned}
+\]
+and every other transition, in particular every transition on $\sep$ after the separator,
+leads to $\sSink$. The rejected states are $\sAct(r,r')$ with $r\in\Rej$ and
+$\sDone(r',k)$ with $k\le N_A-1$. The admission relation consists of the pairs
+\[
+ \bigl(\sPre(q,q'),\sAct(r,r')\bigr)\ \text{with }(q,r)\in\Guard,
+ \qquad
+ \bigl(\sAct(r_1,r'_1),\sAct(r_2,r'_2)\bigr)\ \text{with }(r_1,r_2)\in\GuardS,
+\]
+and no others. The relation $\Pi$ relates $\sPre(q,q')$ to $\sAct(r,r')$ and to
+$\sDone(r',k)$ iff $(q',r')\in\Head$, and relates no other pairs.
+
+Thus $\RPi$ reads the separator only from a mortal state, rejects a word only if
+fewer than $N_A$ letters follow the first rejected cut of the target, and lets
+$\Pi$ compare the head automata on the two sides of the separator. The target
+automaton is kept up to and including the first rejected cut, because events
+and self events may end there; after it, events and self events no longer
+exist (\cref{def:ex-events}), so only $B'$ and the counter remain. The admissions
+from the self guard $\GuardS$ are the only difference from a reader for
+instances without self events; the compression below allows an arbitrary admission relation.
+
+For a reader, only the states reachable from its start state matter: the
+restriction to them is again a reader, with the same run on every word and
+hence the same holes and $\Pi$-holes. Let $r_I$ and $z_I$ be the numbers of
+states of the product automata $A\times A'$ and $B\times B'$ reachable from
+their start states, so that $r_I\le N_AN_{A'}$ and $z_I\le N_BN_{B'}$, and put
+\[
+ \Nbar=1+r_I+z_I+N_AN_{B'},\qquad d_I=2\Nbar N_A-1 .
+\]
+
+\begin{lemma}[The $\Pi$-reader]\label{lem:mo-pi-reader}
+The reader $\RPi$ and the relation $\Pi$ are computable from $I$, and:
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+\item at most $\Nbar$ states of $\RPi$ are reachable from its start state;
+\item a word $w$ over $\Sigma\sqcup\{\sep\}$ is a $\Pi$-hole of $\RPi$ iff
+  $w=u\sep t$ with $u,t\in\Sigma^*$ and $(u,t)$ a mortal hole of $I$;
+\item for such $w$ the first rejected cut is $\len u+1+J(t)$, so the rejected
+  tail of $w$ is $\len t-J(t)$.
+\end{enumerate}
+\end{lemma}
+
+On $u\sep t$, the state at a cut $x\le\len u$ carries $A_x(u)$ and $A'_x(u)$
+while $u$ is safe, and the state at the cut $\len u+1+e$ carries $B_e(t)$ up to
+$J(t)$ and $B'_e(t)$ throughout. By \cref{lem:mo-sep}, the admitted comparisons
+are then exactly the events and the self events, and $\Pi$ on the anchored
+comparisons is exactly the head condition. The proof is in
+\cref{app:mo-separator}.
+
+\subsection{The Depth of the Separator Word}\label{sec:mo-depth}
+
+The length bound of the bounded-depth search grows with the depth of the word
+(\cref{thm:bg-search}). For a mortal hole, the depth of the separator word is
+bounded at once.
+
+\begin{lemma}[Depth of mortal holes]\label{lem:mo-depth}
+Every mortal hole $(u,t)$ of $I$ satisfies $\depth(u\sep t)\le d_I$.
+\end{lemma}
+
+\begin{proof}
+By \cref{lem:mo-pi-reader}, $u\sep t$ is a nonempty rejected word of the
+reachable part of $\RPi$, a reader with at most $\Nbar$ states, and its rejected
+tail is $\len t-J(t)\le N_A-1$. \Cref{thm:bg-depth} gives
+$\depth(u\sep t)\le2\Nbar((N_A-1)+1)-1=d_I$.
+\end{proof}
+
+The bound is coarse, since it involves the spine and head automata through
+$\Nbar$, but it enters the final estimate only through a polynomial in $\Nbar$
+and $N_A$, and changes only the constant in the exponent
+(\cref{lem:mo-estimate}).
+
+\subsection{Positive Channels}\label{sec:mo-channels}
+
+The bounded-depth search sees each level of the hierarchy through a lettered
+monitor, the derivative of the monitor one level below
+(\cref{def:bg-monitor,def:bg-derivative}); the derivatives carry the negative
+conditions, because a comparison of one level reappears at the next as a
+comparison of blocks or as a test in the final target. We carry the positive
+condition in the same way. At level $0$ it is an anchored comparison in $\Pi$,
+a comparison together with a test of its continuation letter; one level up, the
+continuation letter is the first letter of the expansion of a block, or a
+letter inside the last block, and the comparison may have become a test of the
+final label. Five components cover all the forms that arise.
+
+\begin{definition}[Positive channel]\label{def:mo-channel}
+Let $\mathcal M$ be a lettered monitor over an alphabet $\Gamma$ with state set
+$\mathcal Q$. A \emph{positive channel} $\Theta=(F,R,S,S',\Phi)$ on $\mathcal M$
+consists of a predicate $F\subseteq\mathcal Q\times\Gamma$, three relations
+$R$, $S$ and $S'$ on labels, and a set $\Phi\subseteq\Gamma$ of letters. For a
+nonempty word $v$ with labels $L_0,\ldots,L_{\len v}$, the \emph{positive
+condition} $\PosOp_\Theta(v)$ holds iff one of the following clauses holds:
+\begin{description}[leftmargin=2.8em,font=\normalfont]
+\item[(F)] $F(L_{\len v})$;
+\item[(R)] some comparison $(x,y)$ of $v$ with $y<\len v$ has $R(L_x,L_y)$ and
+  $v[x+\len v-y]\in\Phi$;
+\item[(S)] some cut $x<\len v$ has $S(L_x,L_{\len v})$;
+\item[(S$'$)] some cut $x<\len v$ has $S'(L_x,L_{\len v})$ and $v[x]\in\Phi$.
+\end{description}
+A \emph{positive hole} of $(\mathcal M,\Theta)$ is a hole $v$ of $\mathcal M$
+with $\PosOp_\Theta(v)$.
+\end{definition}
+
+Clauses (R) and (S$'$) together say that some comparison has its labels in a
+relation, $R$ if it is not terminal and $S'$ if it is, and its continuation
+letter in $\Phi$; the continuation letter of the terminal comparison $(x,\len
+v)$ is $v[x]$. Clauses (F) and (S) are tests without a continuation letter.
+They are empty at level $0$, but derivatives move witnesses into them, as the
+derivatives of lettered monitors move admissions into the terminal relation and the
+final target.
+
+For a reader $(\mathcal M,\Adm,\Rej)$ over $\Gamma\ni\sep$ with start $q_0$ and
+$\Pi\subseteq Q\times Q$, the \emph{base channel} on the lettered monitor of
+the reader (\cref{def:bg-monitor}) is
+\[
+ \Theta_\Pi=(\varnothing,\widehat\Pi,\varnothing,\widehat\Pi,\{\sep\}),
+ \qquad
+ \widehat\Pi(L,L')\iff(\den L,\den L')\in\Pi .
+\]
+
+\begin{lemma}[The base channel]\label{lem:mo-base}
+A nonempty word $w$ satisfies $\PosOp_{\Theta_\Pi}(w)$ iff it has an anchored
+comparison $(x,y)$ with $(q_x,q_y)\in\Pi$. Hence the $\Pi$-holes of the reader
+are exactly the positive holes of its lettered monitor with the base channel.
+\end{lemma}
+
+\begin{proof}
+Since $\den L_i=q_i$, clause (R) is an anchored comparison $(x,y)$ with
+$y<\len w$ and $(q_x,q_y)\in\Pi$, and clause (S$'$) is the same for a terminal
+comparison $(x,\len w)$, whose continuation letter is $w[x]$; clauses (F) and
+(S) are empty. The reader and its lettered monitor have the same nonempty
+holes.
+\end{proof}
+
+The derivative of a channel uses the shifted blocks of
+\cref{def:bg-derivative}. The letter that follows the position $g$ of the
+shifted block of $X$ is $(X\ell)[g]$: the letter $X[g]$ for $g<\len X$, and
+the marker that opens the next shifted block for $g=\len X$.
+
+\begin{definition}[Derivative of a channel]\label{def:mo-channel-derivative}
+Let $\Theta=(F,R,S,S',\Phi)$ be a positive channel on $\mathcal M$ and
+$\ell\in\Gamma$. The \emph{derivative} $\Theta_\ell=(F_\ell,R_\ell,S_\ell,
+S'_\ell,\Phi_\ell)$ is the positive channel on $\mathcal M_\ell$ given by
+\[
+\begin{aligned}
+ \Phi_\ell&=\{X:(X\ell)[0]\in\Phi\},\\
+ R_\ell((\zeta,X),(\zeta',X'))&\iff X=xy,\ X'=x'y,\
+   R\bigl(\lab_{\len x}(\zeta,X),\lab_{\len{x'}}(\zeta',X')\bigr)
+   \text{ for some }x,x',y,\\
+ S'_\ell&=R_\ell,\\
+ S_\ell((\zeta,X),(\zeta',X'))&\iff\ptest(\zeta,X;\delta_\ell(\zeta',X')),\\
+ F_\ell(\zeta,X)&\iff F(\delta_\ell(\zeta,X),\ell)\ \text{or}\
+   \ptest(\zeta,X;\delta_\ell(\zeta,X)),
+\end{aligned}
+\]
+where the \emph{positive terminal test} is
+\[
+\begin{aligned}
+ \ptest(\zeta,X;\zeta'')\iff{}&\text{for some }g\le\len X:\
+ S\bigl(\lab_g(\zeta,X),(\zeta'',\ell)\bigr),\\
+ &\text{or }S'\bigl(\lab_g(\zeta,X),(\zeta'',\ell)\bigr)\text{ and }
+ (X\ell)[g]\in\Phi,
+\end{aligned}
+\]
+and every relation with the start label $\triangleright$ of $\mathcal M_\ell$ as
+an argument is false.
+\end{definition}
+
+The relation $R_\ell$ is built from $R$ exactly as the derived admission
+$\Lambda_\ell$ is built from $\Lambda$, and the positive terminal test is the
+analog of the terminal test in $\Lfin_\ell$ and $\Tfin_\ell$: it relates a
+position of a block, possibly the closing marker, to the final label, which is
+$(\zeta'',\ell)$ when the final marker is read from the state $\zeta''$. The predicate $F$ concerns
+only the final label, so it enters $F_\ell$ but not $S_\ell$. The set
+$\Phi_\ell$ tests the first letter of the expansion of a block, because the
+continuation letter of a comparison of the expansion is the first letter of the
+expansion of the continuation letter of the corresponding comparison of blocks
+(\cref{lem:mo-transport}). This is how the anchoring equation travels up the
+hierarchy: ``followed by $\sep$'' at level $0$ becomes ``followed by a block
+whose expansion starts with $\sep$'' at level $1$, and so on.
+
+\begin{lemma}[Positive desubstitution]\label{lem:mo-desub}
+Let $\Theta$ be a positive channel on $\mathcal M$, let $\ell\in\Gamma$, and let
+$v$ be the expansion of a nonempty word $v'$ of blocks avoiding $\ell$. Then
+$\PosOp_\Theta(v)\iff\PosOp_{\Theta_\ell}(v')$. Consequently $v$ is a positive
+hole of $(\mathcal M,\Theta)$ iff $v'$ is a positive hole of
+$(\mathcal M_\ell,\Theta_\ell)$.
+\end{lemma}
+
+The second claim follows from the first and \cref{lem:bg-desub}. The proof of
+the first, in \cref{app:mo-desub}, translates each clause by the label facts
+\cref{eq:bg-label-facts} and the alignment lemma (\cref{lem:bg-alignment}): a
+nonterminal comparison of $v$ becomes a comparison of blocks, read by $R_\ell$
+or, if it ends at the last cut, by $S'_\ell$; a terminal comparison of $v$ that
+starts in the block $X_i$ becomes a test of $S_\ell$ or, if $X_i$ is the last
+block, of $F_\ell$.
+
+\begin{corollary}[Channel towers]\label{cor:mo-tower}
+Let $\mathcal M_0$ be a lettered monitor with $N$ states, $\Theta_0$ a positive
+channel on it, and $w$ a nonempty word with canonical hierarchy
+$(w_j,\ell_j)$. Put $\mathcal M_{j+1}=(\mathcal M_j)_{\ell_j}$ and
+$\Theta_{j+1}=(\Theta_j)_{\ell_j}$. Then $w$ is a positive hole of
+$(\mathcal M_0,\Theta_0)$ iff $w_j$ is a positive hole of
+$(\mathcal M_j,\Theta_j)$, for every $j$.
+\end{corollary}
+
+\begin{proof}
+Each $w_{j+1}$ is a nonempty word of blocks avoiding $\ell_j$, with expansion
+$w_j$. Apply \cref{lem:mo-desub} at each level.
+\end{proof}
+
+Neither the lemma nor the corollary assumes that $\sep$ occurs once, or at
+all, and the reader may have an arbitrary admission relation.
+
+\begin{example}[A witness travels up the tower]\label{ex:mo-loses-tower}
+Take $\Gamma=\{0,1,\sep\}$, the five states $0,\ldots,4$ with start $0$, the
+transitions
+\begin{center}
+\begin{tabular}{@{}c|ccccc@{}}
+state & $0$ & $1$ & $2$ & $3$ & $4$\\
+\hline
+on $0$ & $3$ & $0$ & $0$ & $3$ & $0$\\
+on $1$ & $1$ & $1$ & $4$ & $0$ & $2$\\
+on $\sep$ & $4$ & $3$ & $2$ & $4$ & $0$
+\end{tabular}
+\end{center}
+$\Adm=\varnothing$, $\Rej=\{0,1\}$ and $\Pi=\{(3,4),(4,2)\}$. The word
+$w=010\sep10$ has the run $0,3,0,3,4,2,0$ and ends in a rejected state, so it is
+a hole. Its anchored comparisons are $(1,4)$, $(2,5)$ and $(3,6)$, with state
+pairs $(3,4)$, $(0,2)$ and $(3,0)$. Only the first, which matches the factor
+$10$ before the separator with the final $10$, is in $\Pi$, so $w$ is a
+$\Pi$-hole; for the base channel, its witness $(1,4)$ is clause (R). The
+hierarchy of $w$ is $w_1=abc$ with $a=[\eps]$, $b=[1]$ and $c=[\sep1]$, and
+$w_2=[ab]$, a single letter. At level $1$, with the marker $0$, the cut $1$
+lies in the block $X_1=1$ and the cut $4$ in the last block $X_2=\sep1$, both
+with the common suffix $1$; so the comparison of blocks is the terminal pair
+$(2,3)$ of $w_1$, and the witness becomes clause (S$'$) at the cut $2$, with
+continuation letter $c$, which lies in $\Phi_1$ because its expansion starts
+with $\sep$. At level $2$, with the marker $c$, the cut $2$ of $w_1$ is the end
+of the only block $ab$ of $w_2$; so the witness becomes the second disjunct of
+the final target $F_2$, through the positive terminal test at the position
+$\len{ab}$, whose letter is the marker $c\in\Phi_1$. Clause (R) at level $0$
+has become clause (S$'$) at level $1$ and clause (F) at level $2$.
+\end{example}
+
+\Cref{fig:mo-tower} draws the three levels of this example. Each level sees
+the witness only through its own letters: once the matched factor $10$ has
+become the single letter $b$ and the separator the first letter of $c$, the
+comparison turns into a test at the boundary between $b$ and $c$, and one
+level higher into a test of the final label.
+
+\input{figures/mo-tower}
+
+\subsection{Anchored Compression}\label{sec:mo-compression}
+
+\paragraph{What the compression for plain entailment misses}
+Steps~2 and~4 of the bounded-depth search (\cref{sec:bg-hierarchy}, and
+precisely \cref{app:bg-search}) replace the word by another one: step~2 merges
+isolated letters with the same exchange type, and step~4 deletes the columns
+between two cuts of a column word with equal summaries. Each of them only has
+to keep the word a hole. A $\Pi$-hole must also \emph{contain} an anchored
+comparison in $\Pi$. The exchange types and summaries record nothing about
+$\Pi$, so a column deletion, and similarly a merge, can destroy every such
+comparison.
+
+\begin{example}[The compression for plain entailment loses the anchored witness]\label{ex:mo-loses}
+Continue \cref{ex:mo-loses-tower}. Step~4 shortens the block $ab$ over the
+level-$1$ monitor with the marker $c$. In this monitor $c$ leads every state to
+$2$, and the exits of the shifted blocks of the prefixes $a$ and $ab$ are $0$
+from every entry state; since $\Adm$ is empty, all terminal and admission bits
+are false. So the summaries after $a$ and after $ab$ coincide, and step~4
+deletes the column holding $b$. Expanding $[a]$ gives $0\sep10$
+(\cref{fig:mo-tower}, last row), with run
+$0,3,4,2,0$: a hole, whose anchored comparisons $(0,3)$ and $(1,4)$ have the
+state pairs $(0,2)$ and $(3,0)$, both outside $\Pi$. The deleted letter $b$ is
+exactly the letter whose expansion is the matched factor $10$ before the
+separator.
+\end{example}
+
+The bound of the next theorem is an explicit function $\Lensharp(N,d)$. Like
+$\holeBound(N,d)$ of \citet{Zhao26}, it is built from constants $\sCsharp$,
+$\sAsharp$, $\sGsharp$ and $\scolsharp$, which bound the anchored exchange
+types, the protected and isolated letters, the dictionaries and the positive
+column summaries. They are defined in \cref{eq:mo-constants}, increase in each
+argument, and do not depend on the alphabet; the theorem states their closed
+form.
+
+\begin{theorem}[Anchored compression]\label{thm:mo-anchored}
+Let $(\mathcal M,\Adm,\Rej)$ be a reader with $N\ge1$ states over a finite
+alphabet $\Gamma\ni\sep$, let $\Pi\subseteq Q\times Q$, and let $d\ge0$. If the
+reader has a $\Pi$-hole of depth at most $d$, then it has a $\Pi$-hole of depth
+at most $d$ and length at most $\Lensharp(N,d)$. More generally, for every
+lettered monitor $\mathcal M_0$ with $N$ states over any alphabet and every
+positive channel $\Theta_0$ on it, if $(\mathcal M_0,\Theta_0)$ has a positive
+hole of depth at most $d$, then it has one of depth at most $d$ and length at
+most $\Lensharp(N,d)$. Moreover, with
+$\Xisharp(N,d)=6N^2+10N(N+d)(d+1)+7N+3d+4$,
+\[
+ \sGsharp(N,d)\le2^{\Xisharp(N,d)}
+ \qquad\text{and}\qquad
+ \Lensharp(N,d)\le2^{2^{5\Xisharp(N,d)}} .
+\]
+\end{theorem}
+
+The theorem is the analog of \cref{thm:bg-search} for $\Pi$-holes. It
+preserves the \emph{existence} of an anchored comparison in $\Pi$, not its
+coordinates or its state pair; to keep a particular state pair, apply it to
+the singleton relation of that pair. It needs no uniqueness of the separator.
+The first claim is the second one for the lettered monitor of the reader and
+the base channel, by \cref{lem:mo-base}.
+
+\paragraph{Why recording the channel suffices}
+The positive condition is a property of the labels at the cuts of a witness
+and of one letter, the continuation letter. The shortenings of \citet{Zhao26}
+(steps~2--4 in \cref{sec:bg-hierarchy}) preserve such data once they record
+the channel. The merges preserve the state run, the comparison positions, and
+the relevant channel tests; the top shortening preserves the labels of the
+cuts of the witness, which it never deletes, and the letter, which is constant
+on a unary word; and the
+summaries determine the derived channel, so that agreement preserves labels
+and letters up to renaming. This is why recording the channel suffices, with
+no further condition on the separator.
+
+\begin{proof}[Proof outline]
+The complete proof is in \cref{app:mo-proof}. The proof of \cref{thm:bg-search} merges letters
+with equal exchange types and deletes columns between equal summaries. We add
+the five components of the channel to both, so that each shortening keeps some
+anchored witness, though not necessarily the original one; every argument
+about the negative conditions is reused unchanged. Let $w$ be a positive hole
+of depth $D\le d$, with hierarchy $(w_j,\ell_j)$; we follow the five steps of
+that proof (\cref{sec:bg-hierarchy}).
+\begin{enumerate}[leftmargin=*]
+\item \emph{Towers.} By \cref{cor:mo-tower}, $w_j$ is a positive hole of
+  $(\mathcal M_j,\Theta_j)$ for every $j$; the clause of the witness may change
+  from level to level (\cref{ex:mo-loses-tower}).
+\item \emph{Merging letters.} In the terms of step~2 in \cref{sec:bg-hierarchy},
+  a letter of $w_i$ is unprotected if it is neither the marker nor a letter of
+  the start prefix, and isolated if, moreover, all its unequal comparison
+  partners are protected; its exchange type is the table of how $\mathcal M_i$
+  treats it when it is read from an ordinary state. The
+  \emph{anchored exchange type} of an unprotected letter $a$ at a level
+  $1\le i<D$ adds the same table for the channel: the row of $F_i$ at $a$, the
+  self table, the protected rows and the initial row of each of $R_i$, $S_i$
+  and $S'_i$, and the bit $[a\in\Phi_i]$ (\cref{def:mo-type}). There are at
+  most $\sCsharp(N,d)$ anchored types (\cref{lem:mo-types}). Merging two
+  isolated letters with the same anchored type keeps the comparisons and the
+  run of the level, so it keeps every value of $\Lambda_i$, $\Lfin_i$, $R_i$,
+  $S_i$ and $S'_i$ at the comparisons of the level, exactly as in the
+  argument of \citet{Zhao26} for $\Lambda_i$ and $\Lfin_i$; it keeps the final label,
+  because the marker is protected; and it keeps the position of every
+  continuation letter and changes that letter at most from $a$ to $b$, which
+  have the same bit. So the merged level is again positive, and expanding it
+  gives a positive hole of $(\mathcal M_0,\Theta_0)$ of the same depth, no
+  longer, with a smaller dictionary (\cref{lem:mo-exchange}). Repeated merges
+  bound the dictionary, the set of letters, of every level $i\ge1$ by
+  $\sGsharp(N,d)$ (\cref{lem:mo-dictionary}). A merge is not injective and
+  gives no agreement; after each merge the hierarchy and the towers are
+  recomputed.
+\item \emph{The top level.} The top level $w_D$ is unary. Deleting a loop
+  between two cuts with equal states keeps a hole (\cref{lem:bg-unary}), and it
+  keeps the positive witness if no cut of the witness is deleted. Protecting the
+  at most three cuts of one witness leaves at most three stretches of
+  pairwise distinct states, so $\len{w_D}\le3(N+D)$ after shortening
+  (\cref{lem:mo-unary}).
+\item \emph{Deleting columns.} The \emph{positive summary} of a tuple of blocks
+  extends the summary of \cref{app:bg-search} by fields that record the positive terminal
+  test, the last pending $S'$-test (a test at the end of a block, whose letter
+  is the next one to be read), whether a block is empty, the bit $\Phi$ of its
+  first letter, and the lift $R_\ell$ between pairs of blocks. These fields are
+  updated column by column and determine the derived channel on the blocks, in
+  particular $S_\ell$ without an $F$-term and $F_\ell$ with one
+  (\cref{lem:mo-summary}). Deleting the columns between two cuts with equal
+  positive summaries therefore keeps both the derived monitor and the derived
+  channel (\cref{lem:mo-columns}). In \cref{ex:mo-loses}, the pending
+  $S'$-test is false after $a$ and true after $ab$, where it records the
+  witness $(1,4)$; so the positive summaries after $a$ and after $ab$ differ,
+  and the column holding $b$ is kept (\cref{ex:mo-loses-fields}).
+\item \emph{Agreement and the bound.} Agreement of monitors on the letters in
+  use (step~4 in \cref{sec:bg-hierarchy}) is extended to the five components
+  of the channel, which must also take equal values at corresponding letters
+  and labels. Extended agreement preserves positive holes and is preserved
+  under derivation (\cref{lem:mo-agreement}). The supported compression of
+  \citet{Zhao26}, which shortens the letters in use level by level from the top,
+  then runs unchanged with the positive summaries (\cref{lem:mo-compression}).
+  Each of the at most $d$ expansions costs a factor
+  $\scolsharp(N+d+1,\sGsharp(N,d))$, and the top level costs $3(N+d+1)$, which
+  gives $\Lensharp(N,d)$. The new top word is a positive hole of the new top
+  monitor, and \cref{lem:bg-desub,lem:mo-desub} reconstruct a positive hole of
+  $(\mathcal M_0,\Theta_0)$ of depth at most $D$.
+\end{enumerate}
+The closed-form estimate is \cref{lem:mo-closed-form}.
+\end{proof}
+
+\subsection{Short Mortal Holes and Decidability}\label{sec:mo-short}
+
+Put
+\[
+ \Lensharp_I=\Lensharp(\Nbar,d_I),
+\]
+with $\Nbar$ and $d_I$ as in \cref{sec:mo-separator}, and recall the bound
+$\Lnm$ of \cref{thm:nm-three-cases}, evaluated at the state counts
+$(N_A,N_B,N_{A'},N_{B'})$.
+
+\begin{theorem}[Short mortal holes]\label{thm:mo-short}
+If $I$ has a mortal hole, then it has a mortal hole $(u,t)$ with
+$\len u+1+\len t\le\Lensharp_I$. No assumption on $I$ is needed; in particular
+(FH) is not used.
+\end{theorem}
+
+\begin{proof}
+Let $(u,t)$ be a mortal hole. By \cref{lem:mo-pi-reader}, $w=u\sep t$ is a
+$\Pi$-hole of $\RPi$, and of its reachable part, a reader with at most $\Nbar$
+states over the finite alphabet $\Sigma\sqcup\{\sep\}$. By \cref{lem:mo-depth},
+$\depth(w)\le d_I$. By \cref{thm:mo-anchored} and monotonicity of $\Lensharp$,
+the reachable part has a $\Pi$-hole $\tilde w$ of length at most
+$\Lensharp_I$. By \cref{lem:mo-pi-reader}(ii), $\tilde w=\tilde u\sep\tilde t$
+with $(\tilde u,\tilde t)$ a mortal hole, and
+$\len{\tilde u}+1+\len{\tilde t}=\len{\tilde w}$.
+\end{proof}
+
+\begin{corollary}[Mortal holes are decidable]\label{cor:mo-decidable}
+It is decidable whether an instance of the two-word hole problem with self
+events has a mortal hole.
+\end{corollary}
+
+\begin{theorem}[Short holes]\label{thm:mo-decide}
+Let $I$ satisfy (FH). Then $I$ has a hole iff it has a hole $(u,t)$ with
+\[
+ \len u+\len t<\max\bigl(\Lnm(N_A,N_B,N_{A'},N_{B'}),\ \Lensharp_I\bigr).
+\]
+In particular, it is decidable whether an instance with forced target heads
+has a hole.
+\end{theorem}
+
+\begin{proof}
+By \cref{cor:nm-short-holes}, $I$ has a hole iff it has a hole with
+$\len u+\len t<\Lnm(N_A,N_B,N_{A'},N_{B'})$ or a mortal hole. In the second case
+\cref{thm:mo-short} gives a mortal hole, which is a hole, with
+$\len u+\len t<\Lensharp_I$. The bound is computable from $I$, and the alphabet
+$\Sigma$ is finite, so there are finitely many candidate pairs; for each, the
+conditions of \cref{def:ex-ss2self} are checked over finitely many cuts.
+\end{proof}
+
+The proof of \cref{cor:mo-decidable} is the same enumeration with the bound of
+\cref{thm:mo-short} and the additional tests that $A(u)$ is mortal and
+$\len t-J(t)<N_A$ (\cref{app:mo-estimates}). Both bounds are independent of the
+alphabet, and hence of the arity; the alphabet enters only the number of
+candidate pairs. For $n=0$ the only candidate is $(\eps,\eps)$.
+
+\paragraph{The size of the bound}
+Write $E_1(x)=2^x$ and $E_{k+1}(x)=2^{E_k(x)}$.
+
+\begin{lemma}[Mortal bound]\label{lem:mo-estimate}
+Let $\alpha\ge3$ and $\beta\ge0$ be integers with $\Nbar\le2^\alpha$ and
+$N_A\le2^\beta$. Then $\Lensharp_I\le E_3(3\alpha+2\beta+9)$.
+\end{lemma}
+
+\begin{corollary}[Mortal bound for extracted instances]\label{cor:mo-extracted}
+Let $\varphi$ be a flat system over $X$ and $\psi$ a flat system over $X\cup Z$,
+with $v=\len X$, $h=\len Z$ and $s=v+h$. Every extracted instance $I_{pq}$
+(\cref{def:ex-instance}) satisfies
+\[
+ \Lensharp_{I_{pq}}\le E_3(10v+6s+18)\le E_3(16s+18),
+\]
+for every arity $n$ and every variance. So if $I_{pq}$ has a mortal hole, it
+has one whose separator word has length at most $E_3(16s+18)$.
+\end{corollary}
+
+\begin{proof}
+By \cref{sec:ex-instances}, $N_A=2^{2v}$, $N_B=2^{4v+2h+1}=2^{2v+2s+1}$ and
+$N_{A'}=N_{B'}=2^{2s}$, and the reachable pairs of states of $B$ and $B'$ number
+at most $N_B$. Hence $r_I\le N_AN_{A'}=2^{2v+2s}$, $z_I\le2^{2v+2s+1}$ and
+$N_AN_{B'}=2^{2v+2s}$, so $\Nbar\le1+2^{2v+2s+2}\le2^{2v+2s+3}$.
+\Cref{lem:mo-estimate} with $\alpha=2v+2s+3$ and $\beta=2v$ gives
+$E_3(3(2v+2s+3)+4v+9)=E_3(10v+6s+18)$, and $v\le s$. The second claim is
+\cref{thm:mo-short}. None of these sizes depends on $n$.
+\end{proof}
+
+\begin{remark}[Where (FH) is used]\label{rem:mo-fh}
+Condition (FH) is used only in \cref{thm:mo-decide}, through
+\cref{thm:nm-three-cases}. Every other result of this section, in particular
+\cref{thm:mo-short,cor:mo-decidable}, holds for every instance.
+\end{remark}

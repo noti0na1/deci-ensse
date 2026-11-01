@@ -1,0 +1,654 @@
+%% complexity -- witness lengths, the summary search and the 2-EXPSPACE /
+%% 3-EXPTIME upper bound, arity one (PSPACE) and arity zero; the exponential
+%% lower bound on witnesses, the embedding of binary trees into arity n >= 2,
+%% and PSPACE-hardness for every fixed arity n >= 2.
+
+\providecommand{\parity}{\operatorname{par}}
+\providecommand{\CondI}{\textup{(I0)}}
+\providecommand{\CondU}{\textup{(U)}}
+\providecommand{\CondII}{\textup{(II)}}
+\providecommand{\GuardS}{\Guard_{\mathrm{s}}}
+\providecommand{\Lnm}{\mathsf L_{\mathrm{nm}}}
+\providecommand{\RU}{\mathcal R_{\mathrm U}}
+\providecommand{\PosOp}{\operatorname{Pos}}
+\providecommand{\cxcode}{\operatorname{code}}   % prefix-free binary code of a word
+\providecommand{\cxemb}{E}                      % embedding of binary trees into arity n
+
+\section{Complexity}\label{sec:cx}
+
+This section bounds the complexity of the decision and proves lower bounds.
+Throughout, $s=\len X+\len Z$ is the number of variables after flattening
+(\cref{sec:bg-constraints}), $v=\len X$, and $E_1(x)=2^x$,
+$E_{k+1}(x)=2^{E_k(x)}$. The upper bounds of \cref{sec:cx-upper} hold for every
+arity $n$ and every variance $c$, with constants that do not depend on $n$; the
+arity enters only the size of the alphabet and of the input. The lower bounds
+of \cref{sec:cx-lower} are proved for a covariant constructor of arity at least
+two.
+
+\subsection{Upper Bounds}\label{sec:cx-upper}
+
+\paragraph{Witness lengths}
+When both systems are satisfiable in the tree class considered and the
+entailment fails, a counterexample word (\cref{def:as-certificate}) of length
+at most $E_3(10v+6s+18)\le E_3(16s+18)$ exists over $\BFT$, and of length at
+most $E_3(20v+12s+18)\le E_3(32s+18)$ over $\BF$ with $f$ covariant
+(\cref{thm:as-main}); every counterexample word yields a countermodel
+effectively (\cref{lem:as-countermodel}). \Cref{prop:as-bounds} and
+\cref{tab:as-bounds} bound the kinds separately. Words for \CondI\ and holes
+that are not mortal are singly exponential in $s$; for the latter the pump
+keeps the purely periodic case polynomial in the sizes of the automata
+(\cref{thm:nm-pump}), for every instance of the two-word problem with self
+events that satisfies (FH). The words for \CondU\ and the mortal holes need
+the triply exponential estimates of compression. All these bounds are existential: they bound a shortest
+counterexample, not every one.
+
+\paragraph{Searching without storing the word}
+Enumerating all words up to the bound of \cref{thm:as-main} decides the
+problem in triply exponential space. The words need not be stored. The
+compression of \cref{thm:mo-anchored} only ever uses a dictionary of boundedly
+many blocks per level, and a level is described, for the purpose of the
+levels above it, by the derived monitor and channel on these blocks, which
+the column summaries determine (\cref{lem:mo-summary}). A nondeterministic
+search can therefore build the hierarchy from the bottom, one level at a time,
+keeping only the current derived tables.
+
+\begin{proposition}[Summary search]\label{prop:cx-search}
+Let $\mathcal M_0$ be a lettered monitor with $N\ge1$ states over a finite
+alphabet $\Gamma$, let $\Theta_0$ be a positive channel on it, both given by
+their tables, and let $d\ge0$. Whether $(\mathcal M_0,\Theta_0)$ has a positive
+hole of depth at most $d$ is decidable in nondeterministic space polynomial in
+$N+d+1$, $\sGsharp(N,d)$ and $\len\Gamma$, hence in deterministic space
+$2^{O((N+d+1)^3)}\cdot\mathrm{poly}(\len\Gamma)$.
+\end{proposition}
+
+\begin{proof}
+Put $g=\sGsharp(N,d)$. We use the summaries, column words and agreement of
+\cref{app:bg-search} and their extensions by channels in \cref{app:mo}. The
+search keeps a level $j\le d$ and a \emph{current pair} $(\mathcal W,\Theta)$:
+a lettered monitor with the $N$ states of $\mathcal M_0$ and $j$ symbolic
+states, and a positive channel on it, over a current alphabet. Initially
+$j=0$ and $(\mathcal W,\Theta)=(\mathcal M_0,\Theta_0)$, over $\Gamma$; for
+$j\ge1$ the current alphabet is $\{1,\ldots,h\}$ with $h\le g$. The search
+repeats one of two moves.
+\begin{itemize}[leftmargin=*]
+\item \emph{Accept} if some letter $z$ and some $m\le3(N+j)$ make $z^m$ a
+  positive hole of $(\mathcal W,\Theta)$. This is checked by computing the
+  labels of $z^m$ and testing every pair of cuts.
+\item \emph{Derive}, if $j<d$: choose a marker $\ell$ and a number $1\le h\le g$,
+  and guess a valid column word with $h$ tracks over the current alphabet
+  without $\ell$, one column at a time, while computing the positive summary
+  of the tracks read so far by the automaton of \cref{lem:mo-summary}, starting
+  from the summary of $h$ empty blocks; a binary counter stops the guess before
+  $\scolsharp(N+j,h)$ columns. Require that the final equality fields declare
+  the $h$ blocks pairwise distinct. Replace $(\mathcal W,\Theta)$ by the
+  restriction of $(\mathcal W_\ell,\Theta_\ell)$ to the $h$ blocks, named
+  $1,\ldots,h$, which the final summary determines at every state
+  (\cref{app:bg-search}, step~4, and \cref{lem:mo-summary}(2)), and increase
+  $j$.
+\end{itemize}
+
+\emph{Space.} A current pair over $h\le\max(g,\len\Gamma)$ letters with
+$M\le N+d+1$ states is given by its transitions, final targets, the relations
+$\Lambda$, $\Lfin$, $R$, $S$, $S'$ on labels, the predicate $F$ and the set
+$\Phi$, in $O(M^2h^2+Mh\log M)$ bits. A positive summary has at most
+$\scolsharp(M,h)$ values, hence $O(M^2h^2+Mh\log M)$ bits, and so does the
+counter; a column has $h$ entries. Only the current pair, one summary, one
+column, the counter and $j$ are stored. Since $g\le2^{\Xisharp(N,d)}$ by
+\cref{thm:mo-anchored} and $\Xisharp(N,d)\le30(N+d+1)^3$, the nondeterministic
+space is polynomial in $N+d+1$, $g$ and $\len\Gamma$, and Savitch's theorem
+squares it, which keeps the stated form.
+
+\emph{Soundness.} We show by induction on the number of moves that there are
+markers $\widetilde\ell_0,\ldots,\widetilde\ell_{j-1}$ and an injective map
+$\rho_j$ from the current alphabet into the letters of level $j$, with a valid
+image family for these markers (\cref{app:bg-search}), such that
+$(\mathcal W,\Theta)\equiv_{E,\rho_j}(\mathcal M^{\widetilde{\boldsymbol\ell}}_j,
+\Theta^{\widetilde{\boldsymbol\ell}}_j)$, where $E$ is the current alphabet.
+Initially $\rho_0$ is the identity. In a derive move, the guessed column word
+spells blocks $Y_1,\ldots,Y_h$ over $E$ that avoid $\ell$; by
+\cref{lem:mo-summary}(1) the computed summary is theirs, so the new pair is the
+restriction of $(\mathcal W_\ell,\Theta_\ell)$ to $\{Y_1,\ldots,Y_h\}$. By
+\cref{lem:mo-agreement},
+$(\mathcal W_\ell,\Theta_\ell)\equiv_{\{Y_a\},\rho_j^*}
+((\mathcal M^{\widetilde{\boldsymbol\ell}}_j)_{\rho_j(\ell)},
+(\Theta^{\widetilde{\boldsymbol\ell}}_j)_{\rho_j(\ell)})$, and the images avoid
+$\rho_j(\ell)$. Put $\widetilde\ell_j=\rho_j(\ell)$ and
+$\rho_{j+1}(a)=\rho_j^*(Y_a)$, which is injective because the $Y_a$ are
+distinct and $\rho_j$ is injective. If the search accepts with $z^m$, then
+$\rho_j(z)^m$ is a positive hole of $(\mathcal M^{\widetilde{\boldsymbol\ell}}_j,
+\Theta^{\widetilde{\boldsymbol\ell}}_j)$, since agreement preserves positive
+holes (\cref{app:mo-agreement}). Expanding it along the markers gives, by
+\cref{lem:bg-desub,lem:mo-desub}, a positive hole $w$ of
+$(\mathcal M_0,\Theta_0)$. Each expansion ends with its marker and its blocks
+avoid it, so the canonical hierarchy of $w$ recovers the expanded levels and
+reaches the unary word $\rho_j(z)^m$ at level $j$, and $\depth(w)\le j\le d$.
+
+\emph{Completeness.} Suppose a positive hole of depth at most $d$ exists. By
+\cref{lem:mo-dictionary} there is one, $w$, of depth $D\le d$ whose
+dictionaries satisfy $g_i\le g$ for $1\le i\le D$; let $(w_j,\ell_j)$ be its
+hierarchy, $\mathcal A_j$ its dictionaries and $(\mathcal M_j,\Theta_j)$ its
+towers. We follow a run in which, for $1\le j\le D$, the current pair is the
+restriction of $(\mathcal M_j,\Theta_j)$ to $\mathcal A_j$, up to the names of
+the letters. At level $j<D$, choose $\ell=\ell_j$ and $h=g_{j+1}$. The letters
+of $\mathcal A_{j+1}$ are $h$ distinct blocks over $\mathcal A_j$ that avoid
+$\ell_j$, and their positive summary depends only on the tables at the letters
+of $\mathcal A_j$, so it is also their summary for the current pair. By the
+deletion argument in the proof of \cref{lem:mo-columns}, some valid column word
+with fewer than $\scolsharp(N+j,h)$ columns has the same final summary; the
+search guesses it, and the new pair is the restriction of
+$(\mathcal M_{j+1},\Theta_{j+1})$ to $\mathcal A_{j+1}$, because the summary
+determines it. At level $D$, $w_D=z^m$ is a positive hole of
+$(\mathcal M_D,\Theta_D)$ by \cref{cor:mo-tower}, hence of the current pair, and
+\cref{lem:mo-unary} shortens it to $m\le3(N+D)$. The search accepts.
+\end{proof}
+
+The \emph{trivial channel} $(\mathcal Q\times\Gamma,\varnothing,\varnothing,
+\varnothing,\varnothing)$ makes every nonempty word positive, so its positive
+holes are the holes of the monitor, and \cref{prop:cx-search} also decides
+whether a monitor has a nonempty hole of depth at most $d$.
+
+\begin{theorem}[Complexity of the decision]\label{thm:cx-upper}
+Existential entailment over $\BFT$, for every arity and variance, and over
+$\BF$ with $f$ covariant, is decidable in each of the three tree classes in
+deterministic space $E_2(O(s))\cdot\mathrm{poly}(m)$, where $m$ is the size of
+the input, with the arity, the variance and the systems given explicitly. It is
+therefore in 2-EXPSPACE and in 3-EXPTIME.
+\end{theorem}
+
+\begin{proof}
+By \cref{lem:bg-flattening}, flattening is linear, so let the systems be flat.
+Over $\BF$, apply the reduction of \cref{thm:tc-gadget}, which is polynomial
+and doubles $s$ (\cref{cor:tc-bf}). For $n=0$ enumerate the $3^s$ assignments
+(\cref{rem:tc-nullary}), in polynomial space. Let $n\ge1$.
+
+\emph{Satisfiability.} For each class $\mathcal D$, $\Sat_{\mathcal D}$ of a
+system $\chi$ is decided in polynomial time: by \cref{lem:bg-signed-sat}, it is
+satisfiability of the signed system of the system $\chi^\flat$ of
+\cref{lem:bg-sandwich}, and by \cref{thm:bg-nsse-sat}(1) this is the
+absence of a label clash, and over finite trees also of a cycle clash, which are
+closure and graph tests of polynomial size; regular satisfiability is
+satisfiability. If $\varphi$ is not $\mathcal D$-satisfiable, the entailment
+holds; if $\varphi$ is and $\psi$ is not, it fails. Otherwise both are
+satisfiable, and \cref{thm:tc-regular,thm:tc-finite} reduce the problem to
+arbitrary trees.
+
+\emph{The three conditions.} By \cref{cor:ex-entailment}, the entailment holds
+iff \CondI\ and \CondU\ hold and no extracted instance has a hole. Condition
+\CondI\ is decided in polynomial space (\cref{prop:sm-decide}). For \CondU,
+compute the tables of the reduced unit readers $\widehat{\mathcal R}_p$ of
+\cref{lem:un-reduced}, with fewer than $K_{\mathrm U}=2^{v+s+1}$ states each,
+in space $2^{O(s)}\mathrm{poly}(m)$ (\cref{lem:un-source}). By
+\cref{lem:un-holes,lem:un-reduced}, \CondU\ fails iff some
+$\widehat{\mathcal R}_p$ has a hole. The empty word is tested directly. As in
+the proof of \cref{thm:un-decidable}, by \cref{thm:bg-brt,lem:un-clock}, a
+reduced unit reader with a hole has the empty hole or a nonempty hole of depth
+at most $D_{\mathrm U}=2^{v+2}(4K_{\mathrm U}-1)-1$, and its nonempty holes are
+those of its lettered monitor (\cref{def:bg-monitor}). So
+\cref{prop:cx-search} with the trivial channel decides \CondU\ in space
+$2^{O((K_{\mathrm U}+D_{\mathrm U}+1)^3)}\mathrm{poly}(n)=E_2(O(s))\,\mathrm{poly}(n)$.
+
+For \CondII, fix $p,q\in X^\pm$. The instance $I_{pq}$ satisfies (FH), so by
+\cref{cor:nm-short-holes} it has a hole iff it has a hole with
+$\len u+\len t<\Lnm(N_A,N_B,N_{A'},N_{B'})$, a bound singly exponential in $s$ (\cref{prop:as-bounds}), or a mortal hole. The first
+alternative is decided by enumerating such pairs and checking the conditions of
+\cref{def:ex-ss2self} cut by cut, in space $2^{O(s)}\mathrm{poly}(m)$. For the
+second, by \cref{lem:mo-pi-reader,lem:mo-depth}, $I_{pq}$ has a mortal hole iff
+the reachable part of $\RPi$ has a $\Pi$-hole of depth at most $d_I$; this part
+has $\Nbar\le2^{2v+2s+3}$ states (proof of \cref{cor:mo-extracted}), so
+$d_I<2^{4v+2s+4}$, and its tables, including the mortality of the states of $A$,
+are computed by reachability in space $2^{O(s)}\mathrm{poly}(m)$. Its
+$\Pi$-holes are the positive holes of its lettered monitor with the base channel
+(\cref{lem:mo-base}), and \cref{prop:cx-search} decides their existence in space
+$E_2(O(s))\,\mathrm{poly}(n)$.
+
+\emph{Total.} All tests together use deterministic space
+$E_2(O(s))\,\mathrm{poly}(m)$, and $s\le m$. A deterministic machine in this space
+has at most $2^{E_2(O(s))\mathrm{poly}(m)}$ configurations, which gives the time
+bound.
+\end{proof}
+
+\begin{remark}[Plain entailment]\label{rem:cx-plain}
+Plain entailment $\varphi\models_{\mathcal D}x\le y$ is the case
+$\psi=\{x\le y\}$, $Z=\varnothing$. \Cref{thm:cx-upper} therefore also places
+plain entailment, for every arity and variance and in each tree class, in
+2-EXPSPACE. The earlier procedure for plain entailment places non-entailment in
+N3EXPTIME and
+entailment in coN3EXPTIME, hence in 3EXPSPACE
+\nssecite{Corollary ``Complexity upper bounds''}; the summary search improves
+the deterministic space upper bound to 2-EXPSPACE, one exponential lower.
+\end{remark}
+
+\paragraph{Arity one}
+For $n=1$ there is a single letter, words are determined by their lengths, and
+a suffix comparison is a comparison of lengths. Here a direct shortening gives
+singly exponential witnesses for every instance, mortal or not.
+
+\begin{theorem}[Arity one]\label{thm:cx-unary}
+Let $n=1$, with either variance.
+\begin{enumerate}[leftmargin=*]
+\item Let $I$ be an instance of the two-word problem with self events that
+  satisfies (FH), and let $r_I\le N_AN_{A'}$ be the number of states of
+  $A\times A'$ reachable from the start. If $I$ has a hole, it has a hole
+  $(u,t)$ with $\len t\le N_B-1$ and $\len u+1+\len t\le r_I+2N_B-2$.
+\item Every reader with $N$ states over a one-letter alphabet that has a hole
+  has a hole of length at most $N-1$.
+\item Let $\varphi$ and $\psi$ be flat systems over $\BFT$ with $s$ variables.
+  If they are $\mathcal D$-satisfiable and
+  $\varphi\not\models_{\mathcal D}\Exists\psi$, a counterexample word of length
+  less than $2^{4s+3}$ exists. Over $\BF$ with $f$ covariant, if $\varphi$ and
+  $\psi$ are $\mathcal D$-satisfiable over $\BF$ and the entailment fails, the
+  pair $(\varphi^\natural,\psi^\natural)$ of \cref{thm:tc-gadget}, which has $2s$
+  variables, has a counterexample word of length less than $2^{8s+3}$.
+  Existential entailment at arity one is in PSPACE, for both variances and in
+  each tree class, over $\BFT$ and, for covariant $f$, over $\BF$.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+Write the letter as $0$. For words $0^a$ and $0^b$ and cuts $x\le a$, $y\le b$,
+the pair $(x,y)$ is a cross comparison of $(0^a,0^b)$ iff $b-y\le a-x$, and it is
+aligned iff $b-y=a-x$; every pair of cuts $i<j$ of a word is a comparison.
+
+(1) Let $(u,t)$ be a hole, $J=J(t)$, and let $(x,e)$ be a head event; by (FH),
+$e\le J$ (\cref{lem:ex-head-before-J}). Since $\len u-x=\len t-e\ge\len t-J$,
+we may delete $\len t-J$ letters from the end of both words: let $u'$ be the
+prefix of $u$ of length $L=\len u-(\len t-J)$ and $t'$ the prefix of $t$ of
+length $J$. The cuts of $u'$ and $t'$ are cuts of $u$ and $t$ with the same
+states, and $J(t')=J$. For $x\le L$ and $y\le J$, the pair $(x,y)$ is a cross
+comparison of $(u',t')$ iff $J-y\le L-x$, iff $\len t-y\le\len u-x$, iff it is
+one of $(u,t)$; so $(u',t')$ has no event, $t'$ has no self event, and the head
+event $(x,e)$ is a head event of $(u',t')$, with $x\le L$. The spine $u'$ is
+safe. So $(u',t')$ is a hole whose target is first rejected at its end.
+
+The states $B_0(t'),\ldots,B_J(t')$ are pairwise distinct: if $B_i=B_j$ with
+$i<j\le J$, the run of the single letter repeats with period $j-i$ from $i$ on,
+so $B_{J-(j-i)}(t')=B_J(t')\in\Rej$ with $J-(j-i)<J$, contradicting the choice
+of $J$. Hence $\len{t'}=J\le N_B-1$.
+
+If $L<J$, then $\len{u'}+1+\len{t'}\le2J\le2N_B-2$. Otherwise let $m$ be the
+least cut of $u'$ at which $A\times A'$ is in the state it has at the cut
+$L-J$. The states of $A\times A'$ at the cuts $0,\ldots,m$ are pairwise
+distinct, so $m\le r_I-1$: if two of them coincided, the run would be periodic from the first of them, and the state at the cut $L-J$ would occur before $m$, contrary to the choice of $m$. Let $u''=0^{m+J}$. Its states
+at the cuts $x\le m$ are those of $u'$, and at the cut $m+y$, $y\le J$, those of
+$u'$ at $L-J+y$. The pair $(u'',t')$ is a hole. Its spine is safe, since all its
+states occur on $u'$. The head event $(x,e)$ has $x=L-J+e$ and becomes the
+aligned pair $(m+e,e)$, with the same states. A cross comparison $(x,y)$ of
+$(u'',t')$ with $x\ge m$ corresponds to the cross comparison $(L-J+x-m,y)$ of
+$(u',t')$, with the same states, and one with $x<m$ has the same states as the
+pair $(x,y)$ of $(u',t')$, which is a cross comparison because
+$L-x>L-m\ge J\ge J-y$; neither is an event. The target and its self events are
+unchanged. Finally $\len{u''}+1+\len{t'}\le r_I-1+2J+1\le r_I+2N_B-2$.
+
+(2) Let $w$ be a hole with first rejected cut $J$. Its prefix of length $J$ is
+rejected, and its comparisons are pairs of cuts $i<j\le J$, which are
+comparisons of $w$ with the same states; so it is a hole. Its states at the cuts
+$0,\ldots,J$ are pairwise distinct, as in~(1), so $J\le N-1$.
+
+(3) By \cref{prop:as-bounds}(1), a failure of \CondI\ has a word of
+length less than $2^{2v+2s+2}$. A failure of \CondU\ has a \CondU-word of
+length at most $2^{v+1}-2$ (\cref{rem:un-single}). A hole of an extracted
+instance has one with $\len u+1+\len t\le r_I+2N_B-2$ by~(1), where $r_I\le2^{2v+2s}$ and
+$N_B=2^{2v+2s+1}$. Each bound is less than $2^{4s+3}$.
+Over $\BF$, the pair of \cref{thm:tc-gadget} is $\mathcal D$-satisfiable over
+$\BFT$ and its entailment fails (proof of \cref{thm:as-main}), and it has $2s$
+variables, which gives $2^{8s+3}$.
+For membership in PSPACE, follow the proof of \cref{thm:cx-upper}, which handles
+satisfiability, the tree classes, $\BF$ and \CondI\ in polynomial space, and
+replace the searches for \CondU\ and \CondII\ by an enumeration of the
+candidates up to these bounds. A unary word is stored by its length, in $O(s)$
+bits. The state of an automaton at a cut is a set of signed variables,
+recomputed from the start in polynomial space, and each condition of
+\cref{def:bg-hole,def:ex-ss2self} quantifies over cuts, which binary counters
+enumerate; comparisons are tests of lengths. So all tests use polynomial space.
+For $\BF$ the gadget doubles $s$, which keeps the bounds singly exponential.
+\end{proof}
+
+\begin{remark}[Arity zero]\label{rem:cx-nullary}
+For $n=0$ every tree is $\Bot$, $f()$ or $\Top$ (\cref{rem:bg-nullary}), and the
+entailment says that every assignment of $X$ that satisfies $\varphi$ has an
+assignment of $Z$ that satisfies $\psi$ (\cref{rem:tc-nullary}). Assignments
+have polynomial size and are checked in linear time, so the problem is in
+$\Pi^p_2$, hence in PSPACE, in each tree class, which coincide.
+\end{remark}
+
+\subsection{Lower Bounds}\label{sec:cx-lower}
+
+\paragraph{Long witnesses}
+Shortest counterexamples can be exponentially long, already for plain
+entailment over $\BF$ with a binary covariant constructor and antecedents
+without literals $u=\Bot$. The construction uses a small automaton for the set
+of words that are not extensions of one exponentially long word, the record of
+a binary counter.
+
+\begin{proposition}[Exponential witnesses]\label{prop:cx-length}
+For every $k\ge1$ there are a word $W_k\in\{0,1\}^*$ of length
+$L_k=2(k+1)2^k$ and a satisfiable flat system $\varphi_k$ over $\BF$, with $f$
+binary and covariant, without hidden variables and without literals $u=\Bot$,
+over $9k+30$ variables, such that $\varphi_k\models x\le y$ fails over arbitrary
+and over regular trees, and:
+\begin{enumerate}[leftmargin=*]
+\item every word of $\Kpos(\rho x)\setminus\Kpos(\rho y)$, for every solution
+  $\rho$ of $\varphi_k$, has the prefix $W_k$, and some regular solution has
+  $W_k\in\Kpos(\rho x)\setminus\Kpos(\rho y)$;
+\item for the instance of \cref{thm:tc-gadget} over $\BFT$, conditions \CondI\
+  and \CondU\ hold, and every hole $(u,t)$ of an extracted instance has
+  $\len t\ge L_k$; so every counterexample word of that instance
+  (\cref{def:as-certificate}) is a hole word longer than $L_k$.
+\end{enumerate}
+For every arity $n\ge3$, statements (1) and (2) hold for a system over $\BF$
+with $f$ covariant of arity $n$ and $18k+61$ variables, which may contain
+literals $u=\Bot$.
+Hence shortest counterexample words can have length $2^{\Omega(s)}$, for every
+fixed arity $n\ge2$.
+\end{proposition}
+
+\begin{proof}
+\emph{A counter.} Over the alphabet $\Gamma=\{0,1,\#,\$\}$ let
+$H=C_0\#C_1\#\cdots\#C_{2^k-1}\$$, where $C_j$ is the binary expansion of $j$
+with $k$ bits, least significant bit first; $\len H=(k+1)2^k$. Consider the
+nondeterministic automaton $\mathcal N$ over $\Gamma$, all of whose states are
+final, with the following states and transitions; a transition that is not
+listed does not exist.
+\begin{itemize}[leftmargin=*]
+\item $\mathsf E$ loops on every letter.
+\item $\mathsf F_0,\ldots,\mathsf F_k$ check the format: $\mathsf F_i$ goes on a
+  bit to $\mathsf F_{i+1}$ if $i<k$ and to $\mathsf E$ if $i=k$; on $\#$ to
+  $\mathsf F_0$ if $i=k$ and to $\mathsf E$ otherwise; on $\$$ to $\mathsf E$ if
+  $i<k$.
+\item $\mathsf I$ checks that $C_0$ is zero: it goes on $0$ to $\mathsf I$ and
+  on $1$ to $\mathsf E$.
+\item $\mathsf C(c)$, $c\in\{0,1\}$, tracks the carry of an increment and
+  spawns checkers: on a bit $b$ it goes to both $\mathsf C(c\land b)$ and
+  $\mathsf W(b\oplus c,k)$, and on $\#$ to $\mathsf C(1)$.
+\item $\mathsf W(b,j)$, $0\le j\le k$, waits for the corresponding bit of the
+  next block: for $j>0$ it goes on every letter other than $\$$ to
+  $\mathsf W(b,j-1)$; $\mathsf W(b,0)$ goes on the bit $1-b$ to $\mathsf E$.
+\item $\mathsf O(o)$, $o\in\{0,1\}$, records whether the current block is all
+  ones so far: on a bit $b$ it goes to $\mathsf O(o\land b)$; on $\#$ to
+  $\mathsf E$ if $o=1$ and to $\mathsf O(1)$ if $o=0$; $\mathsf O(0)$ goes on
+  $\$$ to $\mathsf E$.
+\end{itemize}
+The initial states are $\mathsf F_0$, $\mathsf I$, $\mathsf C(1)$ and
+$\mathsf O(1)$, and there are $3k+9$ states. We claim that the words with a run
+of $\mathcal N$ are exactly the words in $\Gamma^*\setminus H\Gamma^*$.
+
+No branch reaches $\mathsf E$ on a prefix of $H$: the format is right; $C_0$ is
+zero; a checker spawned at the bit of offset $p$ in block $C_i$ reads the $k$
+letters between it and the bit of offset $p$ in $C_{i+1}$, which is
+$b\oplus c$ for the bit $b$ and the incoming carry $c$, because $C_{i+1}=C_i+1$;
+a $\#$ follows only blocks that are not all ones; and $\$$ follows the all-ones
+block $C_{2^k-1}$. After $H$ no state remains: $\mathsf F_k$, $\mathsf C(\cdot)$,
+$\mathsf O(1)$ and the checkers have no transition on $\$$, and $\mathsf I$ has
+none on $\#$. So no word in $H\Gamma^*$ has a run. Every proper prefix of $H$
+has a run through the format states. Let $w$ first differ from $H$ at
+position $i<\len H$. If $H[i]$ is a bit of $C_j$ and $w[i]\in\{\#,\$\}$, the
+format branch, at some $\mathsf F_p$ with $p<k$, reaches $\mathsf E$. If $w[i]$
+is the other bit, then $\mathsf I$ reaches $\mathsf E$ if $j=0$, and otherwise
+the checker spawned at the same offset of $C_{j-1}$ is at $\mathsf W(H[i],0)$
+and reaches $\mathsf E$. If $H[i]=\#$, a bit leads $\mathsf F_k$ to $\mathsf E$,
+and $\$$ leads $\mathsf O(0)$ to $\mathsf E$, since $C_j$ is not all ones. If
+$H[i]=\$$, a bit leads $\mathsf F_k$ to $\mathsf E$ and $\#$ leads $\mathsf O(1)$
+to $\mathsf E$. Since $\mathsf E$ loops, $w$ has a run, which proves the claim.
+
+\emph{Binary words.} Code the tokens by $0\mapsto00$, $1\mapsto01$,
+$\#\mapsto10$, $\$\mapsto11$, and let $W_k$ be the code of $H$, of length $L_k$.
+Let $\mathcal L$ have the states $q$, $(q,0)$ and $(q,1)$ for every state $q$
+of $\mathcal N$, all final, the initial states of $\mathcal N$, a transition on
+the bit $b$ from $q$ to $(q,b)$, and a transition on the bit $b'$ from $(q,b)$
+to every successor of $q$ on the token coded by $bb'$. It has $9k+27$ states.
+By induction on the number of complete codes, the base states reachable on the
+code of a token word are the states reachable on that word in $\mathcal N$, and
+after one further bit the reachable set is nonempty iff that set is. So a
+binary word has a run of $\mathcal L$ iff its longest prefix of even length is
+the code of a token word with a run of $\mathcal N$, that is, iff it does not
+begin with $W_k$. The language of $\mathcal L$ is therefore
+$\{0,1\}^*\setminus W_k\{0,1\}^*$.
+
+\emph{The system.} Let $\varphi_k$ have the variables $x$, $y$, $d$ and $Y_q$
+for the states $q$ of $\mathcal L$, and the literals
+\[
+ f(d,d)\le Y_q,\qquad f(Y_r,d)\le Y_q\ \ (q\xrightarrow0r),\qquad
+ f(d,Y_r)\le Y_q\ \ (q\xrightarrow1r),\qquad Y_q\le y\ \ (q\text{ initial}).
+\]
+In every solution, $\Kpos(Y_q)$ contains every word that has a run of
+$\mathcal L$ from $q$, by induction on its length, using
+\cref{lem:bg-bf-order}; hence $\Kpos(y)\supseteq\{0,1\}^*\setminus W_k\{0,1\}^*$,
+and every word of $\Kpos(x)\setminus\Kpos(y)$ begins with $W_k$. Conversely, let
+$\Kpos(Y_q)$ be the set of words with a run from $q$, $d=\Bot$, $\Kpos(y)$ the
+language of $\mathcal L$, and $\Kpos(x)$ the set of prefixes of $W_k$. These
+sets are regular and prefix closed, since all states are final, and they
+satisfy every literal, so this is a regular solution with
+$W_k\in\Kpos(x)\setminus\Kpos(y)$. This proves~(1); the antecedent is
+satisfiable and the entailment fails over arbitrary and regular trees
+(\cref{thm:tc-regular}).
+
+(2) The consequent is $\psi=\{x\le y\}$ and $Z=\varnothing$, so $\psi^\natural=
+\psi$ has no facts and no forbidden roots: \CondI\ and \CondU\ hold.
+Its pure moves are the copies $(x^0,w)\to(y^0,w)$ and $(y^1,w)\to(x^1,w)$. Let
+$(u,t)$ be a hole of an extracted instance $I_{pq}$ of $\varphi^\natural$ and
+$\psi$. By \cref{thm:ex-reduction}, $(p,t)\to^*(q,u)$ by pure moves of $\psi$,
+and the least solution $\rho$ of $\varphi^\natural$ that contains $(p,t)$ omits
+$(q,u)$; so $u=t$ and $(p,q)$ is $(x^0,y^0)$ or $(y^1,x^1)$. By
+\cref{lem:tc-gadget}(1), $\rho x$ and $\rho y$ are $\Top$-free, so their
+positive cones are empty, and $p=y^1$, $q=x^1$. For $\Top$-free covariant trees
+the negative cone is the complement of the constructor positions
+(\cref{rem:ch-one-sign}), so $t\in\Kpos(\rho x)\setminus\Kpos(\rho y)$. The
+restriction of $\rho$ to $X$ solves $\varphi_k$ over $\BF$, and~(1) gives
+$\len t\ge L_k$.
+
+For $n\ge3$, apply \cref{prop:cx-embedding} below: the solutions of the
+translated antecedent are, on the original variables, the images of the
+solutions of $\varphi_k$, with the same sets of constructor positions, and the
+translation has $2(9k+30)+1$ variables; it contains the literal $o=\Bot$. Statement~(2) carries over by the same
+argument. Finally $s\le18k+61$ and $\log_2L_k\ge k+1$, so
+$L_k\ge2^{(s-61)/18}$.
+\end{proof}
+
+The antecedents have no finite solutions, since $\Kpos(y)$ is infinite, so the
+proposition gives no lower bound over finite trees.
+
+\paragraph{Larger arities}
+A lower bound for a binary constructor does not transfer to a constructor of
+larger arity by \emph{bare padding}, that is, by filling the new arguments of
+every constructor with $\Bot$. The translated antecedent constrains values that
+are not translations of binary trees, and such values may refute the
+translated entailment.
+
+\begin{example}[Bare padding fails]\label{ex:cx-padding}
+Over $\BF$ with $f_2$ binary and covariant,
+$\mathrm{true}\models\exists a\,b\ \ x\le f_2(a,b)$ holds in every tree class:
+take the children of $x$, or $a=b=\Bot$ if $x=\Bot$. With $f_3$ ternary and the
+new argument filled by $\Bot$, the entailment
+$\mathrm{true}\models\exists a\,b\ \ x\le f_3(a,b,\Bot)$ fails at the finite tree
+$x=f_3(\Bot,\Bot,f_3(\Bot,\Bot,\Bot))$. In the same way, padding the antecedent
+of \cref{prop:cx-length} leaves $x$ unconstrained, and a value of $x$ with a
+constructor at the one-letter word $2$, which lies outside $\Kpos(y)$, is a
+countermodel with a witness of length one.
+\end{example}
+
+The repair restricts every variable to the image of the binary trees, by a
+variant of the gadget of \cref{sec:tc-gadget}.
+
+\begin{proposition}[Embedding binary trees]\label{prop:cx-embedding}
+Let $n\ge2$, let $f$ be covariant of arity $n$, and let $f_2$ be binary and
+covariant. For a tree $t$ over $\{\Bot,f_2\}$ let $\cxemb(t)$ be the tree over
+$\BF$ with $\Kpos(\cxemb t)=\Kpos(t)$. For a system $\chi$ over
+$\{\Bot,f_2\}$, let $\chi^{\cxemb}$ replace every literal $f_2(a_0,a_1)\le u$ by
+$f(a_0,a_1,o,\ldots,o)\le u$ and every literal $u\le f_2(a_0,a_1)$ by
+$u\le f(a_0,a_1,o,\ldots,o)$, for a fresh variable $o$. For $\varphi$ over $X$
+and $\psi$ over $X\cup Z$, put
+\[
+ \varphi^{(n)}=\varphi^{\cxemb}\cup\{o=\Bot\}\cup\bigcup_{x\in X}B(x,m_x),
+ \qquad
+ \psi^{(n)}=\psi^{\cxemb}\cup\bigcup_{z\in Z}B(z,m_z),
+\]
+where $B(v,m)=\{v\le m,\ m\le f(m,m,o,\ldots,o)\}$,
+with the visible variables $X\cup\{o\}\cup\{m_x\}_{x\in X}$ and the hidden
+variables $Z\cup\{m_z\}_{z\in Z}$. Then:
+\begin{enumerate}[leftmargin=*]
+\item $\cxemb$ is a bijection from the trees over $\{\Bot,f_2\}$ onto the trees
+  over $\BF$ whose constructor positions lie in $\{0,1\}^*$; it preserves and
+  reflects the order, maps each tree class onto its part of the image, and
+  $\cxemb(f_2(a,b))=f(\cxemb a,\cxemb b,\Bot,\ldots,\Bot)$;
+\item for every tree class $\mathcal D$,
+  $\varphi\models_{\mathcal D}\Exists\psi$ over $\{\Bot,f_2\}$ iff
+  $\varphi^{(n)}\models_{\mathcal D}\exists\bar z\,\bar m\,\psi^{(n)}$ over
+  $\BF$, and the restrictions to $X$ of the solutions of $\varphi^{(n)}$ are
+  exactly the images under $\cxemb$ of the solutions of $\varphi$.
+\end{enumerate}
+The translation has $2s+1$ variables and size linear in the input for fixed $n$.
+\end{proposition}
+
+\begin{proof}
+(1) Prefix-closed subsets of $\{0,1\}^*$ are exactly the sets of constructor
+positions of binary trees and of the trees in the image, and the order on both
+sides is inclusion of these sets (\cref{lem:bg-bf-order}). A tree over $\BF$ is finite iff this set is finite, and regular iff it is a
+regular language (\cref{thm:lf-representation}(4)), on both sides.
+
+(2) Let $m$ be a tree over $\BF$ with $m\le f(m,m,\Bot,\ldots,\Bot)$. Then
+$\Kpos(m)\subseteq\{\eps\}\cup0\Kpos(m)\cup1\Kpos(m)$, and by induction on length
+every word of $\Kpos(m)$ lies in $\{0,1\}^*$. Conversely, the regular tree $\Theta$
+with $\Kpos(\Theta)=\{0,1\}^*$ and the finite trees $\Theta_h$ with
+$\Kpos(\Theta_h)=\{0,1\}^{<h}$ satisfy this literal, and every tree in the image
+of $\cxemb$ lies below $\Theta$, and below $\Theta_h$ if it is finite with all
+positions shorter than $h$. So, with $o=\Bot$, a value of $v$ admits a value of
+$m$ with $B(v,m)$ in the class $\mathcal D$ iff it lies in the image of
+$\cxemb$. On this image, a literal of $\chi^{\cxemb}$ with $o=\Bot$ holds for
+$\cxemb\circ\sigma$ iff the corresponding literal of $\chi$ holds for $\sigma$,
+by~(1). Both claims of~(2) now follow as in the proof of \cref{thm:tc-gadget},
+with $\cxemb$ in place of the identity on $\Top$-free trees.
+\end{proof}
+
+\paragraph{Hardness}
+\Citet[Theorems~1 and~2]{HengleinRehof98} proved PSPACE-hardness of plain
+entailment over $\BFT$ for a binary covariant constructor. We prove
+PSPACE-hardness for every fixed arity $n\ge2$, in each tree class, by explicit
+reductions from the universality and the inclusion problems of
+nondeterministic automata over $\{0,1\}$, which are PSPACE-complete
+\citep{StockmeyerMeyer73}. For a word $w\in\{0,1\}^*$ let
+$\cxcode(w)=e(w)1$, where $e$ replaces each letter $0$ by $00$ and each $1$ by
+$01$. The code is prefix free: if $\cxcode(w')\pre\cxcode(w)$ and
+$\len{w'}<\len w$, then position $2\len{w'}$ carries the final $1$ of
+$\cxcode(w')$ but the letter $0$ in $\cxcode(w)$. From an automaton for $L$ one
+obtains in linear time an automaton for $\cxcode(L)$: replace each transition
+by two, the first labeled $0$, and add a transition labeled $1$ from every final
+state to one new final state.
+
+\begin{theorem}[PSPACE-hardness]\label{thm:cx-hard}
+Let $n\ge2$ be fixed and $f$ covariant. In each of the three tree classes:
+\begin{enumerate}[leftmargin=*]
+\item existential entailment over $\BF$ is PSPACE-hard;
+\item plain entailment over $\BFT$ is PSPACE-hard;
+\item consequently existential entailment over $\BFT$ is PSPACE-hard, and so is
+  the problem with the variance as part of the input, already on covariant
+  instances.
+\end{enumerate}
+\end{theorem}
+
+We claim no hardness for a fixed variance with a contravariant argument, and
+none for $n=1$, where the problem is in PSPACE by \cref{thm:cx-unary}. The
+reductions use the extra arguments of $f$ either for an unconstrained filler,
+whose positions every condition ignores, or for $\Bot$, under literals that
+already confine the relevant values to the letters $0$ and $1$; neither is
+bare padding.
+
+\begin{proof}
+Let $\Sigma=\{0,\ldots,n-1\}$. For an automaton $\mathcal N$ over $\{0,1\}$
+with states $Q$, initial state $q_0$ and final states $F$, write $L_q$ for the
+words accepted from $q$.
+
+(1) Let $\mathcal F(\mathcal N)$ have the variables $x$, $d$ and $X_q$ for
+$q\in Q$, and the literals
+\[
+ x\le X_{q_0},\quad X_q\le f(X_{q'},d,\ldots,d)\ (q\xrightarrow0q'),\quad
+ X_q\le f(d,X_{q'},d,\ldots,d)\ (q\xrightarrow1q'),\quad X_q=\Bot\ (q\in F).
+\]
+We claim: a tree $t$ over $\BF$ in a class $\mathcal D$ is the value of $x$ in
+some $\mathcal D$-solution iff no word of $L_{q_0}$ is a constructor position
+of $t$. If $\pi\in\Kpos(t)$ and $q_0\xrightarrow\pi q$, then by induction on
+$\pi$ the subtree of $t$ at $\pi$ lies below $X_q$: an upper literal at a
+constructor node passes to the child in the direction of the transition. For
+$\pi\in L_{q_0}$ with $q\in F$ this contradicts $X_q=\Bot$. Conversely, let $h$
+bound the lengths of the positions of $t$ if $t$ is finite, and put
+$h=\infty$ otherwise, with $\Sigma^{\le\infty}=\Sigma^*$. Let $\Kpos(d)=\Sigma^{\le h}$ and let $\Kpos(X_q)$ be the
+words of $\Sigma^{\le h}$ with no prefix in $L_q$. These sets are prefix
+closed, finite if $h<\infty$ and regular otherwise. If $0w\in\Kpos(X_q)$ and
+$q\xrightarrow0q'$, then no prefix of $w$ lies in $L_{q'}$, so
+$w\in\Kpos(X_{q'})$, and every $iw\in\Kpos(X_q)$ with $i\ne0$ has
+$w\in\Kpos(d)$; so the upper literals hold by \cref{lem:bg-bf-order}, and
+symmetrically for the letter $1$. For $q\in F$, $\eps\in L_q$, so $X_q=\Bot$.
+Finally $\Kpos(t)\subseteq\Kpos(X_{q_0})$, since $\Kpos(t)$ is prefix closed and
+avoids $L_{q_0}$.
+
+Given automata $\mathcal N_1,\mathcal N_2$, let $\mathcal N'_i$ accept
+$\cxcode(L(\mathcal N_i))$. Let $\varphi=\mathcal F(\mathcal N'_2)$, with all
+its variables visible, and let $\psi=\mathcal F(\mathcal N'_1)$ with fresh
+variables except $x$, all of them hidden. Both systems are satisfiable, by the
+assignment $\Bot$. By the claim, $\varphi\models_{\mathcal D}\Exists\psi$ iff
+every $\Top$-free $t\in\mathcal D$ whose constructor positions avoid
+$\cxcode(L(\mathcal N_2))$ also avoids $\cxcode(L(\mathcal N_1))$. If
+$L(\mathcal N_1)\subseteq L(\mathcal N_2)$, this holds. If $w\in L(\mathcal
+N_1)\setminus L(\mathcal N_2)$, let $t$ be the finite tree whose constructor
+positions are the prefixes of $\cxcode(w)$; a prefix of $\cxcode(w)$ in
+$\cxcode(L(\mathcal N_2))$ would equal $\cxcode(w)$ by prefix freeness, so $t$
+is a countermodel. Inclusion of automata is PSPACE-hard, and the reduction is
+polynomial.
+
+(2) Let $\mathcal N$ accept $\cxcode(L(\mathcal N_0))$ for a given automaton
+$\mathcal N_0$, and let $C=(00\mid01)^*1$ be the set of all codes and $P$ the set
+of proper prefixes of codes, the words $e(w)$ and $e(w)0$. Let $\chi$ have the
+variables $x$, $d$, $b$, $r$, $r'$ and $X_q$ for $q\in Q$, and the literals
+\[
+\begin{gathered}
+ x\le X_{q_0},\quad X_q\le f(X_{q'},d,b,\ldots,b)\ (q\xrightarrow0q'),\quad
+ X_q\le f(d,X_{q'},b,\ldots,b)\ (q\xrightarrow1q'),\quad X_q=\Bot\ (q\in F),\\
+ b=\Bot,\qquad f(r',b,\ldots,b)\le r,\qquad f(r,r,b,\ldots,b)\le r' .
+\end{gathered}
+\]
+We show that $\chi\models_{\mathcal D}x\le r$ iff $L(\mathcal N_0)=\{0,1\}^*$.
+
+Suppose $\mathcal N_0$ is universal, so that $\mathcal N$ accepts every code,
+and let $\rho$ be a solution. \emph{The values of $r$.} Call $r$ the state of
+the words $e(w)$ and $r'$ that of the words $e(w)0$. By induction along $P$, if
+$\pi\in P$ is a position of $\rho r$, then its subtree lies above the value of
+its state: from $r$, the literal $f(r',b,\ldots,b)\le r$ gives a node $f$ or
+$\Top$ whose child $0$, if it exists, lies above $r'$, and from $r'$ the other
+literal gives children $0$ and $1$ above $r$. In particular $\rho r$ is not
+$\Bot$ at any position in $P$. \emph{The values of $x$.} Every $\pi\in P$ is a
+proper prefix of an accepted code, so an accepting run reaches, on $\pi$, a
+state $q$ with an outgoing transition; as in~(1), if $\pi$ is a position of
+$\rho x$, its subtree lies below $X_q$, which lies below a constructor tree, so
+$\rho x$ is not $\Top$ at $\pi$, and the children of that subtree in the
+directions $i\ge2$ are $\Bot$. Every code $c$ is accepted, so if $c$ is a
+position of $\rho x$, its subtree lies below $X_q=\Bot$ for a final $q$. The
+children of a word of $P$ are words of $P$, codes, and words $\pi i$ with
+$\pi\in P$ and $i\ge2$, and $\rho x$ is $\Bot$ at the last two kinds; so every
+position of $\rho x$ is of one of these three kinds. Hence at every common
+position either $\rho x$ is $\Bot$, or the position lies in $P$, where $\rho x$
+has a label in $\{\Bot,f\}$ and $\rho r$ one in $\{f,\Top\}$. So
+$\rho x\le\rho r$.
+
+Suppose $w\notin L(\mathcal N_0)$, and let $c=\cxcode(w)$, so that no prefix of
+$c$ is accepted by $\mathcal N$, by prefix freeness. Let $x$ be the finite tree
+whose constructor positions are the prefixes of $c$, $c$ included. For $q\in Q$
+let $X_q$ be the join, the union of constructor positions, of the subtrees of
+$x$ at the prefixes $\pi$ of $c$ with $q_0\xrightarrow\pi q$; each is the path
+tree along the rest of $c$. Then $x\le X_{q_0}$, $X_q=\Bot$ for $q\in F$, and
+the upper literals hold with $b=\Bot$ and $d$ the finite tree with
+$\Kpos(d)=\{0,1\}^{\le\len c}$, as in~(1). Let $r_0=r'_0=\Top$,
+$r_{h+1}=f(r'_h,\Bot,\ldots,\Bot)$ and $r'_{h+1}=f(r_h,r_h,\Bot,\ldots,\Bot)$. By
+induction $r_{h+1}\le r_h$ and $r'_{h+1}\le r'_h$, so $(r_h,r'_h)$ satisfies the
+two lower literals, and for $h>\len c$ the tree $r_h$ has the label $\Bot$ at
+$c$, where $x$ has $f$. This finite solution refutes $x\le r$.
+
+Universality is PSPACE-hard and the reduction is polynomial; since PSPACE is
+closed under complement, this proves~(2). Item~(3) follows from~(1) by
+\cref{thm:tc-gadget}, or from~(2), since plain entailment is the case
+$Z=\varnothing$ and the covariant instances have the variance $c=0$.
+\end{proof}
+
+The reduction of~(2) reproves, for $n=2$, the theorem of
+\citet{HengleinRehof98}, in all three tree classes, and extends it to every
+fixed arity at least two. Together with \cref{thm:cx-upper,thm:cx-unary}, the
+problem is PSPACE-hard and in 2-EXPSPACE for every fixed $n\ge2$ and covariant
+$f$, and in PSPACE for $n\le1$; whether it is PSPACE-hard for $n=1$ is open.

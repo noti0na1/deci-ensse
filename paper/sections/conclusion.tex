@@ -1,0 +1,93 @@
+%% conclusion -- summary; open problems: {bot,f} with a contravariant
+%% argument, the complexity and witness-length gaps, unary hardness, richer
+%% signatures; mechanization; implementation in type inference.
+
+\providecommand{\CondI}{\textup{(I0)}}
+\providecommand{\CondU}{\textup{(U)}}
+\providecommand{\CondII}{\textup{(II)}}
+
+\section{Conclusion}\label{sec:concl}
+
+We have shown that existential subtype entailment $\varphi\entails\Exists\psi$
+for one constructor is decidable over arbitrary, regular, and finite trees, for
+every arity and every variance over $\BFT$, and over $\BF$ when the
+constructor is covariant (\cref{thm:as-main}). Signed leaf cones turn every
+system into a Horn system with unary rules, and collision return reduces the
+entailment to three conditions on single seeds. Two of them become hole
+problems for finite readers. Condition \CondU\ is a hole problem of the
+kind solved for plain entailment~\citep{Zhao26}; condition \CondII\ is a hole problem for two words that share
+a suffix, in which a word can also obstruct itself through a self event. Holes
+that are not mortal are found through breakers, lassos and a pump, and are
+singly exponential. Mortal holes are packed around a separator into one word of
+bounded depth, and a compression that carries a positive channel up the
+hierarchy keeps the anchored comparison that a mortal hole must contain. The
+transfers to regular and finite trees hold for every variance, and a gadget
+reduces covariant $\BF$ to $\BFT$.
+
+\paragraph{The Signature without Top and a Contravariant Argument}
+We do not know whether existential entailment over $\BF$ is decidable when $f$
+has a contravariant argument. Neither omitting the literals $\Top\le u$ nor
+the gadget of \cref{thm:tc-gadget} reduces this case to $\BFT$
+(\cref{rem:tc-gadget-needed}): the gadget excludes leaves $\Top$ only
+because each covariant child of its variable lies below the variable itself.
+A decision for this case needs either a gadget that bounds the leaves of both
+polarities without $\Top$ literals, or a direct treatment of the cones of
+trees without $\Top$, in which every leaf is $\Bot$ but its sign still depends
+on the polarity of its path.
+
+\paragraph{Complexity}
+The problem is PSPACE-hard for every fixed arity $n\ge2$ with $f$ covariant,
+and in 2-EXPSPACE (\cref{thm:cx-hard,thm:cx-upper}). For $n\le1$ it is in
+PSPACE (\cref{thm:cx-unary,rem:cx-nullary}), but we know no lower bound for
+$n=1$: the reductions of \cref{thm:cx-hard} need two independent directions,
+and a unary constructor offers only one. Closing the gap between PSPACE and
+2-EXPSPACE for $n\ge2$ is open, as is the complexity for a fixed variance with
+a contravariant argument, for which we claim no lower bound.
+
+\paragraph{Witness Lengths}
+Shortest counterexample words can be exponentially long
+(\cref{prop:cx-length}), and they are at most triply exponential
+(\cref{thm:as-main}). Words for \CondI\ and holes that are not mortal are
+singly exponential, and the words for \CondU\ stay below the mortal bound
+(\cref{thm:un-decidable}), so the bound of \cref{thm:as-main} is that of the
+mortal holes. Whether mortal holes have a doubly exponential bound is open.
+The length bound of anchored compression is exponential in the depth and in
+the square of the dictionary size, and the dictionaries are exponential in
+the number of states and the depth; dictionaries of polynomial size would give
+a doubly exponential bound. Bounded depth and the subset structure of the
+automata do not give such dictionaries by themselves, and a different
+compression, or a direct analysis of the long common suffix of a mortal hole,
+may be needed. The words for \CondU\ come from the compression of \citet{Zhao26},
+whose bound has the same form, so an improvement of the overall bound would
+need it there as well. The exponential lower bound holds over arbitrary and
+regular trees; we have no superpolynomial lower bound over finite trees.
+
+\paragraph{Richer Signatures and Conclusions}
+Several constructors, possibly together with nullary base types, change the
+order on labels: incomparable constructors clash, and the leaf cones would have
+to record which constructor occurs at each position, while the polarity of a
+path would depend on the constructors along it. Entailment of disjunctions,
+$\varphi\entails\psi_1\vee\psi_2$, is not covered either: a disjunction is not
+a Horn clause, and the single-seed characterization of \cref{sec:ch} rests on
+the Horn form.
+
+\paragraph{Mechanization}
+The mechanized proof covers decidability on flat input in all six cases, with
+anchored compression and all search bounds as explicit functions of automaton
+state counts (\cref{sec:mechanization}). Mechanizing the flattening of
+\cref{lem:bg-flattening}, the bounds of \cref{prop:as-bounds} in terms of the
+number of variables, the countermodels of \cref{lem:as-countermodel}, and the
+summary search of \cref{prop:cx-search} would make the quantitative and
+certifying statements machine checked as well.
+
+\paragraph{Implementation in Type Inference}
+The procedure of \cref{thm:as-main} is not meant to be run as stated. A
+practical subsumption or simplification checker could first apply the classes
+of \cref{sec:ap-plain}, which reduce to plain entailment, then test
+satisfiability and condition \CondI, both in polynomial space, and then search
+for short holes of the unit readers and of the extracted instances. Each
+counterexample found can be checked directly and yields a regular countermodel
+(\cref{lem:as-countermodel}); only the absence of counterexamples depends on
+the bounds. Which of these cases arise in the constrained types produced by
+inference, and how often mortal holes or long words for \CondU\ are needed, are
+empirical questions that we leave open.

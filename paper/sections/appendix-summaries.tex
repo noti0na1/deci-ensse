@@ -1,0 +1,389 @@
+%% appendix-summaries.tex -- proofs for the sections on pushdown summaries
+%% (sec:sm), condition (U) (sec:un), and two-word holes with self events
+%% (sec:ex): lifting, summaries, the lowest point, duality, least closures of
+%% regular seeds, deadness from states, the deadness theorem, and the
+%% reduction of (II) to holes of the extracted instances.
+
+\section{Proofs for Summaries, Condition (U), and Extracted Instances}\label{app:sm}
+
+\subsection{Summaries and the Lowest Point}\label{app:sm-summaries}
+
+Throughout, $\chi$ is a system over $V$, pure derivations are those of
+$\chi$, that is, of the copy and constructor literals of $\chi^\pm$
+(\cref{sec:sm-lowest}), and the automata are those of \cref{def:sm-automata}.
+
+\begin{lemma}[Lifting]\label{lem:sm-lift}
+\leavevmode
+\begin{enumerate}[leftmargin=*]
+\item If $(a,\eta)\to^*_\chi(b,\eta')$, then
+  $(a,\eta\sigma)\to^*_\chi(b,\eta'\sigma)$ by a pure derivation above
+  $\sigma$, for every word $\sigma$.
+\item A pure derivation that starts at an atom $(a,\eta\sigma)$ and whose atoms
+  all have height at least $\len\sigma$ is above $\sigma$, and deleting the
+  suffix $\sigma$ from all its words yields a pure derivation.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(1) is \cref{lem:lf-moves}(1), applied move by move; every word of the new
+derivation ends with $\sigma$. (2) Suppose that an atom $(r,\eta\sigma)$ is
+followed by a move to an atom of height at least $\len\sigma$. A copy or a push
+yields an atom $(r',\eta'\sigma)$ with $(r,\eta)\to_\chi(r',\eta')$. A pop must
+have $\eta\ne\eps$, since popping the first letter of $\sigma$ would lower the
+height below $\len\sigma$; so again the result is $(r',\eta'\sigma)$ with
+$(r,\eta)\to_\chi(r',\eta')$. Induction along the derivation proves both
+claims.
+\end{proof}
+
+\begin{proof}[Proof of \cref{lem:sm-summaries}]
+(a) For the forward implication, induct on the derivation of $D_\chi(a,b)$ by
+the rules of \cref{def:sm-automata}, constructing a pure derivation for every
+$w$ at once. Reflexivity gives the empty derivation, a copy literal $a\le b$ of
+$\chi^\pm$ one copy, and transitivity a concatenation. For the decomposition
+rule, which concludes $D_\chi(a_i,b_i)$ from $f(a_j)_j\le u$, $D_\chi(u,v)$, and
+$v\le f(b_j)_j$: push $i$ from $(a_i,w)$ to $(u,iw)$, follow the derivation
+$(u,iw)\to^*_\chi(v,iw)$ above $iw$ given by the induction hypothesis, and pop
+$i$ to $(b_i,w)$. The result is above $w$.
+
+For the reverse implication, induct on the length of the derivation. If it is
+empty, $a=b$. Otherwise its first move, from $(a,w)$, is a copy or a push,
+since a pop would produce a word shorter than $w$. If it is a copy to $(a',w)$
+by a literal $a\le a'$, then $D_\chi(a,a')$, the induction hypothesis gives
+$D_\chi(a',b)$ for the rest, and transitivity concludes. If it is a push of $i$
+to $(u,iw)$ by a literal $f(a_j)_j\le u$ with $a=a_i$, let $(b',w)$ be the first
+later atom of height $\len w$; it exists because the derivation ends at height
+$\len w$. The atoms from $(u,iw)$ up to the one just before $(b',w)$ have height
+at least $\len w+1$, so by \cref{lem:sm-lift}(2) they form a derivation above
+$iw$, which ends at an atom $(v,iw)$. The next move lowers the height, so it is
+a pop of $i$ by a literal $v\le f(b_j)_j$, and $b'=b_i$. The induction
+hypothesis gives $D_\chi(u,v)$, the decomposition rule gives $D_\chi(a,b')$,
+and the induction hypothesis applied to the rest, from $(b',w)$ to $(b,w)$,
+gives $D_\chi(b',b)$. Transitivity concludes.
+
+(b) Induct on $\len\gamma$. For $\gamma=\eps$, $P^\chi_p(\eps)=\upc\chi p$, and (a)
+applies. Let $\gamma=\gamma'i$. By definition, $b\in P^\chi_p(\gamma'i)$ iff there
+are $r\in P^\chi_p(\gamma')$ and a literal $r\le f(b_j)_j$ of $\chi^\pm$ with
+$D_\chi(b_i,b)$. If so, the induction hypothesis with $i\sigma$ in place of
+$\sigma$, a pop of $i$, and (a) compose to the required derivation.
+Conversely, given a derivation from $(p,\gamma'i\sigma)$ to $(b,\sigma)$ above
+$\sigma$, let $(b',\sigma)$ be its first atom of height $\len\sigma$. The earlier
+atoms have height at least $\len\sigma+1$, so by \cref{lem:sm-lift}(2) they form
+a derivation above $i\sigma$, which ends at some $(r,i\sigma)$; the next move is
+a pop of $i$ by a literal $r\le f(b_j)_j$, and $b'=b_i$. The induction
+hypothesis gives $r\in P^\chi_p(\gamma')$, and (a) applied to the rest gives
+$D_\chi(b_i,b)$. Hence $b\in\pstep i(P^\chi_p(\gamma'))=P^\chi_p(\gamma)$.
+
+(c) Induct on $\len\beta$. For $\beta=\eps$, $Q^\chi_q(\eps)=\downc\chi q$,
+and (a) applies. Let $\beta=\beta'i$. By definition, $a\in Q^\chi_q(\beta'i)$
+iff there are $r\in Q^\chi_q(\beta')$ and a literal $f(a_j)_j\le r$ of
+$\chi^\pm$ with $D_\chi(a,a_i)$. If so, (a), a push of $i$ from $(a_i,\sigma)$ to
+$(r,i\sigma)$, and the induction hypothesis with $i\sigma$ in place of $\sigma$
+compose. Conversely, given a derivation from $(a,\sigma)$ to
+$(q,\beta'i\sigma)$ above $\sigma$, let $(a',\sigma)$ be its last atom of
+height $\len\sigma$. It is not the final atom, and all later atoms have height
+at least $\len\sigma+1$. So the next move is a push from $(a',\sigma)$ to some
+$(r,i'\sigma)$ by a literal $f(a_j)_j\le r$ with $a'=a_{i'}$, and by
+\cref{lem:sm-lift}(2) the rest is a derivation above $i'\sigma$. Its final word
+$\beta'i\sigma$ therefore ends with $i'\sigma$, so $i'=i$. The induction
+hypothesis gives $r\in Q^\chi_q(\beta')$, and (a) applied to the part before
+$(a',\sigma)$ gives $D_\chi(a,a_i)$.
+
+The last claim holds because the conditions on the left do not mention $w$ or
+$\sigma$.
+\end{proof}
+
+\begin{proof}[Proof of \cref{lem:sm-lowest-point}]
+Given the derivation, let $h$ be its least height and $\sigma$ the suffix of
+$w$ of length $h$. Every atom has height at least $\len\sigma$, so the
+derivation is above $\sigma$ by \cref{lem:sm-lift}(2), and its first atom of
+height $h$ is some $(r,\sigma)$. Then $v=\beta\sigma$ for a word $\beta$; put
+$i=\len w-h$ and $e=\len v-h$, so that $\wsuf wi=\sigma=\wsuf ve$. The part of
+the derivation up to $(r,\sigma)$ leads from $(p,\wpre wi\sigma)$ to
+$(r,\sigma)$ above $\sigma$, so $r\in P^\chi_{p,i}(w)$ by
+\cref{lem:sm-summaries}(b). The rest leads from $(r,\sigma)$ to
+$(q,\wpre ve\sigma)$ above $\sigma$, so $r\in Q^\chi_{q,e}(v)$ by
+\cref{lem:sm-summaries}(c). Conversely, given $i$, $e$, and $r$ in the
+intersection, put $\sigma=\wsuf wi=\wsuf ve$; \cref{lem:sm-summaries}(b,c) give
+pure derivations $(p,w)\to^*_\chi(r,\sigma)\to^*_\chi(q,v)$.
+\end{proof}
+
+\begin{proof}[Proof of \cref{lem:sm-duality}]
+By \cref{lem:lf-duality}, reversing a pure derivation and flipping every
+signed variable gives a pure derivation, and the dual of an atom has the same
+word. So the reversed derivation visits the same words, and it is above
+$\sigma$ iff the original one is. (1) By \cref{lem:sm-summaries}(a),
+$D_\chi(a,b)$ iff $(a,w)\to^*_\chi(b,w)$ above $w$, iff
+$(\bar b,w)\to^*_\chi(\bar a,w)$ above $w$, iff $D_\chi(\bar b,\bar a)$. Hence
+$r\in\downc\chi{\bar q}$ iff $D_\chi(r,\bar q)$ iff $D_\chi(q,\bar r)$ iff
+$r\in\overline{\upc\chi q}$. (2) By \cref{lem:sm-summaries}(c,b),
+$r\in Q^\chi_{\bar q}(w)$ iff $(r,\sigma)\to^*_\chi(\bar q,w\sigma)$ above
+$\sigma$, iff $(q,w\sigma)\to^*_\chi(\bar r,\sigma)$ above $\sigma$, iff
+$\bar r\in P^\chi_q(w)$. (3) By \cref{lem:sm-summaries}, $D_\chi(a,b)$ gives
+$(a,\eps)\to^*_\chi(b,\eps)$, $r\in P^\chi_p(w)$ gives
+$(p,w)\to^*_\chi(r,\eps)$, and $r\in Q^\chi_q(w)$ gives
+$(r,\eps)\to^*_\chi(q,w)$. The sign invariant of \cref{lem:lf-moves}(2),
+extended to pure derivations, gives the three claims, since
+$\parity(\eps)=0$.
+\end{proof}
+
+\subsection{Least Closures and Deadness}\label{app:sm-dead}
+
+\begin{proof}[Proof of \cref{lem:sm-mu}]
+By definition, $(q,v)\in\mu_\chi$ iff $(q,v)\in\Reach_\chi(p,\eps)$ for some
+fact $(p,\eps)$, iff, by \cref{lem:lf-ext-first},
+$(p,\alpha)\to^*_\chi(q,v)$ for some $\alpha$. By \cref{lem:sm-lowest-point},
+this holds iff there are cuts $i\le\len\alpha$ and $e\le\len v$ with
+$\wsuf\alpha i=\wsuf ve$ and
+$P^\chi_p(\wpre\alpha i)\cap Q^\chi_{q,e}(v)\ne\varnothing$. If so, then
+$Q^\chi_{q,e}(v)$ meets $P^\chi_p(\gamma)\subseteq\Fup\chi$ for
+$\gamma=\wpre\alpha i$. Conversely, if $r\in P^\chi_p(\gamma)\cap Q^\chi_{q,e}(v)$
+for a fact $(p,\eps)$, a word $\gamma$, and a cut $e$, take
+$\alpha=\gamma\,\wsuf ve$ and $i=\len\gamma$.
+
+Let $Y$ be the least set that contains $\upc\chi p$ for every fact
+$(p,\eps)$ and contains $\pstep i(\{r\})$ for each of its elements $r$. Since
+$\pstep i(P)=\bigcup_{r\in P}\pstep i(\{r\})$, induction on $\gamma$ gives
+$P^\chi_p(\gamma)\subseteq Y$, so $\Fup\chi\subseteq Y$. Conversely,
+$\upc\chi p=P^\chi_p(\eps)\subseteq\Fup\chi$, and if $r\in P^\chi_p(\gamma)$, then
+$\pstep i(\{r\})\subseteq\pstep i(P^\chi_p(\gamma))=P^\chi_p(\gamma i)$; so
+$\Fup\chi$ has the closure properties of $Y$, and $Y\subseteq\Fup\chi$. The set
+$Y$ is computed by adding elements of $V^\pm$ until nothing changes, which
+takes at most $2\len V$ rounds of polynomial time each.
+\end{proof}
+
+\begin{proof}[Proof of \cref{lem:sm-regular-closure}]
+By definition, $H_\chi(S)=\mu_\chi\cup\bigcup_{a\in S}\Reach_\chi(a)$. By
+\cref{lem:sm-mu}, $(q,v)\in\mu_\chi$ iff $\wpre ve\in V_{r,q}$ for some cut $e$
+and some $r\in\Fup\chi$, that is, iff
+$v\in\bigcup_{r\in\Fup\chi}V_{r,q}\Sigma^*$. Next, let $w\in S_p$. By
+\cref{lem:lf-ext-first,lem:sm-lowest-point}, $(q,v)\in\Reach_\chi(p,w)$ iff there
+are a word $\alpha$, cuts $i\le\len{w\alpha}$ and $e\le\len v$, and a signed
+variable $r$ with $\wsuf{(w\alpha)}i=\wsuf ve$ and
+$r\in P^\chi_p(\wpre{(w\alpha)}i)\cap Q^\chi_{q,e}(v)$. Put
+$\gamma=\wpre{(w\alpha)}i$, $\beta=\wpre ve$, and $\sigma=\wsuf ve$. Then
+$v=\beta\sigma$, $\beta\in V_{r,q}$, $\gamma\in U_{p,r}$, and
+$\gamma\sigma=w\alpha\in S_p\Sigma^*$, so $v\in V_{r,q}\mathrm{Res}_{p,r}$.
+Conversely, if $v=\beta\sigma$ with $\beta\in V_{r,q}$ and
+$\gamma\sigma=w\alpha$ for some $\gamma\in U_{p,r}$, $w\in S_p$, and word
+$\alpha$, then \cref{lem:sm-lowest-point} with the cuts $\len\gamma$ and
+$\len\beta$ gives $(p,w\alpha)\to^*_\chi(q,v)$, hence $(q,v)\in\Reach_\chi(p,w)$
+by \cref{lem:lf-ext-first}. This proves the formula.
+
+The language $V_{r,q}$ is recognized by the lower automaton of $q$ with the
+accepting states $\{Q:r\in Q\}$, and $U_{p,r}$ by the upper automaton of $p$
+with the accepting states $\{P:r\in P\}$. Let $M$ be a deterministic automaton
+for $S_p\Sigma^*$, which is regular. The set $I$ of states of $M$ reached by
+words of $U_{p,r}$ is computable: it consists of the second components of the
+reachable states $(P,m)$ of the product of the upper automaton of $p$ with $M$
+such that $r\in P$. Then $\mathrm{Res}_{p,r}$ is the union over $m\in I$ of the
+languages accepted by $M$ from $m$, which is regular. Concatenation, finite
+union, and the language $\Sigma^*$ are effective. Finally, $H_\chi(S)$ is
+consistent iff $\eps\notin H_\chi(S)_m$ for every forbidden root $(m,\eps)$ and
+$H_\chi(S)_{x^+}\cap H_\chi(S)_{x^-}=\varnothing$ for every variable $x$, which
+are emptiness tests for regular languages.
+\end{proof}
+
+\begin{proof}[Proof of \cref{lem:sm-dead-states}]
+We first show that
+\begin{equation}\label{eq:sm-union}
+ P^\chi_p(wz)=\bigcup_{r\in P^\chi_p(w)}P^\chi_r(z)\qquad\text{for all words }w,z.
+\end{equation}
+For $z=\eps$ this holds because $P^\chi_p(w)$ is upward closed under $D_\chi$
+and $r\in\upc\chi r=P^\chi_r(\eps)$. The induction step from $z$ to $zi$ applies
+$\pstep i$, which distributes over unions.
+
+(1) By \cref{lem:sm-roots}(3) and \cref{eq:sm-union}, $\DeadU_\chi(p,w)$ iff
+some $r\in P^\chi_p(w)$ and some $z$ have
+$P^\chi_r(z)\cap\Ndown\chi\ne\varnothing$, that is, by \cref{lem:sm-roots}(3)
+for the atom $(r,\eps)$, iff some $r\in P^\chi_p(w)$ has
+$\DeadU_\chi(r,\eps)$.
+
+(2) This is \cref{lem:sm-mu} for the atom $(\bar p,w)$, together with
+$Q^\chi_{\bar p}=\overline{P^\chi_p}$ (\cref{lem:sm-duality}(2)).
+
+(3) Suppose $\DeadT_\chi(p,w)$. If $\DeadU_\chi(p,w)$, then (1) gives some
+$r\in P^\chi_p(w)$ with $\DeadU_\chi(r,\eps)$, hence $r\in\DeadT^\eps_\chi$.
+Otherwise $(\bar p,w\delta)\in\mu_\chi$ for some $\delta$, and by (2) applied to
+$w\delta$ there is a cut $e\le\len{w\delta}$ with
+$\overline{P^\chi_p(\wpre{(w\delta)}e)}\cap\Fup\chi\ne\varnothing$. If
+$e\le\len w$, then $(\bar p,w)\in\mu_\chi$ by (2). If $e>\len w$, write
+$\wpre{(w\delta)}e=wz$; by \cref{eq:sm-union}, some $r\in P^\chi_p(w)$ has
+$\overline{P^\chi_r(z)}\cap\Fup\chi\ne\varnothing$, and (2) for the atom
+$(\bar r,z)$ gives $(\bar r,z)\in\mu_\chi$, so $r\in\DeadT^\eps_\chi$.
+
+Conversely, $(\bar p,w)\in\mu_\chi$ gives $\DeadT_\chi(p,w)$ with $\delta=\eps$.
+Let $r\in P^\chi_p(w)\cap\DeadT^\eps_\chi$; then $(p,w)\to^*_\chi(r,\eps)$ by
+\cref{lem:sm-summaries}(b). If $\DeadU_\chi(r,\eps)$, then
+$\Reach_\chi(r,\eps)\subseteq\Reach_\chi(p,w)$ contains a forbidden root. If
+$(\bar r,\delta)\in\mu_\chi$, then duality reverses the derivation to
+$(\bar r,\eps)\to^*_\chi(\bar p,w)$, \cref{lem:sm-lift}(1) lifts it to
+$(\bar r,\delta)\to^*_\chi(\bar p,w\delta)$, and $(\bar p,w\delta)\in\mu_\chi$
+because $\mu_\chi$ is closed under the rules (\cref{lem:lf-closure}(1)).
+
+(4) The first part of $\DeadT_\chi$ is inherited by prefixes by
+\cref{lem:sm-roots}(4), and $(\bar p,wv\delta)=(\bar p,w(v\delta))$.
+
+(5) By \cref{lem:sm-roots}(3) and \cref{eq:sm-union}, $r\in\DeadU^\eps_\chi$ iff
+$r\in\Ndown\chi$, which is the case $z=\eps$, or some letter $i$ and some
+$b\in P^\chi_r(i)$ have $b\in\DeadU^\eps_\chi$. So $\DeadU^\eps_\chi$ is the
+least set that contains $\Ndown\chi$ and contains every $r$ with
+$P^\chi_r(i)\cap\DeadU^\eps_\chi\ne\varnothing$ for some $i$; it is computed by
+iteration in polynomial time. Similarly, by (2) and \cref{eq:sm-union}, the
+set $M$ of signed variables $r$ with $(\bar r,\delta)\in\mu_\chi$ for some
+$\delta$ consists of the $r$ with $P^\chi_r(z)\cap\overline{\Fup\chi}\ne
+\varnothing$ for some $z$; it is the least set that contains every $r$ with
+$\upc\chi r\cap\overline{\Fup\chi}\ne\varnothing$ and every $r$ with
+$P^\chi_r(i)\cap M\ne\varnothing$ for some $i$. Finally
+$\DeadT^\eps_\chi=\DeadU^\eps_\chi\cup M$.
+\end{proof}
+
+\begin{proof}[Proof of \cref{thm:sm-dead}]
+By \cref{cor:lf-dead}, $(p,w)$ is dead iff (a) $\DeadU_\chi(p,w)$, or (b)
+$(\bar p,w\delta)\in\mu_\chi$ for some $\delta$, or (c) $(p,w)$ has a
+self-collision, that is, $(p,w\alpha)\to^*_\chi(\bar p,w\delta)$ for some
+words $\alpha$ and $\delta$. Causes (a) and (b) together are
+$\DeadT_\chi(p,w)$, and the causes may overlap. It remains to show that a
+self-collision implies $\DeadT_\chi(p,w)$ or a self event, and that a self
+event implies a self-collision.
+
+Assume a self-collision. By \cref{lem:sm-lowest-point,lem:sm-duality}(2), there are cuts
+$i\le\len{w\alpha}$ and $j\le\len{w\delta}$ with
+$\wsuf{(w\alpha)}i=\wsuf{(w\delta)}j$ and
+\[
+ P^\chi_p(\wpre{(w\alpha)}i)\cap\overline{P^\chi_p(\wpre{(w\delta)}j)}
+ \ne\varnothing .
+\]
+In particular both sets $P^\chi_p(\wpre{(w\alpha)}i)$ and
+$P^\chi_p(\wpre{(w\delta)}j)$ are nonempty. If $i>\len w$, then
+$\wpre{(w\alpha)}i$ is a proper extension of $w$ with a nonempty upper set, and
+the pop bound (\cref{lem:sm-roots}(2) with $k=\len w$) gives $\DeadU_\chi(p,w)$; the
+case $j>\len w$ is the same. Otherwise $i,j\le\len w$, and the equation reads
+$\wsuf wi\,\alpha=\wsuf wj\,\delta$, so $\wsuf wi$ and $\wsuf wj$ are prefixes
+of one word and hence comparable in the prefix order, and the displayed
+condition reads $P^\chi_{p,i}(w)\cap\overline{P^\chi_{p,j}(w)}\ne\varnothing$. By
+sign coherence (\cref{lem:sm-duality}(3)), the elements of $P^\chi_{p,i}(w)$
+have the sign $\sgn(p)\oplus\parity(\wpre wi)$ and those of
+$\overline{P^\chi_{p,i}(w)}$ the opposite sign, so $i\ne j$. If $i<j$, then
+$\wsuf wj$ is the shorter suffix, so $\wsuf wj\pre\wsuf wi$, and $(i,j)$ is a
+self event. If $j<i$, flipping both sets gives
+$P^\chi_{p,j}(w)\cap\overline{P^\chi_{p,i}(w)}\ne\varnothing$ and
+$\wsuf wi\pre\wsuf wj$, so $(j,i)$ is a self event.
+
+Conversely, let $(i,j)$ be a self event of $(p,w)$. Then $\wsuf wi=\wsuf wj\,\delta$
+for some word $\delta$, and the guard says, by \cref{lem:sm-duality}(2), that
+$P^\chi_{p,i}(w)\cap Q^\chi_{\bar p}(\wpre wj)\ne\varnothing$. Since
+$\wpre{(w\delta)}j=\wpre wj$ and $\wsuf{(w\delta)}j=\wsuf wj\,\delta=\wsuf wi$,
+\cref{lem:sm-lowest-point} gives $(p,w)\to^*_\chi(\bar p,w\delta)$, a
+self-collision with $\alpha=\eps$.
+\end{proof}
+
+\subsection{The Reduced Unit Reader and the Rejection Clock}
+
+\begin{proof}[Proof of \cref{lem:un-reduced}]
+(1) The bit $b$ never returns from $1$ to $0$, and if $\mathrm{du}$ fails at a
+cut, it fails at every later cut (\cref{lem:un-source}(2)). So the replaced
+states are closed under the transitions of $\RU(p)$, and a run that meets one
+of them stays among them. None of them is rejected, since a rejected state has
+$b=0$ and satisfies $\mathrm{du}$. Hence a word rejected by $\RU(p)$ meets no
+replaced state, and a word rejected by $\widehat{\mathcal R}_p$ never meets the
+absorbing state $\bot$. In both cases the run consists of kept states, between
+which the transitions are unchanged, so the word has the same run in both
+readers and is rejected by both. Each comparison of the word is tested on
+states of this run, which carry the same self guard in both readers. So the two
+readers reject the same words, with the same states at every cut and the same
+admitted comparisons, and they have the same holes.
+
+(2) If two prefixes of a word are rejected by $\widehat{\mathcal R}_p$, they
+are rejected by $\RU(p)$ by (1); by betweenness for $\RU(p)$
+(\cref{lem:un-rejected-path}), so is every intermediate prefix, and by (1)
+again it is rejected by $\widehat{\mathcal R}_p$. A word rejected by
+$\widehat{\mathcal R}_p$ has, by (1), the same first rejected cut and the same
+admitted comparisons in both readers, so the admission cone of $\RU(p)$
+transfers.
+
+(3) A kept state after a word $u$ is
+$\zeta=(P^\varphi_p(u),0,P^\psi_p(u))$ by \cref{lem:un-source}(1), and
+$\mathrm{du}(\zeta)$ gives $P^\psi_p(u)\cap\DeadU^\eps_\psi\ne\varnothing$, so
+$P^\psi_p(u)\ne\varnothing$. By \cref{lem:sm-duality}(3), applied in $\varphi$
+and in $\psi$ to the same seed $p$ and the same word $u$, all elements of
+$P^\varphi_p(u)$ and of $P^\psi_p(u)$ have the sign $\sgn(p)\oplus\parity(u)$,
+which the nonempty set $P^\psi_p(u)$ determines. For each sign there are at
+most $2^v$ sets $P\subseteq X^\pm$ and $2^s-1$ nonempty sets
+$P'\subseteq(X\cup Z)^\pm$ of that sign. Adding $\bot$ gives at most
+$1+2^{v+1}(2^s-1)=2^{v+s+1}-2^{v+1}+1<2^{v+s+1}$ states.
+\end{proof}
+
+\begin{proof}[Proof of \cref{lem:un-clock}]
+Let $w$ be rejected by $\RU(p)$, and let $\zeta_j=(P_j,b_j,P'_j)$ be the state
+of $\Bsrc_p$ at the cut $j$, so that $P_j=P^\varphi_{p,j}(w)$ is also the state
+of $\mathcal A_p$ there. At the last cut, $b=0$ and $\mathrm{du}$ holds, so by
+\cref{lem:un-source}(2) and the monotonicity of the bit, $b_j=0$ and
+$\mathrm{du}(\zeta_j)$ hold at every cut $j$. Hence $\zeta_j\in\Rej_{\mathrm U}$
+iff $\mathrm{dt}(\zeta_j)$ fails, iff
+$P_j\cap\DeadT^\eps_\varphi=\varnothing$, which is rejection by $\mathcal A_p$
+at the cut $j$. So $w$ is rejected by $\mathcal A_p$, with the same first
+rejected cut, and $r(w)$ is the same for both readers. By sign coherence
+(\cref{lem:sm-duality}(3)), every reachable state of $\mathcal A_p$ is empty or
+a nonempty set of elements of $X^\pm$ of one sign, so $\mathcal A_p$ has at
+most $2(2^v-1)+1=2^{v+1}-1$ states. \Cref{thm:bg-depth} holds for every reader
+and every nonempty rejected word, without any condition on the admission
+relation, so for $w\ne\eps$ it gives
+$\depth(w)\le2(2^{v+1}-1)(r(w)+1)-1$.
+\end{proof}
+
+\subsection{Extracted Instances}\label{app:sm-extraction}
+
+\begin{proof}[Proof of \cref{thm:ex-reduction}]
+Write $\zeta_e$ for the state of $B=\Bsrc_p$ at the cut $e$ of $t$. By
+\cref{def:ex-instance,lem:un-source}, $A_s(u)=Q^\varphi_{q,s}(u)$,
+$A'_s(u)=Q^\psi_{q,s}(u)$, $B'_e(t)=P^\psi_{p,e}(t)$, and
+$\zeta_e=(P^\varphi_{p,e}(t),[(\bar p,\wpre te)\in\mu_\varphi],P^\psi_{p,e}(t))$.
+We translate the conditions of \cref{def:ex-ss2self}.
+\begin{itemize}[leftmargin=*]
+\item Condition (a) says that $Q^\varphi_{q,s}(u)\cap\Fup\varphi=\varnothing$
+  for every cut $s$, that is, $(q,u)\notin\mu_\varphi$ (\cref{lem:sm-mu}).
+\item By \cref{lem:un-source}(2), a cut that is rejected stays rejected at
+  every later cut, so condition (b) says that the last cut of $t$ is rejected:
+  neither $\DeadT_\varphi(p,t)$ nor $\DeadU_\psi(p,t)$ holds.
+\item Condition (d) says that some cuts $s\le\len u$ and $e\le\len t$ have
+  $\wsuf te=\wsuf us$ and $P^\psi_{p,e}(t)\cap Q^\psi_{q,s}(u)\ne\varnothing$;
+  by \cref{lem:sm-lowest-point} for $\psi$, this says $(p,t)\to^*_\psi(q,u)$.
+\item Assume (b). At the cut $J(t)$, $\mathrm{dt}$ fails, so
+  $\DeadU_\varphi(p,\wpre t{J(t)})$ fails, and the pop bound (\cref{lem:sm-roots}(2))
+  gives $P^\varphi_{p,e}(t)=\varnothing$ for every $e>J(t)$. A guard
+  $Q^\varphi_{q,s}(u)\cap P^\varphi_{p,e}(t)\ne\varnothing$ or a self guard
+  $P^\varphi_{p,i}(t)\cap\overline{P^\varphi_{p,j}(t)}\ne\varnothing$ therefore
+  forces $e\le J(t)$, respectively $j\le J(t)$. Hence, under (b), condition (c)
+  says that there are no cuts $e\le\len t$ and $s\le\len u$ with
+  $\wsuf te\pre\wsuf us$ and
+  $P^\varphi_{p,e}(t)\cap Q^\varphi_{q,s}(u)\ne\varnothing$, and condition (e)
+  says that $(p,t)$ has no self event in $\varphi$
+  (\cref{lem:un-source}(3)).
+\end{itemize}
+
+Let $(u,t)$ be a hole. By (b) and (e), $(p,t)$ is not dead by support and has no
+self event, so it is live by \cref{thm:sm-dead}, since $\varphi$ is
+satisfiable. By (d), $(p,t)\to^*_\psi(q,u)$. By (a) and (c), and by
+\cref{lem:sm-membership} for the live seed $(p,t)$ and the atom $(q,u)$,
+$(q,u)\notin\Cl_\varphi(p,t)$.
+
+Conversely, let $(p,t)$ be live in $\varphi$, $(p,t)\to^*_\psi(q,u)$, and
+$(q,u)\notin\Cl_\varphi(p,t)$. By \cref{thm:sm-dead}, $\DeadT_\varphi(p,t)$
+fails and $(p,t)$ has no self event in $\varphi$; by \CondU\ and
+\cref{lem:un-dead}, $\DeadU_\psi(p,t)$ fails. So (b) and (e) hold. Condition
+(d) holds by the derivation. Since $(q,u)\notin\Cl_\varphi(p,t)$,
+\cref{lem:sm-membership} gives $(q,u)\notin\mu_\varphi$, which is (a), and the
+absence of the cuts described above, which is (c).
+
+(1) By \cref{lem:ch-pure}(2), \CondII\ fails iff some visible atom $(p,t)$
+that is live in $\varphi$ and some visible atom $(q,u)$ satisfy
+$(p,t)\to^*_\psi(q,u)$ and $(q,u)\notin\Cl_\varphi(p,t)$. By the equivalence
+just proved, this happens iff some $I_{pq}$ has a hole.
+
+(2) Let $(u,t)$ be a hole of $I_{pq}$. Then $(p,t)$ is live, so
+$S=\Cl_\varphi(p,t)$ is a model of $\varphi$ (\cref{lem:lf-closure}(2)). If
+$S=T|_X$ for a model $T$ of $\psi$, then $T$ contains $(p,t)$ and is closed
+under the rules of $\psi$, so it contains $(q,u)$, which is visible; hence
+$(q,u)\in S$, a contradiction. By \cref{lem:lf-clauses}, the solution of
+$\varphi$ whose set of atoms is $S$ has no extension to a solution of $\psi$.
+\end{proof}

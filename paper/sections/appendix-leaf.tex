@@ -1,0 +1,231 @@
+%% appendix-leaf -- proofs omitted from the sections on signed leaf cones and
+%% on the characterization.
+
+\section{Proofs for Leaf Cones and the Characterization}\label{app:lf}\label{app:leaf}
+
+This appendix proves the results of \cref{sec:lf,sec:ch} whose proofs were
+omitted there. We keep their notation. For a tree $t$, a word $w$
+\emph{meets} a leaf $v$ of $t$ if $v\pre w$. By the chain property, a word
+meets at most one leaf, a word that meets no leaf is a position labeled $f$,
+and a proper prefix of a position is never a leaf. We use
+\cref{eq:lf-direct} throughout: $w\in L^s_t$ iff $w$ meets a leaf of $t$ of
+sign $s$.
+
+\begin{proof}[Proof of \cref{thm:lf-representation}]
+(1) A word meets at most one leaf, and every extension $wi$ of $w$ meets the
+leaf that $w$ meets. By \cref{eq:lf-direct}, the two cones are disjoint and
+extension closed.
+
+Conversely, let $(L^0,L^1)$ be a pair of disjoint extension-closed sets, and
+put $L=L^0\cup L^1$. Let $D$ be the set of words none of whose proper
+prefixes lies in $L$. For $w\in D$ put $t(w)=f$ if $w\notin L$, and, if
+$w\in L^s$, put $t(w)=\Top$ if $s\oplus\parity(w)=0$ and $t(w)=\Bot$ if
+$s\oplus\parity(w)=1$; this is well defined because $L^0\cap L^1=\varnothing$.
+The set $D$ contains $\eps$ and is prefix closed, and $wi\in D$ iff $w\in D$
+and $w\notin L$, that is, iff $w\in D$ and $t(w)=f$. So $t$ is a tree. Its
+leaves are the words of $D\cap L$, and by construction a leaf $w\in L^s$ has
+sign $s$. We show $L^s_t=L^s$. If $w\in L^s_t$, then $w$ meets a leaf $v$ of
+sign $s$, so $v\in L^s$, and $w\in L^s$ by extension closure. If $w\in L^s$,
+let $v$ be the shortest prefix of $w$ that lies in $L$. Then $v\in D$, so $v$
+is a leaf of $t$. If $v\in L^{s'}$, then $w\in L^{s'}$ by extension closure,
+so $s'=s$ by disjointness; thus $w$ meets the leaf $v$ of sign $s$, and
+$w\in L^s_t$.
+
+For uniqueness, we show that the leaf pair determines the tree. A word $w$ is
+a position of $t$ iff no proper prefix of $w$ is a leaf, iff no proper prefix
+of $w$ lies in $L^0_t\cup L^1_t$: a proper prefix in this union meets a leaf,
+which is again a proper prefix of $w$. A position $w$ is labeled $f$ iff it
+is not a leaf, iff $w\notin L^0_t\cup L^1_t$, since the only leaf that a
+position can meet is itself. A leaf $w\in L^s_t$ has sign $s$, so its label
+is $\Top$ if $s\oplus\parity(w)=0$ and $\Bot$ otherwise.
+
+(2) For trees $t$ and $u$ put $T=\nu_0t$ and $U=\nu_0u$; they have the
+domains of $t$ and $u$. By \cref{lem:bg-normalization}(2), $t\le_c u$ iff
+$T\le U$ in the covariant order, that is, by \cref{eq:bg-order} for the
+covariant variance,
+\[
+ t\le_c u\quad\Longleftrightarrow\quad T(w)\le U(w)\ \text{ at every common
+ position $w$ of $t$ and $u$.}
+\]
+Moreover, a leaf $v$ of $t$ has sign $0$ iff $T(v)=\Top$, and sign $1$ iff
+$T(v)=\Bot$, because $\nu_0$ exchanges the label of $v$ iff
+$\parity(v)=1$.
+
+Assume $t\le_c u$, and let $w\in L^0_t$. Then $w$ meets a leaf $v$ of $t$
+with $T(v)=\Top$, and every proper prefix of $v$ is a position of $t$ labeled
+$f$. If $u$ has a leaf at a proper prefix $v'$ of $v$, then $v'$ is a common
+position, $f=T(v')\le U(v')$ forces $U(v')=\Top$, and $w$ meets the leaf $v'$
+of $u$ of sign $0$. Otherwise $v$ is a position of $u$, by the chain property,
+and $\Top=T(v)\le U(v)$ forces $U(v)=\Top$; again $w\in L^0_u$. Symmetrically,
+let $w\in L^1_u$, so that $w$ meets a leaf $v$ of $u$ with $U(v)=\Bot$. If $t$
+has a leaf at a proper prefix $v'$ of $v$, then $T(v')\le U(v')=f$ forces
+$T(v')=\Bot$; otherwise $v$ is a position of $t$, and $T(v)\le\Bot$ forces
+$T(v)=\Bot$. In both cases $w\in L^1_t$.
+
+Conversely, assume $L^0_t\subseteq L^0_u$ and $L^1_u\subseteq L^1_t$, and let
+$w$ be a common position. If $T(w)=\Top$, then $w$ is a leaf of $t$ of sign
+$0$, so $w\in L^0_u$. As $w$ is a position of $u$, the leaf of $u$ that $w$
+meets is $w$ itself, so $U(w)=\Top$. If $U(w)=\Bot$, then likewise
+$T(w)=\Bot$. In all remaining cases $T(w)\in\{\Bot,f\}$ and
+$U(w)\in\{f,\Top\}$. So $T(w)\le U(w)$ in every case, and $t\le_c u$.
+
+(3) The tree $\Top$ consists of the leaf $\eps$, of polarity $0$ and hence of
+sign $0$; every word meets it, so $L^0_\Top=\Sigma^*$ and
+$L^1_\Top=\varnothing$. Likewise the leaf $\eps$ of $\Bot$ has sign $1$. The
+dual $t^\partial$ has the leaves of $t$, with $\Bot$ and $\Top$ exchanged, so
+every leaf changes its sign, and $L^s_{t^\partial}=L^{1-s}_t$; equivalently,
+$\nu_st^\partial=\nu_{1-s}t$ by \cref{lem:bg-normalization}(1). Let
+$t=f(t_i)_i$. Its root is labeled $f$, so $\eps$ meets no leaf and lies in
+neither cone. The positions of $t$ other than $\eps$ are the words $iv$ with
+$v$ a position of $t_i$, with $t(iv)=t_i(v)$, and
+$\parity(iv)=c(i)\oplus\parity(v)$. Hence $iv$ is a leaf of $t$ iff $v$ is a
+leaf of $t_i$, and then the sign of $iv$ in $t$ is the sign of $v$ in $t_i$
+plus $c(i)$. So $iw$ meets a leaf of $t$ of sign $s$ iff $w$ meets a leaf of
+$t_i$ of sign $s\oplus c(i)$. Finally, $\eps$ lies in a cone iff it meets a
+leaf, that is, iff $\eps$ is a leaf, and the leaf $\eps$ has sign $0$ iff it
+is labeled $\Top$.
+
+(4) A word $w$ is a position labeled $f$ iff it meets no leaf, that is, iff
+$w\notin L^0_t\cup L^1_t$. The positions of $t$ are $\eps$ and the children
+of its positions labeled $f$, so $t$ has at most $1+nk$ positions if it has
+$k$ positions labeled $f$; hence $t$ is finite iff
+$\Sigma^*\setminus(L^0_t\cup L^1_t)$ is finite.
+
+For regularity, let $w$ be a position of $t$ and $w^{-1}t$ the subtree of $t$
+at $w$. The proper prefixes of $w$ are not leaves, so $wv$ meets a leaf of $t$
+iff it meets a leaf $wv'$ with $v'$ a leaf of $w^{-1}t$, and the sign of
+$wv'$ in $t$ is the sign of $v'$ in $w^{-1}t$ plus $\parity(w)$. Hence
+\begin{equation}\label{eq:app-lf-quotient}
+ L^s_{w^{-1}t}=w^{-1}L^{s\oplus\parity(w)}_t\qquad
+ \text{for every position $w$ of $t$ and every sign $s$.}
+\end{equation}
+If $w$ is not a position of $t$, then a proper prefix of $w$ is a leaf, of
+some sign $s$, and $w^{-1}L^s_t=\Sigma^*$ and $w^{-1}L^{1-s}_t=\varnothing$.
+Suppose $L^0_t$ and $L^1_t$ are regular. By the Myhill--Nerode theorem they
+have finitely many left quotients, so by \cref{eq:app-lf-quotient} the
+subtrees of $t$ have finitely many leaf pairs, and by (1) $t$ has finitely
+many distinct subtrees. Conversely, if $t$ has finitely many distinct
+subtrees, then by \cref{eq:app-lf-quotient} and the case of non-positions,
+the pair $(w^{-1}L^0_t,w^{-1}L^1_t)$ takes finitely many values as $w$
+ranges over all words, so both languages have finitely many left quotients
+and are regular.
+\end{proof}
+
+\begin{proof}[Proof of \cref{lem:lf-clauses}]
+Let $\rho$ be an assignment and write $t_v=\rho(v)$. By
+\cref{thm:lf-representation}(2), $u\le v$ holds iff
+$L^0_{t_u}\subseteq L^0_{t_v}$ and $L^1_{t_v}\subseteq L^1_{t_u}$, that is,
+iff $S_\rho$ is closed under the two copies of $u\le v$.
+
+Let $t=f(t_{a_i})_i$. Every nonempty word has the form $iw$, so by
+\cref{thm:lf-representation}(3),
+$L^s_t=\bigcup_{i\in\Sigma}iL^{s\oplus c(i)}_{t_{a_i}}$. The literal
+$f(a_i)_i\le u$ holds iff $t\le_c t_u$, iff $L^0_t\subseteq L^0_{t_u}$ and
+$L^1_{t_u}\subseteq L^1_t$. The first inclusion says that
+$w\in L^{c(i)}_{t_{a_i}}$ implies $iw\in L^0_{t_u}$, for all $i$ and $w$,
+which is closure under $\mathrm{push}_i$. The second says that
+$\eps\notin L^1_{t_u}$, which is the avoidance of the forbidden root
+$(u^1,\eps)$, and that $iw\in L^1_{t_u}$ implies
+$w\in L^{\bar c(i)}_{t_{a_i}}$, which is closure under $\mathrm{pop}_i$. The
+literal $u\le f(a_i)_i$ holds iff $L^0_{t_u}\subseteq L^0_t$ and
+$L^1_t\subseteq L^1_{t_u}$. The first inclusion says that
+$\eps\notin L^0_{t_u}$ and that $iw\in L^0_{t_u}$ implies
+$w\in L^{c(i)}_{t_{a_i}}$, which are the forbidden root $(u^0,\eps)$ and
+closure under $\mathrm{pop}_i$; the second says that
+$w\in L^{\bar c(i)}_{t_{a_i}}$ implies $iw\in L^1_{t_u}$, which is closure
+under $\mathrm{push}_i$.
+
+The literal $u=\Bot$ holds iff $t_u=\Bot$, that is, by
+\cref{thm:lf-representation}(1,3), iff the leaf pair of $t_u$ is
+$(\varnothing,\Sigma^*)$. This holds iff $\eps\in L^1_{t_u}$: if so, then
+$L^1_{t_u}=\Sigma^*$ by extension closure, and $L^0_{t_u}=\varnothing$ by
+disjointness. So $u=\Bot$ holds iff $S_\rho$ contains the fact
+$(u^1,\eps)$. Likewise $\Top\le u$ holds iff $t_u=\Top$, iff
+$(u^0,\eps)\in S_\rho$. This proves the first claim.
+
+For the second, $\rho\mapsto S_\rho$ is a bijection from the assignments onto
+the extension-closed sets without exclusion pairs, as noted before
+\cref{tab:lf-clauses}. Every model has these two properties, and by the
+first claim $\rho$ is a solution of $\chi$ iff $S_\rho$ is a model of $\chi$.
+So the bijection restricts to a bijection from the solutions onto
+$\Mod(\chi)$.
+\end{proof}
+
+\begin{proof}[Proof of \cref{lem:lf-moves}]
+(1) Every scheme of \cref{tab:lf-clauses} holds for all words $w$; replacing
+$w$ by $w\sigma$ turns the move $(p,u)\to(q,t)$ into
+$(p,u\sigma)\to(q,t\sigma)$.
+
+(2) For a copy, $t=u$ and $\sgn(q)=\sgn(p)$. For the other moves we use
+$\parity(iw)=c(i)\oplus\parity(w)$. The move $(a_i^{c(i)},w)\to(u^0,iw)$ has
+$c(i)\oplus\parity(w)=0\oplus\parity(iw)$; the move
+$(u^1,iw)\to(a_i^{\bar c(i)},w)$ has
+$1\oplus\parity(iw)=1\oplus c(i)\oplus\parity(w)$; the move
+$(u^0,iw)\to(a_i^{c(i)},w)$ has $\parity(iw)=c(i)\oplus\parity(w)$; and the
+move $(a_i^{\bar c(i)},w)\to(u^1,iw)$ has
+$1\oplus c(i)\oplus\parity(w)=1\oplus\parity(iw)$.
+\end{proof}
+
+\begin{proof}[Proof of \cref{lem:lf-closure}]
+(1) Every set that contains $\Fact_\chi\cup A$ and is closed under the rules
+contains $H_\chi(A)$, by induction along derivations. Conversely,
+$H_\chi(A)$ contains $\Fact_\chi\cup A$, since derivations may have length
+zero, and it is closed under the rules: each rule has a single premise, so
+applying it to an atom of $\Reach_\chi(x)$ yields an atom of $\Reach_\chi(x)$.
+
+(2) A model $M$ that contains $A$ contains $\Fact_\chi$ and is closed under
+the rules, so $H_\chi(A)\subseteq M$ by (1); since $M$ is consistent, so is
+every subset of $M$. Conversely, if $H_\chi(A)$ is consistent, then it is a
+model by (1), and by the first part it is the least model containing $A$. The
+remaining claims are the cases $A=\varnothing$ and $A=\{a\}$; for the first,
+$\chi$ is satisfiable iff it has a model, by \cref{lem:lf-clauses}.
+
+(3) An inconsistent set contains a forbidden root or an exclusion pair, and
+every atom of $H_\chi(A)$ has a seed in $\Fact_\chi\cup A$.
+
+(4) The extensions by the letters of $\alpha$ derive $(p,u\alpha)$ from
+$(p,u)$, so $\Reach_\chi(p,u\alpha)\subseteq \Reach_\chi(p,u)$ and
+$\Cl_\chi(p,u\alpha)\subseteq\Cl_\chi(p,u)$. A model that contains $(p,u)$ is
+closed under extensions, so it contains $(p,u\alpha)$.
+
+(5) If $S=T|_X$ for a model $T$ of $\chi$, then $T$ contains $S$ and
+$\Fact_\chi$ and is closed under the rules, so $H_\chi(S)\subseteq T$ by (1).
+Hence $H_\chi(S)$ is consistent, and
+$S\subseteq H_\chi(S)|_X\subseteq T|_X=S$. Conversely, if $H_\chi(S)$ is
+consistent and $H_\chi(S)|_X=S$, then $H_\chi(S)$ is a model by (1), with
+visible part $S$, and it is contained in every model that contains $S$. The
+hypothesis on $S$ only ensures that $S$ is the set of atoms of an assignment
+of $X$.
+\end{proof}
+
+\begin{proof}[Proof of \cref{lem:lf-ext-first}]
+We show by induction on $k$ that if a derivation of length $k$ leads from
+$(p,u)$ to $b$, then $(p,u\alpha)\to^*b$ for some $\alpha$. For $k=0$ take
+$\alpha=\eps$. For $k>0$, let the derivation end with a rule from $b'$ to
+$b$, and by induction let $(p,u\alpha')\to^*b'$. If the last rule is a pure
+move, append it, with $\alpha=\alpha'$. If it is an extension from
+$b'=(q,t)$ to $b=(q,ti)$, apply \cref{lem:lf-moves}(1) with $\sigma=i$ to
+each move of the pure derivation from $(p,u\alpha')$ to $(q,t)$; this gives
+$(p,u\alpha'i)\to^*(q,ti)$, and $\alpha=\alpha'i$. Conversely, if
+$(p,u\alpha)\to^*b$, then the extensions by the letters of $\alpha$, followed
+by this pure derivation, form a derivation from $(p,u)$ to $b$.
+\end{proof}
+
+\begin{proof}[Proof of \cref{cor:lf-dead}]
+Put $a=(p,u)$. Suppose that (a), (b) or (c) holds. In case (a),
+$\Cl_\chi(a)\supseteq \Reach_\chi(a)$ contains a forbidden root. In cases (b) and
+(c), $\Cl_\chi(a)$ contains $(\bar p,u\delta)$, and it contains $(p,u\delta)$
+by \cref{lem:lf-closure}(4), an exclusion pair. In each case $\Cl_\chi(a)$ is
+inconsistent, and $a$ is dead by \cref{lem:lf-closure}(2).
+
+Conversely, let $a$ be dead. Then $\Cl_\chi(a)$ is inconsistent; take seeds
+$x,y\in\Fact_\chi\cup\{a\}$ as in \cref{lem:lf-closure}(3). Since $\chi$ is
+satisfiable, $\mu_\chi$ is consistent. If $\Reach_\chi(x)$ contains a forbidden
+root, then $x\notin\Fact_\chi$, so $x=a$, and (a) holds. Otherwise
+$b\in \Reach_\chi(x)$ and $\bar b\in \Reach_\chi(y)$ for some atom $b$, and $x$ and $y$
+are not both facts. Since $\{b,\bar b\}$ is unordered, we may assume
+$y=a$. If $x$ is a fact $e$, then \cref{lem:lf-collision} gives
+$(\bar p,u\delta)\in \Reach_\chi(e)\subseteq\mu_\chi$ for some $\delta$, which is
+(b). If $x=a$, it gives $(\bar p,u\delta)\in \Reach_\chi(a)$, which is (c). The
+last two claims follow from \cref{lem:lf-ext-first}.
+\end{proof}

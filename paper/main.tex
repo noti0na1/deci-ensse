@@ -1,0 +1,46 @@
+%% Existential subtype entailment, general version (any arity, any variance).
+%% Build: make (latexmk -pdf main.tex). Sections live in sections/; the first version is in v1/.
+\documentclass[acmsmall,screen,review,anonymous,nonacm]{acmart}
+\input{macros}
+\setcopyright{none}
+\acmJournal{PACMPL}\acmVolume{11}\acmNumber{POPL}\acmArticle{1}\acmDOI{}
+\citestyle{acmauthoryear}
+\begin{document}
+\title{Existential Subtype Entailment Is Decidable for Non-Structural Subtyping}
+\author{Yaoyu Zhao}
+\email{yaoyu.zhao@epfl.ch}
+\affiliation{\institution{EPFL}\country{Switzerland}}
+\begin{abstract}
+\input{sections/abstract}
+\end{abstract}
+\maketitle
+\input{sections/intro}
+\input{sections/background}
+\input{sections/leaf}
+\input{sections/characterization}
+\input{sections/summaries}
+\input{sections/units}
+\input{sections/extraction}
+\input{sections/nonmortal}
+\input{sections/mortal}
+\input{sections/classes}
+\input{sections/assembly}
+\input{sections/applications}
+\input{sections/complexity}
+\input{sections/mechanization}
+\input{sections/related}
+\input{sections/conclusion}
+\input{sections/disclaimer}
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{refs}
+\appendix
+\crefalias{section}{appendix}\crefalias{subsection}{appendix}
+\input{sections/appendix-nsse}
+\input{sections/appendix-leaf}
+\input{sections/appendix-summaries}
+\input{sections/appendix-nonmortal}
+\input{sections/appendix-mortal}
+\input{sections/appendix-classes}
+\input{sections/appendix-applications}
+\input{sections/appendix-lean}
+\end{document}

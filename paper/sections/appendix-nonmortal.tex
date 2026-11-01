@@ -1,0 +1,842 @@
+%% appendix-nonmortal -- proofs for the section nonmortal: periodic words,
+%% the continuation identity and the decomposition, the breaker and thin
+%% states, survival, the pre-hole graph, the pump (deletion lemma, four
+%% deletions, counting), and the three-case theorem.
+
+\section{Proofs for Non-Mortal Holes}\label{app:nm}\label{app:nonmortal}
+
+This appendix contains the proofs omitted from \cref{sec:nm}: facts on
+infinite periodic words (\cref{app:nm-periodic}), the continuation identity and the
+decomposition (\cref{app:nm-continuation}), the breaker and thin states
+(\cref{app:nm-breaker}), survival (\cref{app:nm-survival}), the pre-hole graph
+(\cref{app:nm-graph}), the pump (\cref{app:nm-pump}), and the three-case
+theorem (\cref{app:nm-three-cases}). We keep the conventions of
+\cref{sec:nm}.
+
+\subsection{Infinite Periodic Words}\label{app:nm-periodic}
+
+Periods of finite words are as in \cref{sec:bg-words}, and the equivalence
+$\theta\pre o\theta\iff\theta\pre o^\omega$ for a nonempty word $o$ is
+\cref{lem:bg-periodic}. We use the theorem of Fine and Wilf
+\citep{FineWilf65,Lothaire02} in its word form: a finite word with periods $\varpi$
+and $\varpi'$ and length at least $\varpi+\varpi'-\gcd(\varpi,\varpi')$ has period $\gcd(\varpi,\varpi')$. It
+concerns equality of letters only and holds over every alphabet. The
+following facts on infinite words are used throughout.
+
+\begin{lemma}[Infinite periodic words]\label{lem:nm-infinite}
+\leavevmode
+\begin{enumerate}[label=(\alph*)]
+\item Let $\xi'$ be an infinite word with a period $\varpi'$, and let $m\ge0$. If
+$\wsuf{\xi'}m$ has a period $\varpi$, then $\xi'$ has the period $\varpi$.
+\item Let $\xi$ be purely periodic with least period $\varpi$. Every period of a
+suffix of $\xi$ is a period of $\xi$, and therefore at least $\varpi$. For
+$i,j\ge0$, $\wsuf\xi i=\wsuf\xi j$ if and only if $i\equiv j\pmod \varpi$. In
+particular, if $\xi=\alpha\lambda^\omega$ with $\lambda\ne\eps$, then
+$\varpi\le\len\lambda$.
+\item Let $o$ be a nonempty word. An infinite word whose finite prefixes are
+all prefixes of $o^\omega$ equals $o^\omega$. If $\xi'$ is an infinite word with
+$o\xi'=\xi'$, then $\xi'=o^\omega$; in particular $\xi'$ has the period $\len o$.
+\item Let $\xi_1=\alpha_1\lambda_1^\omega$ and $\xi_2=\alpha_2\lambda_2^\omega$
+with $\lambda_1,\lambda_2\ne\eps$. If $\xi_1$ and $\xi_2$ agree on their first
+$\max(\len{\alpha_1},\len{\alpha_2})+\len{\lambda_1}+\len{\lambda_2}-1$
+letters, then $\xi_1=\xi_2$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(a) Let $k\ge0$, and choose $N\ge0$ with $N\varpi'\ge m$. Using the period $\varpi'$ of
+$\xi'$ twice and the period $\varpi$ of $\wsuf{\xi'}m$ once,
+\[
+\begin{aligned}
+ \xi'[k]&=\xi'[k+N\varpi']=(\wsuf{\xi'}m)[k+N\varpi'-m]\\
+ &=(\wsuf{\xi'}m)[k+N\varpi'-m+\varpi]=\xi'[k+N\varpi'+\varpi]=\xi'[k+\varpi].
+\end{aligned}
+\]
+
+(b) If a suffix $\wsuf\xi m$ has a period $\varpi'$, then (a), applied to $\xi'=\xi$
+with its period $\varpi$, shows that $\xi$ has the period $\varpi'$; so $\varpi'\ge \varpi$. If
+$i\equiv j\pmod \varpi$, then $\wsuf\xi i=\wsuf\xi j$, since $\varpi$ is a period of
+$\xi$. Conversely, let $\wsuf\xi i=\wsuf\xi j$, and let $i'$ and $j'$ be the
+remainders of $i$ and $j$ modulo $\varpi$. Then $\wsuf\xi{i'}=\wsuf\xi i$ and
+$\wsuf\xi{j'}=\wsuf\xi j$, so $\wsuf\xi{i'}=\wsuf\xi{j'}$. If $i'<j'$, this
+equation says that $\wsuf\xi{i'}$ has the period $j'-i'$, which is then a
+period of $\xi$ smaller than $\varpi$; this is impossible, and so is $j'<i'$. Hence
+$i'=j'$. Finally, $\wsuf\xi{\len\alpha}=\lambda^\omega$ has the period
+$\len\lambda$, so $\varpi\le\len\lambda$.
+
+(c) The first claim holds letter by letter. If $o\xi'=\xi'$, then $\xi'=o^k\xi'$ for every
+$k$, so $\xi'$ begins with $o^k$ for every $k$, and $\xi'=o^\omega$.
+
+(d) Let $k=\max(\len{\alpha_1},\len{\alpha_2})$, $\varpi_1=\len{\lambda_1}$,
+$\varpi_2=\len{\lambda_2}$ and $g=\gcd(\varpi_1,\varpi_2)$. The suffixes $\wsuf{\xi_1}k$ and
+$\wsuf{\xi_2}k$ have the periods $\varpi_1$ and $\varpi_2$, respectively, and they share
+the prefix $v$ of length $\varpi_1+\varpi_2-1\ge \varpi_1+\varpi_2-g$, which therefore has both
+periods and, by the theorem of Fine and Wilf, the period $g$. As $g$ divides
+$\varpi_1$ and $\len v\ge \varpi_1$, the prefix of length $\varpi_1$ of $v$ is
+$(\wpre vg)^{\varpi_1/g}$, and so $\wsuf{\xi_1}k=(\wpre vg)^\omega$. Likewise
+$\wsuf{\xi_2}k=(\wpre vg)^\omega$. The first $k$ letters agree by assumption,
+so $\xi_1=\xi_2$.
+\end{proof}
+
+\subsection{The Continuation Identity and the Decomposition}\label{app:nm-continuation}
+
+\begin{proof}[Proof of \cref{lem:nm-continuation}]
+(a) The automata read the same letters up to these cuts. Since
+$J(t)\le\len t$, the cuts of $t\theta$ up to $J(t)$ carry the states of the
+same cuts of $t$, so $J(t\theta)=J(t)$.
+
+(b) Let $(s,e)$ be a cross comparison of $(u\theta,t\theta)$ with $e\le J(t)$.
+Then $\len{u\theta}-s\ge\len{t\theta}-e\ge\len\theta$, because $e\le\len t$;
+hence $s\le\len u$. For $s\le\len u$ and $e\le\len t$ we have
+$\wsuf{(u\theta)}s=\wsuf us\,\theta$ and $\wsuf{(t\theta)}e=\wsuf te\,\theta$,
+so $(s,e)$ is a cross comparison of $(u\theta,t\theta)$ if and only if
+$\wsuf te\,\theta\pre\wsuf us\,\theta$. This relation implies
+$\wsuf te\pre\wsuf us$: if $\len{\wsuf te}\le\len{\wsuf us}$, then $\wsuf te$ is
+a prefix of $\wsuf us\,\theta$ of length at most $\len{\wsuf us}$, and if
+$\len{\wsuf te}>\len{\wsuf us}$, then $\wsuf te\,\theta$ is longer than
+$\wsuf us\,\theta$. So it holds if and only if $(s,e)$ is a cross comparison of
+$(u,t)$ that $\theta$ keeps. For a self comparison, apply the same argument to
+the pair $(t,t)$ and cuts $i<j\le J(t)$.
+
+(c) For a cross comparison $(s,e)$ with overhang $o$ we have
+$\wsuf us=\wsuf te\,o$, so $\wsuf te\,\theta\pre\wsuf us\,\theta$ if and only if
+$\theta\pre o\theta$, by canceling the common prefix $\wsuf te$; the same
+holds for self comparisons. For $o\ne\eps$ this is equivalent to
+$\theta\pre o^\omega$ by \cref{lem:bg-periodic}. For $o=\eps$ it always
+holds.
+\end{proof}
+
+\begin{proof}[Proof of the continuation facts]
+(K1) The events of $(u\theta,t\theta)$ are the cross comparisons $(s,e)$ of
+$(u\theta,t\theta)$ with $e\le J(t\theta)=J(t)$ whose states lie in $\Guard$.
+By \cref{lem:nm-continuation}(b) they are the cross comparisons $(s,e)$ of
+$(u,t)$ with $e\le J(t)$ that $\theta$ keeps, and by
+\cref{lem:nm-continuation}(a) their states are those in $(u,t)$. The same
+argument applies to self events. (K2) is part of
+\cref{lem:nm-continuation}(c). (K3) An aligned comparison is never broken. If
+a word $\theta\theta'$ keeps a comparison with nonempty overhang $o$, then
+$\theta\theta'\pre o^\omega$, hence $\theta\pre o^\omega$, and $\theta$ keeps
+it. (K4) If $\wsuf us=\wsuf te$, then
+$\wsuf{(u\theta)}s=\wsuf us\,\theta=\wsuf te\,\theta=\wsuf{(t\theta)}e$, and the
+states of $A'$ and $B'$ at these cuts are unchanged. (K5) The states of $A$ at
+the cuts $s\le\len u$ of $u\theta$ are those of $u$, and its state at the cut
+$\len u+k$ is $A(A(u),\wpre\theta k)$.
+\end{proof}
+
+\begin{proof}[Proof of \cref{lem:nm-decomposition}]
+Let $(u_0,t_0)$ be a pre-hole completed by $\theta$. By (K5), $u_0\theta$ is
+safe. By \cref{lem:nm-continuation}(a), $J(t_0\theta)=J(t_0)$ is defined. By
+(K4), $(u_0\theta,t_0\theta)$ has a head event. By (K1), its events are the
+events of $(u_0,t_0)$ that $\theta$ keeps, and the self events of $t_0\theta$
+are the self events of $t_0$ that $\theta$ keeps; there are none. So
+$(u_0\theta,t_0\theta)$ is a hole.
+
+Conversely, let $(u,t)$ be a hole and $J=J(t)$. It has a head event $(s,e)$.
+Put $\gamma=\wpre te$ and $\sigma=\wsuf us=\wsuf te$. By (FH) and
+\cref{lem:ex-head-before-J}, $J\ge e=\len\gamma$. Hence
+$\theta=\wsuf tJ$ has length $\len t-J\le\len t-\len\gamma=\len\sigma$, so
+$\theta$ is a suffix of $\sigma$ and therefore of $u$. Write $u=u_0\theta$ and
+$t=t_0\theta$. Then $u_0$ is safe, as a prefix of $u$, and
+$J(t_0)=J=\len{t_0}$, since $B_i(t_0)=B_i(t)$ for $i\le\len{t_0}$. The head
+event satisfies $e=\len\gamma\le J=\len{t_0}$ and
+$s=\len u-\len\sigma\le\len u-\len\theta=\len{u_0}$, and
+$\wsuf{u_0}s=\wsuf{t_0}e$ because $\theta$ is a common suffix of
+$\wsuf us=\wsuf te$; by \cref{lem:nm-continuation}(a) the states at these cuts
+are unchanged, so $(s,e)$ is a head event of $(u_0,t_0)$. By (K1), the events
+of $(u,t)$ are the events of $(u_0,t_0)$ that $\theta$ keeps, and the self
+events of $t$ are the self events of $t_0$ that $\theta$ keeps. Since $(u,t)$
+is a hole, $\theta$ breaks every obligation of $(u_0,t_0)$, and by (K2)
+$(u_0,t_0)$ has no aligned event. Thus $(u_0,t_0)$ is a pre-hole, and
+$\theta$, which is safe from $A(u_0)$ by (K5), completes it.
+\end{proof}
+
+\subsection{The Breaker and Thin States}\label{app:nm-breaker}
+
+\begin{proof}[Proof of \cref{lem:nm-breaker}]
+Since $q$ is branching, $\mathcal G_A$ has a path from $q$ to a cyclic state
+$r$ that has two distinct safe letters. Let $\alpha$ be the label of a shortest
+such path; it visits pairwise distinct states, so $\len\alpha<N_A$. Let
+$\lambda$ be the label of a shortest cycle through $r$, so
+$1\le\len\lambda\le N_A$. At least one of the two safe letters at $r$ differs
+from $\lambda[0]$; call it $\ell$. Let $k$ be the least integer with
+$k\len\lambda\ge W+\len\lambda$, and put $\theta=\alpha\lambda^k\ell$. The word
+$\theta$ is safe from $q$: $\alpha$ leads to $r$, $\lambda^k$ returns to $r$,
+and $A(r,\ell)$ is safe. By the choice of $k$,
+$k\len\lambda\le W+2\len\lambda-1$, so
+$\len\theta\le(N_A-1)+(W+2N_A-1)+1<W+3N_A$.
+
+Let $o$ be a word with $1\le\Delta=\len o\le W$, and suppose that
+$\theta\pre o^\omega$. Then $\theta$ has the period $\Delta$, and so has its
+suffix $\theta'=\lambda^k\ell$. The prefix $\lambda^k$ of $\theta'$ has the
+periods $\Delta$ and $\len\lambda$ and length
+$k\len\lambda\ge\Delta+\len\lambda$, so by the theorem of Fine and Wilf it has
+the period $g=\gcd(\Delta,\len\lambda)$. Since $k\len\lambda\ge\Delta$, the
+period $\Delta$ of $\theta'$ gives
+$\ell=\theta'[k\len\lambda]=\theta'[k\len\lambda-\Delta]$. The position
+$k\len\lambda-\Delta$ lies in $\lambda^k$ and is divisible by $g$, so the
+period $g$ of $\lambda^k$ gives $\theta'[k\len\lambda-\Delta]=\theta'[0]=\lambda[0]$.
+Thus $\ell=\lambda[0]$, a contradiction.
+
+For the second claim, let $(u_0,t_0)$ be a pre-hole with $A(u_0)$ branching,
+and apply the first claim with $q=A(u_0)$ and $W=\max(\len{u_0},\len{t_0})$.
+Every obligation of $(u_0,t_0)$ has a nonempty overhang $o$ with
+$\len o\le W$ (\cref{sec:nm-prehole}). Since $\theta$ is not a prefix of
+$o^\omega$, it breaks the obligation by \cref{lem:nm-continuation}(c). So
+$\theta$ completes $(u_0,t_0)$.
+\end{proof}
+
+\begin{proof}[Proof of \cref{lem:nm-thin}]
+(a) No state on a path from $q$ in $\mathcal G_A$ is cyclic. Hence the
+$\len\theta+1$ states visited by a word $\theta$ safe from $q$ are pairwise
+distinct, since a repetition would close a cycle, and $\len\theta+1\le N_A$.
+The endpoint is mortal, since every state reachable from a mortal state is
+mortal.
+
+(b) A cyclic state $r$ has at least one safe letter, namely the first letter
+of a cycle through $r$. If it had two, $q$ would be branching. So the unique
+safe letter at $r$ is the first letter of every cycle through $r$, and it leads
+to the next state of such a cycle, which is cyclic.
+
+(c) Let $\xi$ be an infinite word safe from $q$, and let $r_0=q,r_1,\dots$ be
+the states it visits. Some state repeats, so some $r_i$ is cyclic; let $i$ be
+the least such index. By (b) and induction, every $r_j$ with $j\ge i$ is cyclic,
+and $\xi[j]$ is the unique safe letter at $r_j$; so from $i$ on the run is
+determined by its current state. By (b), each state of a cycle through $r_i$
+has the edge of that cycle as its only safe edge, so the run follows the
+cycle and returns to $r_i$; let $l\ge1$ be least with $r_{i+l}=r_i$. Then
+$r_{j+l}=r_j$ for all $j\ge i$, and $\wsuf\xi i=\lambda^\omega$ with
+$\lambda=\wsub\xi i{i+l}$. Put $\alpha=\wpre\xi i$. The states
+$r_0,\dots,r_{i-1}$ are not cyclic, so they are pairwise distinct and differ
+from the cyclic states $r_i,\dots,r_{i+l-1}$. These are pairwise distinct as
+well: if $r_{i+m}=r_{i+m'}$ with $0\le m<m'<l$, then by determinism the run has
+the period $m'-m$ from time $i+m$ on, so $r_{i+l-(m'-m)}=r_{i+l}=r_i$ with
+$1\le l-(m'-m)<l$, contradicting the minimality of $l$. Hence
+$\len\alpha+\len\lambda=i+l\le N_A$, and $\alpha\lambda$ is safe from $q$ with
+$A(q,\alpha\lambda)=A(q,\alpha)$, so $\xi=\alpha\lambda^\omega$ is a lasso of
+$q$. Since $q$ is not mortal, some infinite word is safe from $q$, so $q$ has a
+lasso.
+
+(d) Let $r_0=q,\dots,r_{\len\theta}$ be the states visited by $\theta$. If some
+$r_i$ were cyclic, then by (b) and induction every $r_m$ with $m\ge i$ would be
+cyclic, since $\theta[m]$ is a safe letter at $r_m$ and hence the unique one;
+then $A(q,\theta)=r_{\len\theta}$ would be cyclic and not mortal. So no $r_i$ is
+cyclic. Then the $r_i$ are pairwise distinct, since a repetition would make a
+state cyclic, and $\len\theta<N_A$.
+\end{proof}
+
+\subsection{Survival}\label{app:nm-survival}
+
+\begin{proof}[Proof of \cref{lem:nm-survival}]
+(a) By \cref{lem:nm-continuation}(c), a finite word keeps a comparison with
+nonempty overhang $o$ if and only if it is a prefix of $o^\omega$. So the
+comparison survives $\xi$ if and only if every finite prefix of $\xi$ is a
+prefix of $o^\omega$, that is, by \cref{lem:nm-infinite}(c), if and only if
+$\xi=o^\omega$. An aligned comparison is kept by every word.
+
+(b) Suppose that $\wsuf us\,\xi=\wsuf te\,\xi$. The finite words $\wsuf te$ and
+$\wsuf us$ are prefixes of this infinite word, and
+$\len{\wsuf te}\le\len{\wsuf us}$, so $\wsuf te\pre\wsuf us$ and $(s,e)$ is a
+cross comparison. For every prefix $\theta$ of $\xi$, the words
+$\wsuf te\,\theta$ and $\wsuf us\,\theta$ are prefixes of the same infinite word,
+and the first is not longer, so $\wsuf te\,\theta\pre\wsuf us\,\theta$: the
+comparison survives $\xi$. Conversely, let $(s,e)$ be a cross comparison that
+survives $\xi$. For every $n$, $\wsuf te\,\wpre\xi n\pre\wsuf us\,\wpre\xi n$,
+so the first $\len{\wsuf te}+n$ letters of $\wsuf us\,\xi$ are those of
+$\wsuf te\,\xi$. As $n$ is arbitrary, $\wsuf us\,\xi=\wsuf te\,\xi$. The claim
+on self comparisons is the case $u=t$, $s=i$, $e=j$.
+
+(c) By (a), $\xi\ne o^\omega$. By \cref{lem:nm-infinite}(d), applied to
+$\alpha\lambda^\omega$ and $\eps\,o^\omega$, the two words differ at some
+position $i<\len\alpha+\len\lambda+\len o-1$. The prefix of $\xi$ of length
+$i+1$ is not a prefix of $o^\omega$, so it breaks the comparison by
+\cref{lem:nm-continuation}(c), and by (K3) so does every longer prefix, in
+particular the prefix of length $\len\alpha+\len\lambda+\len o-1$.
+\end{proof}
+
+\subsection{The Pre-Hole Graph}\label{app:nm-graph}
+
+For words $v$ and $z$, the \emph{aligned pairs} of $(v,z)$ are the pairs of
+cuts $(s,e)$, $s\le\len v$ and $e\le\len z$, with $\wsuf vs=\wsuf ze$. Let
+$\mathrm h(v,z)\in\{0,1\}$ be $1$ if and only if some aligned pair $(s,e)$ of
+$(v,z)$ has $(A'_s(v),B'_e(z))\in\Head$, and let $\mathrm g(v,z)\in\{0,1\}$ be
+$1$ if and only if some aligned pair has $(A_s(v),B_e(z))\in\Guard$.
+
+\begin{lemma}[Aligned pairs under extension]\label{lem:nm-hit}
+For words $v$, $z$ and letters $\ell$, $\ell'$:
+\begin{enumerate}[label=(\alph*)]
+\item the only aligned pair of $(v,\eps)$ is $(\len v,0)$, and the only aligned
+pair of $(\eps,z)$ is $(0,\len z)$;
+\item the aligned pairs of $(v\ell,z\ell')$ are $(\len{v\ell},\len{z\ell'})$
+and, if $\ell=\ell'$, the aligned pairs of $(v,z)$.
+\end{enumerate}
+Consequently $\mathrm h(v\ell,z\ell')=1$ if and only if
+$(A'(v\ell),B'(z\ell'))\in\Head$, or $\ell=\ell'$ and $\mathrm h(v,z)=1$; and
+likewise for $\mathrm g$, with $A$, $B$ and $\Guard$.
+\end{lemma}
+
+\begin{proof}
+(a) The suffixes of $\eps$ are empty, and the only empty suffix of $v$ is
+$\wsuf v{\len v}$. (b) The pair of last cuts is aligned. Let $(s,e)$ be another
+aligned pair. If $s=\len{v\ell}$, then the common suffix is empty and
+$e=\len{z\ell'}$; so $s\le\len v$ and, likewise, $e\le\len z$. Then
+$\wsuf{(v\ell)}s=\wsuf vs\,\ell$ and $\wsuf{(z\ell')}e=\wsuf ze\,\ell'$, which are
+equal if and only if $\ell=\ell'$ and $\wsuf vs=\wsuf ze$. The states at the
+cuts $s\le\len v$ and $e\le\len z$ are those of $v$ and $z$.
+\end{proof}
+
+\paragraph{The graph $\mathcal P_E$}
+Let $E$ be a set of safe states of $A$. The nodes of $\mathcal P_E$ are the
+tuples $\kappa=(r_A,r_B,r_{A'},r_{B'},h,g,\phi)$ with $r_M\in S_M$ for each
+automaton $M$, bits $h,g\in\{0,1\}$, and a phase $\phi\in\{0,1,2\}$; there are
+$12aba'b'$ of them. Every edge is labeled by a pair of words of length at most
+one. From a node $\kappa$ there are the following edges.
+\begin{itemize}[leftmargin=*]
+\item A \emph{spine edge}, labeled $(\ell,\eps)$, if $\phi=0$ and
+  $A(r_A,\ell)$ is safe. It leads to the node with $A(r_A,\ell)$ and
+  $A'(r_{A'},\ell)$ in place of $r_A$ and $r_{A'}$, with $h=1$ if and only if
+  $(A'(r_{A'},\ell),r_{B'})\in\Head$, with $g=1$ if and only if
+  $(A(r_A,\ell),r_B)\in\Guard$, and with phase $0$.
+\item A \emph{target edge}, labeled $(\eps,\ell')$, if $\phi=1$ and
+  $r_B\notin\Rej$. It leads to the node with $B(r_B,\ell')$ and
+  $B'(r_{B'},\ell')$ in place of $r_B$ and $r_{B'}$, with $h=1$ if and only if
+  $(r_{A'},B'(r_{B'},\ell'))\in\Head$, with $g=1$ if and only if
+  $(r_A,B(r_B,\ell'))\in\Guard$, and with phase $1$.
+\item A \emph{joint edge}, labeled $(\ell,\ell')$, if $A(r_A,\ell)$ is safe and
+  $r_B\notin\Rej$. It leads to the node with all four states advanced, with
+  $h=1$ if and only if $(A'(r_{A'},\ell),B'(r_{B'},\ell'))\in\Head$ or
+  $\ell=\ell'$ and the old $h$ is $1$, with $g$ defined in the same way from
+  $A$, $B$, $\Guard$ and the old $g$, and with phase $2$.
+\end{itemize}
+A path \emph{spells} the pair of words obtained by concatenating the first and
+the second components of its labels. For words $v$ and $z$ and a phase $\phi$,
+put
+\[
+ \operatorname{node}(v,z,\phi)
+ =(A(v),B(z),A'(v),B'(z),\mathrm h(v,z),\mathrm g(v,z),\phi).
+\]
+The \emph{initial} nodes are $\operatorname{node}(\eps,\eps,\phi)$ for
+$\phi\in\{0,1,2\}$, provided that $0$ is safe; the \emph{final} nodes are
+those with $r_A\in E$, $r_B\in\Rej$, $h=1$ and $g=0$.
+
+\begin{lemma}[Invariant]\label{lem:nm-graph-invariant}
+If a path from an initial node spells $(v,z)$ and ends at the node $\kappa$,
+then $\kappa=\operatorname{node}(v,z,\phi)$ for some phase $\phi$, the word $v$ is safe,
+$B_e(z)\notin\Rej$ for all $e<\len z$, and $z=\eps$ if $\phi=0$, and $v=\eps$ if
+$\phi=1$.
+\end{lemma}
+
+\begin{proof}
+By induction on the length of the path. An initial node $\operatorname{node}(\eps,\eps,\phi)$
+satisfies the claim, since $0$ is safe. Let the claim hold for a path that
+spells $(v,z)$ and ends at $\kappa=\operatorname{node}(v,z,\phi)$. A spine edge requires
+$\phi=0$, so $z=\eps$, and by \cref{lem:nm-hit}(a) it leads to
+$\operatorname{node}(v\ell,\eps,0)$; the word $v\ell$ is safe, since the new state of $A$ is
+safe. A target edge requires $\phi=1$, so $v=\eps$; it leads to
+$\operatorname{node}(\eps,z\ell',1)$ by \cref{lem:nm-hit}(a), and $B_{\len z}(z\ell')=B(z)=r_B$ is
+not in $\Rej$. A joint edge leads to $\operatorname{node}(v\ell,z\ell',2)$ by
+\cref{lem:nm-hit}(b), and safety and non-rejection follow as before. The phase
+$2$ imposes no condition.
+\end{proof}
+
+\begin{lemma}[Correctness of the pre-hole graph]\label{lem:nm-graph-correct}
+The graph $\mathcal P_E$ has a path from an initial node to a final node that
+spells $(v,z)$ if and only if $(v,z)$ is a pre-hole with $A(v)\in E$.
+\end{lemma}
+
+\begin{proof}
+Let such a path end at the final node $\kappa$. By
+\cref{lem:nm-graph-invariant}, $\kappa=\operatorname{node}(v,z,\phi)$, the word $v$ is safe,
+and $B_e(z)\notin\Rej$ for $e<\len z$; as $\kappa$ is final, $A(v)\in E$,
+$B(z)\in\Rej$, so that $J(z)=\len z$, $\mathrm h(v,z)=1$, so that $(v,z)$ has a
+head event, and $\mathrm g(v,z)=0$. Since every cut $e\le\len z=J(z)$ is
+admissible for an event, $\mathrm g(v,z)=0$ says that $(v,z)$ has no aligned
+event. So $(v,z)$ is a pre-hole with $A(v)\in E$.
+
+Conversely, let $(v,z)$ be a pre-hole with $A(v)\in E$. Suppose first that
+$\len v\ge\len z$, and put $m=\len v-\len z$. Start at $\operatorname{node}(\eps,\eps,0)$, which
+is initial since $v$ is safe; take spine edges labeled
+$(v[0],\eps),\dots,(v[m-1],\eps)$, and then joint edges labeled
+$(v[m+i],z[i])$ for $i<\len z$. By \cref{lem:nm-hit}, the path is at
+$\operatorname{node}(\wpre v{m'},\wpre z{e'},\phi)$ after it has spelled
+$(\wpre v{m'},\wpre z{e'})$. Every edge is allowed: the new states of $A$ are
+states of the safe word $v$, and the joint edges start at states $B_i(z)$ with
+$i<\len z=J(z)$, which are not in $\Rej$. The path ends at $\operatorname{node}(v,z,\phi)$,
+which is final because $(v,z)$ is a pre-hole with $A(v)\in E$. If
+$\len z>\len v$, start at $\operatorname{node}(\eps,\eps,1)$, take target edges for the first
+$\len z-\len v$ letters of $z$, which start at states $B_i(z)$ with
+$i<\len z$, and continue with joint edges as before.
+\end{proof}
+
+\begin{proof}[Proof of \cref{prop:nm-short-prehole}]
+Let $(u_0,t_0)$ be a pre-hole with $A(u_0)\in E$. By
+\cref{lem:nm-graph-correct}, $\mathcal P_E$ has a path from an initial node to
+a final node. A shortest such path visits no node twice, since a repeated node
+would allow us to cut out a cycle; so it has fewer than $12aba'b'$ edges. Each
+edge contributes at most one letter to each word, so the path spells a pair
+$(u_1,t_1)$ with $\len{u_1},\len{t_1}<12aba'b'$, which is a pre-hole with
+$A(u_1)\in E$ by \cref{lem:nm-graph-correct}. For decidability, test every pair
+of words over the finite alphabet $\Sigma$ of these lengths.
+\end{proof}
+
+\subsection{The Pump}\label{app:nm-pump}
+
+Throughout this subsection, $\xi$ is a purely periodic infinite word with
+least period $\varpi$. We prove \cref{thm:nm-pump} in five steps: a reformulation
+of survivor-freeness, the structure of rests and periodic ends, with a bound
+on the periodic end of the target, non-self-similar words, a deletion lemma,
+and four deletions together with a count.
+
+\subsubsection{Matched Pairs and Good Pairs}
+
+\begin{definition}[Matched pairs, good pairs]\label{def:nm-good}
+Let $u$ and $t$ be words. A \emph{matched pair} of $(u,t)$ is a pair of cuts
+$(s,e)$, $s\le\len u$ and $e\le\len t$, with $\len t-e\le\len u-s$ and
+$\wsuf us\,\xi=\wsuf te\,\xi$. A \emph{matched self pair} of $t$ is a pair of
+cuts $i<j\le\len t$ with $\wsuf ti\,\xi=\wsuf tj\,\xi$. The pair $(u,t)$ is
+\emph{good} if
+\begin{enumerate}[label=(G\arabic*)]
+\item $u$ is safe;
+\item $B_e(t)\notin\Rej$ for every $e<\len t$, and $B(t)\in\Rej$;
+\item $(u,t)$ has a head event;
+\item $(A_s(u),B_e(t))\notin\Guard$ for every matched pair $(s,e)$ of $(u,t)$;
+\item $(B_i(t),B_j(t))\notin\GuardS$ for every matched self pair $(i,j)$ of
+$t$.
+\end{enumerate}
+\end{definition}
+
+\begin{lemma}[Good pairs]\label{lem:nm-good}
+A pair $(u,t)$ is good if and only if it is a pre-hole for which $\xi$ is
+survivor-free.
+\end{lemma}
+
+\begin{proof}
+Condition (G2) says that $J(t)=\len t$; so every cut of $t$ is admissible for
+events and self events. Let $(u,t)$ be good. Every aligned pair of cuts is a
+matched pair, so by (G4) $(u,t)$ has no aligned event; with (G1)--(G3), it is
+a pre-hole. If an event $(s,e)$ survived $\xi$, then, being a cross comparison,
+it would satisfy $\len t-e\le\len u-s$, and by \cref{lem:nm-survival}(b)
+$\wsuf us\,\xi=\wsuf te\,\xi$; so it would be a matched pair carrying $\Guard$,
+contrary to (G4). Likewise a surviving self event would be a matched self pair
+carrying $\GuardS$, contrary to (G5). So $\xi$ is survivor-free for $(u,t)$.
+
+Conversely, let $(u,t)$ be a pre-hole for which $\xi$ is survivor-free.
+Conditions (G1)--(G3) hold. By \cref{lem:nm-survival}(b), a matched pair is a
+cross comparison that survives $\xi$; if it carried $\Guard$, it would be an
+event, since $e\le\len t=J(t)$, that survives $\xi$. Likewise a matched self pair
+carrying $\GuardS$ would be a surviving self event. So (G4) and (G5) hold.
+\end{proof}
+
+\subsubsection{Rests and Periodic Ends}
+
+Let $w$ be a word. A cut $s$ of $w$ is \emph{periodic} if $\wsuf ws\,\xi$ has
+the period $\varpi$. For $s\le s'$ the word $\wsuf w{s'}\xi$ is a suffix of
+$\wsuf ws\,\xi$, so every cut after a periodic cut is periodic; the cut
+$\len w$ is periodic, because $\xi$ has the period $\varpi$. Let $R_w$ be the
+least periodic cut. The cuts $s\ge R_w$ are periodic, and the cuts
+$s<R_w$, the \emph{rest cuts}, are not. Put $T_w=\len w-R_w$, and call
+$\len w-s$ the \emph{end distance} of the cut $s$; the periodic cuts are the
+cuts of end distance at most $T_w$.
+
+\begin{lemma}[Rests and periodic ends]\label{lem:nm-ends}
+Let $u$ and $t$ be words.
+\begin{enumerate}[label=(\alph*)]
+\item For periodic cuts $s$ of $u$ and $e$ of $t$, $\wsuf us\,\xi=\wsuf te\,\xi$
+if and only if $\len u-s\equiv\len t-e\pmod \varpi$.
+\item If $s\le\len u$, $e\le\len t$ and $\wsuf us\,\xi=\wsuf te\,\xi$, then
+$\max(R_u-s,0)=\max(R_t-e,0)$. In particular, $s$ is periodic if and only
+if $e$ is, and if $s$ is a rest cut, then $e$ is a rest cut with
+$R_t-e=R_u-s$.
+\item If $T_u\ne T_t$, then the end distance $\len u-s=\len t-e$ of every aligned
+pair $(s,e)$ of $(u,t)$ is at most $\min(T_u,T_t)$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(a) Let $k=\len u-s$ and $k'=\len t-e$, and choose $N$ with
+$N\varpi\ge\max(k,k')$. The infinite word $\xi'=\wsuf us\,\xi$ has the period $\varpi$, so
+$\xi'=\wsuf{\xi'}{N\varpi}=\wsuf\xi{N\varpi-k}$. Likewise $\wsuf te\,\xi=\wsuf\xi{N\varpi-k'}$. By
+\cref{lem:nm-infinite}(b), these are equal if and only if $N\varpi-k\equiv N\varpi-k'$,
+that is, $k\equiv k'\pmod \varpi$.
+
+(b) Put $m_u=\max(R_u-s,0)$ and $m_t=\max(R_t-e,0)$, and suppose that
+$m_u>m_t$; the other case is symmetric. Then $s+m_t<R_u\le\len u$, and
+$e\le e+m_t\le\len t$ with $e+m_t\ge R_t$. Removing the first $m_t$ letters of
+both infinite words gives $\wsuf u{s+m_t}\xi=\wsuf t{e+m_t}\xi$. The right side
+has the period $\varpi$, because $e+m_t$ is periodic; so $s+m_t$ is a periodic cut,
+which contradicts $s+m_t<R_u$. The remaining claims follow, because $s$ is a
+rest cut exactly when $R_u-s>0$.
+
+(c) Let $(s,e)$ be an aligned pair and $k=\len u-s=\len t-e$. Then
+$\wsuf us\,\xi=\wsuf te\,\xi$. If $s$ were a rest cut, then by (b) so would be
+$e$, with $R_u-s=R_t-e$, and
+$T_u=k-(R_u-s)=k-(R_t-e)=T_t$, which is excluded. So $s$ is periodic,
+and by (b) so is $e$; that is, $k\le T_u$ and $k\le T_t$.
+\end{proof}
+
+For a rest cut $j$ of $u$, a cut $e$ of $t$ with $\wsuf uj\,\xi=\wsuf te\,\xi$ is
+a \emph{partner} of $j$; by \cref{lem:nm-ends}(b), it is the rest cut
+$e=R_t-(R_u-j)$, so $j$ has at most one partner. Partners of rest cuts of
+$t$ are defined in the same way. A rest cut is \emph{partnered} if it has a
+partner and \emph{unpartnered} otherwise. Let $C_u$ and $U_u$ be the sets of
+partnered and unpartnered rest cuts of $u$, and $C_t$ and $U_t$ those of $t$.
+
+\begin{lemma}[Periodic target end]\label{lem:nm-target-end}
+Let $t$ be a word with $B_e(t)\notin\Rej$ for every $e<\len t$ and
+$B(t)\in\Rej$, as in condition \textup{(G2)}. Then $T_t<N_B\,\varpi$.
+\end{lemma}
+
+\begin{proof}
+Put $L=\len t$, and suppose that two periodic cuts $i<j$ of $t$ have the same
+state of $B$ and end distances that agree modulo $\varpi$. By \cref{lem:nm-ends}(a),
+$\wsuf ti\,\xi=\wsuf tj\,\xi$, and comparing the first $L-j$ letters gives
+$\wsub ti{i+L-j}=\wsuf tj$. By determinism,
+\[
+ B_{L-(j-i)}(t)=B(B_i(t),\wsuf tj)=B(B_j(t),\wsuf tj)=B_L(t)\in\Rej ,
+\]
+although $L-(j-i)<L$. This contradicts the hypothesis. Hence the $T_t+1$
+periodic cuts $e$ of $t$ have pairwise distinct signatures
+$(B_e(t),(L-e)\bmod \varpi)$, of which there are at most $N_B\varpi$; so
+$T_t+1\le N_B\varpi$.
+\end{proof}
+
+\subsubsection{Non-Self-Similar Words}
+
+An infinite word $\xi'$ is \emph{non-self-similar} if $z\xi'\ne\xi'$ for every nonempty
+finite word $z$.
+
+\begin{lemma}[Non-self-similar words]\label{lem:nm-rigid}
+\leavevmode
+\begin{enumerate}[label=(\alph*)]
+\item If $j$ is a rest cut of a word $w$, then $\wsuf wj\,\xi$ is
+non-self-similar.
+\item Let $\xi'$ be non-self-similar. If $z_1\xi'=z_2\xi'$ for finite words $z_1$ and
+$z_2$, then $z_1=z_2$. If $z$ is a nonempty finite word and $k\ge0$, then
+$z\xi'\ne\wsuf{\xi'}k$.
+\item Let $\xi'$ be non-self-similar and $t$ a word. At most one cut $e$ of $t$
+satisfies $\wsuf te\,\xi=\xi'$.
+\item Let $v$ and $v'$ be words, and let $j$ be a rest cut of $v$ such that
+$\wsuf vj\,\xi\ne\wsuf{v'}e\,\xi$ for every cut $e$ of $v'$. Then
+$z\,\wsuf vj\,\xi\ne\wsuf{v'}k\,\xi$ for every finite word $z$ and every cut $k$
+of $v'$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(a) Let $\xi'=\wsuf wj\,\xi$, and suppose that $z\xi'=\xi'$ with $z\ne\eps$. Then $\xi'$ has
+the period $\len z$ by \cref{lem:nm-infinite}(c). Its suffix
+$\wsuf{\xi'}{\len w-j}=\xi$ has the period $\varpi$, so $\xi'$ has the period $\varpi$ by
+\cref{lem:nm-infinite}(a). Then $j$ is a periodic cut, a contradiction.
+
+(b) Let $\len{z_1}\ge\len{z_2}$. Both words are prefixes of $z_1\xi'=z_2\xi'$, so
+$z_1=z_2z$ for a word $z$; canceling $z_2$ gives $z\xi'=\xi'$, so $z=\eps$. If
+$z\xi'=\wsuf{\xi'}k$, then $(\wpre{\xi'}k\,z)\xi'=\wpre{\xi'}k\,\wsuf{\xi'}k=\xi'$ with $\wpre{\xi'}k\,z$
+nonempty, a contradiction.
+
+(c) If $e<e'$ are cuts with $\wsuf te\,\xi=\wsuf t{e'}\xi=\xi'$, then
+$\wsub te{e'}\xi'=\wsuf te\,\xi=\xi'$ with $\wsub te{e'}$ nonempty, a contradiction.
+
+(d) Let $\xi'=\wsuf vj\,\xi$, and suppose that $z\xi'=\wsuf{v'}k\,\xi$. If
+$\len z\le\len{v'}-k$, then $z=\wsub{v'}k{k+\len z}$, and canceling $z$ gives
+$\xi'=\wsuf{v'}{k+\len z}\xi$, contrary to the hypothesis. If
+$\len z>\len{v'}-k$, then $z=\wsuf{v'}k\,z'$ with $z'$ nonempty, and canceling
+$\wsuf{v'}k$ gives $z'\xi'=\xi$. Then $\xi'=\wsuf\xi{\len{z'}}$ has the period $\varpi$, and
+$j$ is a periodic cut, a contradiction.
+\end{proof}
+
+\subsubsection{The Deletion Lemma}
+
+Let $u=xwy$ and $t=x'w'y'$ with $w\ne\eps$ or $w'\ne\eps$, and put $\bar u=xy$
+and $\bar t=x'y'$. A cut $s$ of $\bar u$ is \emph{deep} if $s<\len x$ and
+\emph{shallow} otherwise; its \emph{image} is $\hat s=s$ if $s$ is deep and
+$\hat s=s+\len w$ if $s$ is shallow. Cuts $e$ of $\bar t$ are deep if
+$e<\len{x'}$, shallow otherwise, with images $\hat e$ defined in the same way
+with $w'$. The image map is strictly increasing. For a deep cut $s$,
+$\wsuf{\bar u}s=\wsuf xs\,y$ and $\wsuf u{\hat s}=\wsuf xs\,wy$; for a shallow
+cut $s=\len x+k$, $\wsuf{\bar u}s=\wsuf u{\hat s}=\wsuf yk$, and the end
+distances agree: $\len{\bar u}-s=\len u-\hat s$. The same holds for $\bar t$. Put
+$Y=y\xi$ and $Y'=y'\xi$.
+
+\begin{lemma}[Deletion]\label{lem:nm-deletion}
+Let $(u,t)$ be good, and suppose:
+\begin{enumerate}[label=(D\arabic*)]
+\item each of $A$ and $A'$ has the same state at the cuts $\len x$ and
+$\len{xw}$ of $u$, and each of $B$ and $B'$ has the same state at the cuts
+$\len{x'}$ and $\len{x'w'}$ of $t$;
+\item the image $(\hat s,\hat e)$ of every matched pair $(s,e)$ of
+$(\bar u,\bar t)$ is a matched pair of $(u,t)$, and the image $(\hat i,\hat j)$
+of every matched self pair $(i,j)$ of $\bar t$ is a matched self pair of $t$;
+\item some head event $(s,e)$ of $(u,t)$ is shallow in both words, that is,
+$s\ge\len{xw}$ and $e\ge\len{x'w'}$, or deep in both words at equal distance
+from factors of equal length, that is, $s\le\len x$, $e\le\len{x'}$,
+$\len x-s=\len{x'}-e$ and $\len w=\len{w'}$.
+\end{enumerate}
+Then $(\bar u,\bar t)$ is good, $A(\bar u)=A(u)$, and
+$\len{\bar u}+\len{\bar t}<\len u+\len t$.
+\end{lemma}
+
+\begin{proof}
+First, for $M\in\{A,A'\}$ and every cut $s$ of $\bar u$, $M_s(\bar u)=M_{\hat
+s}(u)$. For $s\le\len x$ the two words have the common prefix $\wpre xs$. For a
+shallow cut $s=\len x+k$, the automaton $M$ reads $x$ and then $\wpre yk$ in
+$\bar u$, and $x$, $w$ and then $\wpre yk$ in $u$; by (D1),
+$M(0,xw)=M(0,x)$, so both runs end in the same state. Likewise
+$M_e(\bar t)=M_{\hat e}(t)$ for $M\in\{B,B'\}$ and every cut $e$ of $\bar t$.
+Moreover, the states of $A'$ and $B'$ at cuts $s\le\len x$ of $\bar u$ and
+$e\le\len{x'}$ of $\bar t$ are those at the same cuts of $u$ and $t$, because the
+prefixes coincide.
+
+(G1) Every $A_s(\bar u)=A_{\hat s}(u)$ is safe. (G2) For $e<\len{\bar t}$ we
+have $\hat e<\len t$, so $B_e(\bar t)=B_{\hat e}(t)\notin\Rej$. The last cut
+$\len{\bar t}$ is shallow with image $\len t$, so $B(\bar t)=B(t)\in\Rej$; in
+the same way $A(\bar u)=A(u)$.
+
+(G3) Let $(s,e)$ be the head event of (D3). If it is shallow in both words,
+then $\bar s=s-\len w$ and $\bar e=e-\len{w'}$ are shallow cuts with images $s$
+and $e$, so $\wsuf{\bar u}{\bar s}=\wsuf us=\wsuf te=\wsuf{\bar t}{\bar e}$, and
+the states of $A'$ and $B'$ there are those at $s$ and $e$; so
+$(\bar s,\bar e)$ is a head event of $(\bar u,\bar t)$. Otherwise
+$\wsuf us=\wsuf xs\,wy$ equals $\wsuf te=\wsuf{x'}e\,w'y'$, where
+$\len{\wsuf xs}=\len{\wsuf{x'}e}$ and $\len w=\len{w'}$; comparing factors of
+equal lengths gives $\wsuf xs=\wsuf{x'}e$, $w=w'$ and $y=y'$. Hence
+$\wsuf{\bar u}s=\wsuf xs\,y=\wsuf{x'}e\,y'=\wsuf{\bar t}e$, and since $s\le\len x$
+and $e\le\len{x'}$, the states of $A'$ and $B'$ at these cuts are those in $u$
+and $t$. So $(s,e)$ is a head event of $(\bar u,\bar t)$.
+
+(G4) Let $(s,e)$ be a matched pair of $(\bar u,\bar t)$. By (D2), $(\hat s,\hat
+e)$ is a matched pair of $(u,t)$, so
+$(A_s(\bar u),B_e(\bar t))=(A_{\hat s}(u),B_{\hat e}(t))\notin\Guard$. (G5) Let
+$(i,j)$ be a matched self pair of $\bar t$. By (D2), $(\hat i,\hat j)$ is a
+matched self pair of $t$, so $(B_i(\bar t),B_j(\bar t))=(B_{\hat
+i}(t),B_{\hat j}(t))\notin\GuardS$.
+
+Finally, $\len{\bar u}+\len{\bar t}=\len u+\len t-\len w-\len{w'}$, and one of
+the deleted factors is nonempty.
+\end{proof}
+
+A pair whose cuts are both shallow satisfies (D2) automatically: its suffixes
+and end distances are those of its image. Since the image map is increasing, a self
+pair $i<j$ with $i$ shallow has $j$ shallow. So (D2) follows from the
+following five implications, which are sufficient conditions for it, for deep
+cuts $s<\len x$ of $\bar u$ and $e<\len{x'}$ of
+$\bar t$, shallow cuts $\len x+k$ of $\bar u$ and $\len{x'}+k$ of $\bar t$, and
+deep cuts $i<j<\len{x'}$ of $\bar t$.
+\begin{enumerate}[label=(\roman*),leftmargin=*]
+\item Both cuts deep: if $\len{\wsuf{x'}e}+\len{y'}\le\len{\wsuf xs}+\len y$ and
+  $\wsuf xs\,Y=\wsuf{x'}e\,Y'$, then
+  $\len{\wsuf{x'}e}+\len{w'}+\len{y'}\le\len{\wsuf xs}+\len w+\len y$ and
+  $\wsuf xs\,wY=\wsuf{x'}e\,w'Y'$.
+\item Spine cut deep, target cut shallow: if
+  $\len{y'}-k\le\len{\wsuf xs}+\len y$ and $\wsuf xs\,Y=\wsuf{y'}k\,\xi$, then
+  $\wsuf xs\,wY=\wsuf{y'}k\,\xi$. The length condition of the image,
+  $\len{y'}-k\le\len{\wsuf xs}+\len w+\len y$, then holds, since only the spine
+  side grows.
+\item Spine cut shallow, target cut deep: if
+  $\len{\wsuf{x'}e}+\len{y'}\le\len y-k$ and $\wsuf yk\,\xi=\wsuf{x'}e\,Y'$,
+  then $\len{\wsuf{x'}e}+\len{w'}+\len{y'}\le\len y-k$ and
+  $\wsuf yk\,\xi=\wsuf{x'}e\,w'Y'$.
+\item Self pair, both cuts deep: if $\wsuf{x'}i\,Y'=\wsuf{x'}j\,Y'$, then
+  $\wsuf{x'}i\,w'Y'=\wsuf{x'}j\,w'Y'$.
+\item Self pair, first cut deep, second cut $\len{x'}+k$ shallow: if
+  $\wsuf{x'}i\,Y'=\wsuf{y'}k\,\xi$, then $\wsuf{x'}i\,w'Y'=\wsuf{y'}k\,\xi$.
+\end{enumerate}
+
+\begin{lemma}[Two ways to lift matched pairs]\label{lem:nm-dischargers}
+\leavevmode
+\begin{enumerate}[label=(\alph*)]
+\item \emph{Absorption.} If $wY=Y$, then \textup{(ii)} holds.
+\item \emph{Rigidity.} If $Y'$ is non-self-similar, then the premises of
+\textup{(iv)} and \textup{(v)} never hold, so \textup{(iv)} and \textup{(v)}
+hold.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(a) If $wY=Y$, then $\wsuf xs\,wY=\wsuf xs\,Y$, which gives (ii).
+
+(b) In (iv), $\wsuf{x'}i\,Y'=\wsuf{x'}j\,Y'$ would give $\wsuf{x'}i=\wsuf{x'}j$ by
+\cref{lem:nm-rigid}(b), although the two words have different lengths. In (v),
+$\wsuf{y'}k\,\xi=\wsuf{Y'}k$ because $k\le\len{y'}$, and
+$\wsuf{x'}i\,Y'=\wsuf{Y'}k$ with $\wsuf{x'}i$ nonempty contradicts
+\cref{lem:nm-rigid}(b).
+\end{proof}
+
+\subsubsection{The Four Deletions}
+
+Put
+\[
+ N_1=aa'\varpi,\qquad N_2=2aba'b',\qquad N_3=aa',\qquad N_4=bb' .
+\]
+For a pair $(u,t)$ and a cut $s$ of $u$, let the \emph{head bit} $\eta(s)$ be
+$1$ if some head event $(s',e')$ of $(u,t)$ has $s'\ge s$, and $0$ otherwise;
+it does not increase with $s$.
+
+\begin{lemma}[Four deletions]\label{lem:nm-four}
+Let $(u,t)$ be good, and suppose that one of the following conditions holds:
+\begin{enumerate}[label=(\arabic*)]
+\item $T_u\ge T_t+N_1$;
+\item $\len{C_u}>N_2$;
+\item $\len{U_u}>N_3$;
+\item $\len{U_t}>N_4$.
+\end{enumerate}
+Then there is a good pair $(\bar u,\bar t)$ with $A(\bar u)=A(u)$ and
+$\len{\bar u}+\len{\bar t}<\len u+\len t$.
+\end{lemma}
+
+\begin{proof}
+In each case we choose $u=xwy$ and $t=x'w'y'$, check (D1)--(D3), and apply
+\cref{lem:nm-deletion}; for (D2) we check the implications (i)--(v), using
+\cref{lem:nm-dischargers} where possible. When $x'=w'=\eps$ and $y'=t$, the
+word $\bar t=t$ has no deep cut, so only (ii) has to be checked, and (D1) for
+$B$ and $B'$ is trivial. When $x=w=\eps$ and $y=u$, only (iii), (iv) and (v)
+have to be checked, and (D1) for $A$ and $A'$ is trivial.
+
+\emph{(1) Spine-end deletion.} For $0\le\delta\le N_1$ let
+$s_\delta=\len u-T_t-\delta$; it is a periodic cut of $u$, since
+$T_t+\delta\le T_t+N_1\le T_u$. The signature
+$(A_{s_\delta}(u),A'_{s_\delta}(u),\delta\bmod \varpi)$ takes at most $N_1$
+values, so some $\delta_1<\delta_2$ have the same signature. Put
+$x=\wpre u{s_{\delta_2}}$, $w=\wsub u{s_{\delta_2}}{s_{\delta_1}}$,
+$y=\wsuf u{s_{\delta_1}}$, $x'=w'=\eps$ and $y'=t$. (D1) holds by the
+signature, and $wY=Y$ by \cref{lem:nm-ends}(a), since the end distances
+$T_t+\delta_2$ and $T_t+\delta_1$ agree modulo $\varpi$; so (ii) holds by
+absorption. For (D3), note that $T_u\ne T_t$, as $N_1\ge1$. By
+\cref{lem:nm-ends}(c), every head event $(s,e)$ has end distance at most $T_t$,
+so
+$s\ge\len u-T_t\ge s_{\delta_1}=\len{xw}$, and $e\ge0=\len{x'w'}$.
+
+\emph{(2) Synchronous rest deletion.} For $j\in C_u$ let $e(j)$ be its partner,
+$e(j)=R_t-(R_u-j)$. The signature
+$(A_j(u),A'_j(u),B_{e(j)}(t),B'_{e(j)}(t),\eta(j))$ takes at most $N_2$
+values, so some $j_1<j_2$ in $C_u$ have the same signature. Put $e_1=e(j_1)$ and
+$e_2=e(j_2)$, so that $e_2-e_1=j_2-j_1>0$, and let $x=\wpre u{j_1}$,
+$w=\wsub u{j_1}{j_2}$, $y=\wsuf u{j_2}$, $x'=\wpre t{e_1}$,
+$w'=\wsub t{e_1}{e_2}$ and $y'=\wsuf t{e_2}$. Then
+$Y=\wsuf u{j_2}\xi=\wsuf t{e_2}\xi=Y'$; call this word $\xi'$. It is
+non-self-similar by \cref{lem:nm-rigid}(a). Moreover
+$w\xi'=\wsuf u{j_1}\xi=\wsuf t{e_1}\xi=w'\xi'$ and $\len w=\len{w'}$, so $w=w'$. (D1)
+holds by the signature. For (D2), (iv) and (v) hold by rigidity. In (i), the
+premise $\wsuf xs\,\xi'=\wsuf{x'}e\,\xi'$ gives $\wsuf xs=\wsuf{x'}e$ by
+\cref{lem:nm-rigid}(b), hence $\wsuf xs\,w\xi'=\wsuf{x'}e\,w'\xi'$, and the length
+condition gains $\len w=\len{w'}$ on both sides. The premise of (ii) never
+holds: $\wsuf xs\,\xi'=\wsuf{y'}k\,\xi=\wsuf{\xi'}k$ with $\wsuf xs$ nonempty
+contradicts \cref{lem:nm-rigid}(b). Neither does that of (iii), for the same
+reason. For (D3), suppose first that $\eta(j_2)=1$, so some head event $(s,e)$
+has $s\ge j_2$. If $e<e_2$, then $\wsuf us\,\xi=\wsuf te\,\xi=\wsub te{e_2}\xi'$
+with $\wsub te{e_2}$ nonempty, while $\wsuf us\,\xi=\wsuf{\xi'}{s-j_2}$, which
+contradicts \cref{lem:nm-rigid}(b). So $e\ge e_2=\len{x'w'}$ and
+$s\ge j_2=\len{xw}$. Otherwise $\eta(j_1)=\eta(j_2)=0$, so every head event
+$(s,e)$ has $s<j_1$. Removing the first $j_1-s$ letters from
+$\wsuf us=\wsuf te$ gives $\wsuf u{j_1}=\wsuf t{e+j_1-s}$, so
+$\wsuf t{e+j_1-s}\xi=\wsuf u{j_1}\xi=\wsuf t{e_1}\xi$. This word is
+non-self-similar by \cref{lem:nm-rigid}(a), so $e+j_1-s=e_1$ by
+\cref{lem:nm-rigid}(c). Hence $s\le\len x$, $e\le\len{x'}$,
+$\len x-s=\len{x'}-e$, and $\len w=\len{w'}$.
+
+\emph{(3) Spine rest deletion.} The pair $(A_j(u),A'_j(u))$ takes at most
+$N_3$ values on $U_u$, so some $i<j$ in $U_u$ have the same pair. Put
+$x=\wpre ui$, $w=\wsub uij$, $y=\wsuf uj$, $x'=w'=\eps$ and $y'=t$. (D1) holds.
+The premise of (ii), $\wsuf xs\,(\wsuf uj\,\xi)=\wsuf tk\,\xi$, never holds, by
+\cref{lem:nm-rigid}(d) with $v=u$, $v'=t$ and the unpartnered rest cut $j$. For
+(D3), every head event $(s,e)$ has $s\ge j$: otherwise removing the first $j-s$
+letters from $\wsuf us=\wsuf te$ gives $\wsuf uj=\wsuf t{e+j-s}$, and $j$ would
+be partnered. So $s\ge\len{xw}$, and $e\ge0=\len{x'w'}$.
+
+\emph{(4) Target rest deletion.} The pair $(B_e(t),B'_e(t))$ takes at most
+$N_4$ values on $U_t$, so some $i<j$ in $U_t$ have the same pair. Put
+$x=w=\eps$, $y=u$, $x'=\wpre ti$, $w'=\wsub tij$ and $y'=\wsuf tj$. (D1) holds.
+The word $Y'=\wsuf tj\,\xi$ is non-self-similar by \cref{lem:nm-rigid}(a), so
+(iv) and (v) hold by rigidity. The premise of (iii),
+$\wsuf uk\,\xi=\wsuf{x'}e\,(\wsuf tj\,\xi)$, never holds, by
+\cref{lem:nm-rigid}(d) with $v=t$, $v'=u$ and the unpartnered rest cut $j$. For
+(D3), every head event $(s,e)$ has $e\ge j=\len{x'w'}$, since otherwise
+$\wsuf tj=\wsuf u{s+j-e}$ and $j$ would be partnered; and $s\ge0=\len{xw}$.
+\end{proof}
+
+No deletion inside the periodic end of $t$ is needed: by
+\cref{lem:nm-target-end}, that periodic end is already short in every good
+pair.
+
+\subsubsection{Counting and the Proof of the Pump}
+
+\begin{lemma}[Counting]\label{lem:nm-count}
+Let $(u,t)$ be a good pair for which none of the conditions \textup{(1)--(4)}
+of \cref{lem:nm-four} holds. Then
+$\len u,\len t<N_1+N_2+N_3+N_4+b\varpi$.
+\end{lemma}
+
+\begin{proof}
+Map each $e\in C_t$ to its partner. By \cref{lem:nm-ends}(b) the partner is the
+rest cut $R_u-(R_t-e)$ of $u$, which is partnered; so the map is an
+injection of $C_t$ into $C_u$, and $\len{C_t}\le\len{C_u}$. Since (2), (3) and
+(4) fail, $R_u=\len{C_u}+\len{U_u}\le N_2+N_3$ and
+$R_t=\len{C_t}+\len{U_t}\le N_2+N_4$. By \cref{lem:nm-target-end},
+$T_t\le b\varpi-1$, and since (1) fails, $T_u\le T_t+N_1-1\le b\varpi+N_1-2$.
+Hence $\len u=R_u+T_u\le N_1+N_2+N_3+b\varpi-2$ and
+$\len t=R_t+T_t\le N_2+N_4+b\varpi-1$, and both are less than
+$N_1+N_2+N_3+N_4+b\varpi$.
+\end{proof}
+
+\begin{proof}[Proof of \cref{thm:nm-pump}]
+Put $K=N_1+N_2+N_3+N_4+b\varpi=2aba'b'+aa'\varpi+b\varpi+aa'+bb'$. By
+\cref{lem:nm-good}, the pair $(u,t)$ is good. Among the good pairs $(u',t')$
+with $A(u')=A(u)$ choose one with $\len{u'}+\len{t'}$ least. If
+$\len{u'}\ge K$ or $\len{t'}\ge K$, then by \cref{lem:nm-count} one of the
+conditions (1)--(4) of \cref{lem:nm-four} holds for $(u',t')$, and
+\cref{lem:nm-four} gives a good pair with the same endpoint and a smaller total
+length, a contradiction. Hence $\len{u'},\len{t'}<K$, and $(u',t')$ is a
+pre-hole for which $\xi$ is survivor-free, by \cref{lem:nm-good}. If
+$\varpi\le N_A=a$, then $aa'\varpi\le a^2a'$ and $b\varpi\le ab$, so $K\le\Pcap(a,b,a',b')$.
+\end{proof}
+
+\subsection{The Three-Case Theorem}\label{app:nm-three-cases}
+
+\paragraph{The bound $\Lnm$}
+Since $a,b,a',b'\ge1$, we have $ab,aa',bb'\le aba'b'$, so
+$\Pcap\le5aba'b'+a^2a'\le6a^2ba'b'$. Hence
+$\max(12aba'b',\Pcap)\le12aba'b'+a^2a'$ and $\max(12aba'b',\Pcap)\le12a^2ba'b'$,
+which give
+\[
+ \Lnm(a,b,a',b')\le48aba'b'+4a^2a'+6a\qquad\text{and}\qquad
+ \Lnm(a,b,a',b')\le48a^2ba'b'+6a\le54a^2ba'b' .
+\]
+
+\begin{proof}[Proof of \cref{thm:nm-three-cases}]
+We first show that (1) or (2) yields a short hole; this part does not use
+(FH). Put $K_0=12aba'b'$ and $K=\max(K_0,\Pcap(a,b,a',b'))$.
+
+Suppose that (1) holds for a pre-hole $(u_0,t_0)$, and let $q=A(u_0)$. By
+\cref{prop:nm-short-prehole} with $E=\{q\}$, there is a pre-hole $(u_1,t_1)$
+with $A(u_1)=q$ and $\len{u_1},\len{t_1}\le K_0-1$. By \cref{lem:nm-breaker} it is
+completed by a word $\theta$ with $\len\theta\le K_0-1+3a$, and by
+\cref{lem:nm-decomposition} $(u_1\theta,t_1\theta)$ is a hole with
+$\len{u_1\theta}+\len{t_1\theta}=\len{u_1}+\len{t_1}+2\len\theta\le
+4(K_0-1)+6a<4K+6a$.
+
+Suppose that (2) holds for a pre-hole $(u_0,t_0)$ and an infinite word $\xi$ safe
+from the thin state $q=A(u_0)$. By \cref{lem:nm-thin}(c), $\xi$ is a lasso
+$\alpha\lambda^\omega$ of $q$. If $\xi$ is not purely periodic, then
+\cref{prop:nm-short-prehole} with $E=\{q\}$ gives a pre-hole $(u_1,t_1)$ with
+$A(u_1)=q$ and $\len{u_1},\len{t_1}\le K_0-1$, and $\xi$ is survivor-free for it
+by \cref{lem:nm-aperiodic}. If $\xi$ is purely periodic, its least period is at
+most $\len\lambda\le a$ by \cref{lem:nm-infinite}(b), and \cref{thm:nm-pump}
+gives a pre-hole $(u_1,t_1)$ for which $\xi$ is survivor-free, with $A(u_1)=q$
+and $\len{u_1},\len{t_1}\le\Pcap(a,b,a',b')-1$. In both cases
+$\len{u_1},\len{t_1}\le K-1$, and $\xi$ is a lasso of $A(u_1)$ that is
+survivor-free for $(u_1,t_1)$. By \cref{cor:nm-lasso-completion}, the prefix
+$\theta$ of $\xi$ of length $\max(\len{u_1},\len{t_1})+a-1\le K+a-2$ completes
+$(u_1,t_1)$, and by \cref{lem:nm-decomposition} $(u_1\theta,t_1\theta)$ is a
+hole with $\len{u_1\theta}+\len{t_1\theta}\le2(K-1)+2(K+a-2)<4K+6a$.
+
+In particular, (1) or (2) implies that $I$ has a hole, and (3) does so
+trivially. Conversely, let $I$ satisfy (FH), and let $(u,t)$ be a hole. By
+\cref{lem:nm-decomposition}, $(u,t)=(u_0\theta,t_0\theta)$, where
+$\theta=\wsuf t{J(t)}$ completes the pre-hole $(u_0,t_0)$. Let $q=A(u_0)$, which
+is safe. Then $A(u)=A(q,\theta)$, and $J(t)=J(t_0)=\len{t_0}$, so
+$\len t-J(t)=\len\theta$. If $q$ is branching, (1) holds. If $q$ is mortal,
+then by \cref{lem:nm-thin}(a) $\len\theta<N_A$ and $A(u)$ is mortal, so $(u,t)$
+is a mortal hole. Let $q$ be thin. If $A(u)$ is not mortal, some infinite word
+$\xi'$ is safe from $A(u)$, so $\xi=\theta\xi'$ is safe from $q$. Every
+obligation of $(u_0,t_0)$ is broken by $\theta$, which is a prefix of $\xi$, and
+so does not survive $\xi$; hence (2) holds with $\xi$. If $A(u)$ is mortal, then
+$\len\theta<N_A$ by \cref{lem:nm-thin}(d), and $(u,t)$ is a mortal hole.
+\end{proof}

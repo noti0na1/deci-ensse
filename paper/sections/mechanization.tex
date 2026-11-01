@@ -1,0 +1,89 @@
+%% mechanization -- what the Lean development checks, plain entailment as a
+%% corollary, the mechanized bounds, where the formal route differs, what is
+%% not mechanized, and the trusted base. Details and the correspondence with
+%% the paper are in appendix-lean.
+
+\section{Mechanization}
+\label{sec:mechanization}
+
+The artifact, a development in Lean~4 \citep{MouraUllrich21} with Mathlib
+\citep{Mathlib20}, contains six decision procedures, one for each case of
+\cref{thm:as-main}(1,2): existential entailment over $\BFT$ for every arity
+$n\ge0$ and every variance, and over $\BF$ for every arity with $f$ covariant,
+each over arbitrary, regular, and finite trees. Arity zero is included. The
+procedures are computable definitions, not classical choices of
+decidability instances, and each has a correctness theorem without premises:
+none assumes satisfiability or positive arity. They take flat systems (\cref{sec:bg-constraints}) whose visible and hidden variables
+are finite ordinals. Classical reasoning enters the proofs of the bounds and of
+correctness, not the searches. Lean and Mathlib are both pinned to
+\texttt{v4.35.0}, and the correctness theorems depend only on the axioms
+\texttt{propext}, \texttt{Classical.choice}, and \texttt{Quot.sound}.
+
+Plain entailment is the instance with no hidden variables and the consequent
+$x\le y$ (\cref{def:bg-existential}). The artifact defines decision procedures
+for plain entailment in the three tree classes with the same names and types
+as those of the artifact of \citet{Zhao26}, and obtains them from the
+existential procedures through \lean{nsse_iff_ensse} and its regular and
+finite versions; it uses no other procedure for plain entailment. The same
+reduction decides covariant plain entailment over $\BF$. The two artifacts
+share, as a library, the definitions, the results on satisfiability, and the
+hole search (\cref{sec:bg-readers}), but not the reduction of plain entailment to
+holes, so the decidability of plain entailment is proved a second time, through
+the characterization of \cref{sec:ch}.
+
+Every search bound is an explicit function of the state counts of the
+automata involved. Anchored compression (\cref{thm:mo-anchored}) is
+mechanized with an elementary bound: \lean{Anchored.exists_short_posHole_elementary}
+shortens a positive hole of a lettered monitor with a positive channel to
+length at most \lean{Anchored.anchoredLengthBound}, and
+\lean{Anchored.anchoredLengthBound_le} proves the estimate
+$2^{2^{5\Xisharp(N,d)+6}}$, against $2^{2^{5\Xisharp(N,d)}}$ in
+\cref{thm:mo-anchored}, with the same exponent $\Xisharp$. The dictionary bound
+is $\sGsharp$ itself; the column count is larger than $\scolsharp$ because the
+formal positive summary stores a second complete column summary where the
+paper adds single fields (\cref{app:lean-diff}). The mortal bound evaluates
+this function at the separator reader with all its states, not only the
+reachable ones, and the non-mortal bound has the form of $\Lnm$ with a larger
+pump capacity. Their maximum, \lean{Core.Words.Self.selfHoleBound}, bounds a
+shortest hole of every instance with forced target heads, as in
+\cref{thm:mo-decide}.
+
+Three principal differences in the formal route are the following. For $\BF$
+with $f$ covariant the formalization does not use the reduction of \cref{thm:tc-gadget}: a direct
+covariant core represents a tree by its set of constructor positions
+(\cref{lem:bg-bf-order}), proves three conditions in which preservation of
+liveness takes the place of \CondU\ and no self events occur, reduces the
+third to two-word holes without self guard, transfers to regular and finite
+trees through regular Horn hulls and finite least solutions, and identifies
+sets of constructor positions with $\Top$-free trees. For regular trees, (2) and (3) of
+\cref{thm:tc-regular} are proved like \cref{thm:tc-finite}: the at most two
+observations of \cref{lem:tc-two-seeds} become ground bounds; these bounds, and
+in (2) the regular visible values, are expressed by literals over fresh
+variables whose values are fixed by the graph equations of regular
+presentations; and the extended system has a regular solution by (1).
+\Cref{lem:sm-regular-closure} is not used. Condition \CondU\ is decided by the
+hole search of \citet{Zhao26} on the unit reader with all its $N_{\mathrm U}$ states, without
+the reductions of \cref{lem:un-reduced,lem:un-clock}.
+
+Not mechanized are the flattening of type expressions
+(\cref{lem:bg-flattening}); the bounds in terms of the number $s$ of variables,
+that is, \cref{thm:as-main}(3,4), \cref{prop:as-bounds},
+\cref{lem:mo-estimate,cor:mo-extracted}, and the closed form in
+\cref{thm:un-decidable}; the effective countermodels of
+\cref{lem:as-countermodel}, since the procedures return only the answer; the
+results of \cref{sec:ap}; and the complexity results of \cref{sec:cx},
+together with the polynomial-space and polynomial-time claims of
+\cref{prop:sm-decide,lem:sm-mu,lem:sm-dead-states}, whose tests the artifact
+performs by finite searches.
+
+The trusted statement consists of the definitions of trees, the variance
+order, finite terms and regular graphs with their interpretations as trees,
+flat literals and their satisfaction, and the six entailment relations. Trees,
+the order, and the two representations are those of \citet{Zhao26}, whose
+characterization module relates the order to the greatest fixed point of the
+constructor rule and shows that the representations denote the regular and
+the finite trees. The kernel checks the proof terms; running the compiled
+procedures also relies on the compiler. \Cref{app:lean} gives the public
+statement, the module layout, the correspondence with the results of this
+paper, and the differences in detail. The artifact is included in
+\anon[the supplementary material]{\url{https://github.com/noti0na1/deci-ensse}}.

@@ -1,0 +1,72 @@
+\begin{figure}[tbp]
+\centering
+\begin{tikzpicture}[>=Stealth,font=\small,x=1cm,y=1cm,
+    every node/.style={inner sep=1.5pt},
+    atom/.style={inner sep=2pt},
+    seed/.style={atom,draw,thick,rounded corners=1pt},
+    hidden/.style={atom,draw,dashed,rounded corners=1pt},
+    mv/.style={->},
+    ml/.style={font=\scriptsize,inner sep=1pt},
+    opp/.style={densely dotted,thick}]
+  % height axis
+  \draw[black!40] (-0.75,-0.25) -- (-0.75,2.45);
+  \foreach \h/\y in {0/0,1/1.1,2/2.2}
+    {\draw[black!40] (-0.82,\y) -- (-0.68,\y);
+     \node[font=\scriptsize,anchor=east] at (-0.82,\y) {$\h$};}
+  \node[font=\scriptsize,anchor=south] at (-0.75,2.45) {$\len w$};
+  % (a) phi = x <= x -> x
+  \node[font=\footnotesize,anchor=west] at (-0.5,3.0) {(a) $\varphi=x\le x\to x$};
+  \node[seed] (s) at (0,1.1) {$(x^0,0)$};
+  \node[atom] (p) at (1.15,0) {$(x^1,\eps)$};
+  \node[atom] (o) at (2.3,1.1) {$(x^1,0)$};
+  \node[atom] (e) at (1.15,2.2) {$(x^0,00)$};
+  \draw[mv] (s) -- node[ml,below left]{$\mathrm{pop}_0$} (p);
+  \draw[mv] (p) -- node[ml,below right]{ext} (o);
+  \draw[mv,dashed] (s) -- node[ml,above left]{ext} (e);
+  \draw[mv,dashed] (e) -- node[ml,above right]{$\mathrm{pop}_0$} (o);
+  \draw[opp] (s) -- node[ml,above,fill=white]{opposites} (o);
+  \node[atom] (r2) at (3.35,2.2) {$(x^0,11)$};
+  \node[atom] (r1) at (3.9,1.1) {$(x^0,1)$};
+  \node[atom,draw,double,rounded corners=1pt] (r0) at (4.45,0) {$(x^0,\eps)$};
+  \draw[mv] (r2) -- node[ml,right]{$\mathrm{pop}_1$} (r1);
+  \draw[mv] (r1) -- node[ml,right]{$\mathrm{pop}_1$} (r0);
+  \node[ml,anchor=north] at (4.45,-0.25) {forbidden root};
+  % (b) psi = x <= z -> z
+  \node[font=\footnotesize,anchor=west] at (5.6,3.0) {(b) $\psi=x\le z\to z$};
+  \node[seed] (a) at (6.0,1.1) {$(x^0,0)$};
+  \node[seed] (b) at (11.6,1.1) {$(x^0,1)$};
+  \node[hidden] (z1) at (7.3,0) {$(z^1,\eps)$};
+  \node[hidden] (z0) at (9.9,0) {$(z^0,\eps)$};
+  \node[atom] (xb) at (8.8,1.1) {$(x^1,1)$};
+  \draw[mv,very thick] (a) -- node[ml,below left]{$\mathrm{pop}_0$} (z1);
+  \draw[mv] (b) -- node[ml,below right]{$\mathrm{pop}_1$} (z0);
+  \draw[mv,very thick] (z1) -- node[ml,below right]{$\mathrm{push}_1$} (xb);
+  \draw[opp] (z1) -- node[ml,below=1pt]{opposites} (z0);
+  \draw[opp] (xb) -- node[ml,above=1pt]{opposites} (b);
+  \node[ml,align=center] at (8.8,2.2) {$\mathrm{push}_1$ is the dual of $\mathrm{pop}_1$};
+\end{tikzpicture}
+\caption{Pure moves and extensions for the arrow, with each atom drawn at the
+height $\len w$ of its word: a pop lowers the stack, a push raises it, and an
+extension adds a letter at the bottom. Seeds are framed, hidden atoms dashed.
+(a) In $x\le x\to x$ (\cref{ex:lf-clauses,ex:lf-least}), the seed $(x^0,0)$
+derives its own opposite $(x^1,0)$, by a pop and an extension or, dashed, with
+the extension first (\cref{lem:lf-ext-first}): a single-seed inconsistency
+without any unit. The atom $(x^0,11)$ is dead for a different reason: it pops
+down to the forbidden root $(x^0,\eps)$. (b) In $x\le z\to z$
+(\cref{ex:ch-arrow}), the seeds $(x^0,0)$ and $(x^0,1)$ derive the opposite
+atoms $(z^1,\eps)$ and $(z^0,\eps)$ of the hidden $z$. Reversing the second
+branch with flipped signs (\cref{lem:lf-duality}) continues the first one (thick):
+the single seed $(x^0,0)$ derives $(x^1,1)$, the opposite of the second seed,
+which is collision return (\cref{lem:lf-collision}).}
+\Description{Two panels of atoms placed at heights 0, 1 and 2, the length of
+their words. Panel a: the framed seed x zero at word 0 pops to x one at the
+empty word, which extends to x one at word 0, drawn at the height of the seed
+and joined to it by a dotted line labeled opposites; a dashed route first extends the seed to x
+zero at 00 and then pops to the same atom. To the right, x zero at 11 pops
+twice to the doubly framed forbidden root x zero at the empty word. Panel b:
+the framed seeds x zero at 0 and x zero at 1 pop to the dashed hidden atoms z
+one and z zero at the empty word, joined by a dotted line labeled opposites;
+a thick push in direction 1 leads from z one to x one at word 1, which is
+joined by a dotted line to the second seed.}
+\label{fig:lf-moves}
+\end{figure}

@@ -1,0 +1,312 @@
+%% characterization -- existential entailment as (I0) and (U) and (II), with
+%% the satisfiability dispatch; the arrow example; remarks on covariant and
+%% joint-parity instances and on the one-sign case {bot,f}; pure forms of (U)
+%% and (II). Closure under intersection (prop:ch-meet) is in classes.tex.
+
+\section{The Characterization}\label{sec:ch}
+
+This section characterizes existential entailment over arbitrary trees by
+three conditions on single seeds. Let $X$ and $Z$ be disjoint finite sets of
+variables, let $\varphi$ be a system over $X$, and let $\psi$ be a system
+over $X\cup Z$ (\cref{def:bg-existential}); every variable of $\psi$ outside
+$Z$ belongs to $X$. An atom $(v^s,w)$ is \emph{visible} if $v\in X$ and
+\emph{hidden} if $v\in Z$. Restricting an assignment to $X$ restricts its set
+of atoms to $\Conf_X$, so by \cref{lem:lf-clauses}
+\begin{equation}\label{eq:ch-models}
+ \varphi\models\Exists\psi\quad\Longleftrightarrow\quad
+ \Mod(\varphi)\subseteq\mathcal F_\psi,\qquad\text{where }
+ \mathcal F_\psi=\{T|_X:T\in\Mod(\psi)\}.
+\end{equation}
+Here $\Mod(\varphi)$ consists of sets of visible atoms, and $\mathcal F_\psi$
+is the \emph{projected family} of $\psi$.
+
+\subsection{Three Conditions}\label{sec:ch-theorem}
+
+\begin{definition}[The three conditions]\label{def:ch-conditions}
+For $\varphi$ and $\psi$ as above, consider:
+\begin{description}[leftmargin=2.8em,font=\normalfont]
+\item[\CondI] $\mu_\psi|_X\subseteq\mu_\varphi$;
+\item[\CondU] for every visible atom $a$ that is live in $\varphi$,
+  $\Reach_\psi(a)$ contains no forbidden root of $\psi$;
+\item[\CondII] for every visible atom $a$ that is live in $\varphi$,
+  $\Reach_\psi(a)|_X\subseteq\Cl_\varphi(a)$.
+\end{description}
+\end{definition}
+
+The names are mnemonic: \CondI\ is the inclusion for zero seeds, comparing the
+consequences of the facts alone; \CondU\ concerns the unit clauses that are
+forbidden roots; and \CondII\ is the inclusion for a single seed $a$.
+
+When both systems are satisfiable, $\mu_\psi$ and $\mu_\varphi$ are their
+least models and $\Cl_\varphi(a)$ is the least model of $\varphi$ that
+contains $a$ (\cref{lem:lf-closure}(2)). So \CondI\ says that every visible
+atom forced by $\psi$ is forced by $\varphi$. Condition \CondU\ says that
+$\psi$ never derives a forbidden root from an atom that some solution of
+$\varphi$ contains. Condition \CondII\ says that every solution of $\varphi$
+that contains an atom $a$ also contains every visible atom that $\psi$
+derives from $a$.
+
+\begin{theorem}[Characterization]\label{thm:ch-characterization}
+Let $\varphi$ be a system over $X$ and $\psi$ a system over $X\cup Z$, for
+any arity and any variance, and let assignments range over arbitrary trees.
+\begin{enumerate}[leftmargin=*]
+\item If $\varphi$ is unsatisfiable, then $\varphi\models\Exists\psi$. If
+  $\varphi$ is satisfiable and $\psi$ is not, then
+  $\varphi\not\models\Exists\psi$.
+\item If $\varphi$ and $\psi$ are satisfiable, then
+  $\varphi\models\Exists\psi$ iff \CondI, \CondU\ and \CondII\ hold.
+\end{enumerate}
+Equivalently, $\Eall(\varphi,\psi)\iff\neg\Sat(\varphi)\lor
+\bigl(\Sat(\psi)\land\CondI\land\CondU\land\CondII\bigr)$.
+\end{theorem}
+
+Each condition concerns a single seed. An obstruction to extending a model
+$S$ of $\varphi$ may a priori involve two atoms of $S$ whose closures under
+$\psi$ collide in an exclusion pair, possibly at a hidden variable. The
+proof below uses collision return (\cref{lem:lf-collision}) to turn every
+such collision into a violation of \CondI\ or of \CondII\ at one seed. This
+step uses duality, which holds for every variance; no condition on pairs of
+seeds remains. When both systems are satisfiable, \cref{fig:ch-conditions}
+shows the four kinds of obstruction that the proof meets: three of them are the failures of the three
+conditions, and the fourth, a collision of two seeds, is reduced to the
+first or the third.
+
+\input{figures/ch-conditions}
+
+\begin{proof}
+Item (1) is immediate from \cref{def:bg-existential}.
+
+For (2), assume that $\varphi$ and $\psi$ are satisfiable. We first show
+that the three conditions are necessary. Assume $\varphi\models\Exists\psi$.
+The least model $\mu_\varphi$ of $\varphi$ is $T|_X$ for some model $T$ of
+$\psi$ by \cref{eq:ch-models}, and $T\supseteq\mu_\psi$ by
+\cref{lem:lf-closure}(2); hence $\mu_\psi|_X\subseteq T|_X=\mu_\varphi$,
+which is \CondI. Let $a$ be a visible atom that is live in $\varphi$. Its
+least model $\Cl_\varphi(a)$ is $T|_X$ for a model $T$ of $\psi$. Since $T$
+contains $a$ and is closed under the rules of $\psi$, it contains $\Reach_\psi(a)$.
+As $T$ contains no forbidden root, this gives \CondU, and
+$\Reach_\psi(a)|_X\subseteq T|_X=\Cl_\varphi(a)$ gives \CondII.
+
+Conversely, assume \CondI, \CondU\ and \CondII, let $S$ be a model of
+$\varphi$, and put $T=H_\psi(S)$, where $S$ is read as a set of atoms over
+$X\cup Z$. By \cref{lem:lf-closure}(5) and \cref{eq:ch-models}, it suffices
+to show that $T|_X=S$ and that $T$ is consistent. Every atom of $S$ is live
+in $\varphi$, and $\Cl_\varphi(a)\subseteq S$ for every $a\in S$ by
+\cref{lem:lf-closure}(1), since $S$ is closed under the rules of $\varphi$ and
+contains its facts.
+
+\emph{Visible part.} Clearly $S\subseteq T|_X$. A visible atom of $T$ lies in
+$\mu_\psi|_X\subseteq\mu_\varphi\subseteq S$, by \CondI, or in $\Reach_\psi(a)|_X$
+for some $a\in S$, which lies in $\Cl_\varphi(a)\subseteq S$ by \CondII.
+
+\emph{Consistency.} Suppose that $T$ is not consistent, and take seeds
+$x,y\in\Fact_\psi\cup S$ as in \cref{lem:lf-closure}(3). If $\Reach_\psi(x)$
+contains a forbidden root, then $x\notin\Fact_\psi$, because $\mu_\psi$ is
+consistent; so $x\in S$, contradicting \CondU. Otherwise $b\in \Reach_\psi(x)$
+and $\bar b\in \Reach_\psi(y)$ for some atom $b$; since an exclusion pair is
+unordered, we may assume that $y\in S$ if one of $x,y$ lies in $S$.
+\begin{itemize}[leftmargin=*]
+\item If $x,y\in\Fact_\psi$, then $b,\bar b\in\mu_\psi$, contradicting the
+  consistency of $\mu_\psi$.
+\item If $x\in\Fact_\psi$ and $y=(q,v)\in S$, then \cref{lem:lf-collision}
+  gives $(\bar q,v\delta)\in \Reach_\psi(x)\subseteq\mu_\psi$ for some $\delta$.
+  This atom is visible, so it lies in $\mu_\varphi\subseteq S$ by \CondI. But
+  $(q,v\delta)\in S$ because $S$ is extension closed, and $S$ has an
+  exclusion pair.
+\item If $x\in S$ and $y=(q,v)\in S$, possibly $x=y$, then
+  \cref{lem:lf-collision} gives $(\bar q,v\delta)\in \Reach_\psi(x)|_X$ for some
+  $\delta$, which lies in $\Cl_\varphi(x)\subseteq S$ by \CondII. Again
+  $(q,v\delta)\in S$, and $S$ has an exclusion pair.
+\end{itemize}
+Each case contradicts an assumption. Hence $T$ is a model of $\psi$ with
+$T|_X=S$, so $S\in\mathcal F_\psi$.
+\end{proof}
+
+The proof shows that, when the conditions hold, $H_\psi(S)$ is the least
+extension of every model $S$ of $\varphi$; when a condition fails, the least
+model $\mu_\varphi$ or $\Cl_\varphi(a)$ that refutes it is a countermodel.
+The two qualifications of the theorem are needed.
+\begin{itemize}[leftmargin=*]
+\item \emph{The satisfiability dispatch.} Let $X=\{x\}$, $\varphi$ empty, and
+  $\psi=\{z=\Bot,\ \Top\le z\}$ with $z$ hidden. Then $\mu_\psi$ consists of
+  atoms of $z$, and $\psi$ has no rule that involves $x$ other than its
+  extensions, so the three conditions hold; but $\psi$ is unsatisfiable, and
+  the entailment fails.
+\item \emph{Condition \CondU.} Let $n\ge0$, $X=\{y\}$, $\varphi$ empty, and
+  $\psi=\{y\le f(z_i)_i\}$ with distinct hidden variables $z_i$. Then $\psi$
+  has no facts, and its only pure moves from visible atoms are the
+  pops $(y^0,iw)\to(z_i^{c(i)},w)$, after which no pure move applies. By
+  \cref{lem:ch-pure} below, \CondI\ and \CondII\ hold. But $y=\Top$ has no
+  extension: \CondU\ fails at the live atom $(y^0,\eps)$, which is a
+  forbidden root of $\psi$.
+\end{itemize}
+The theorem also depends on duality. For a set of one-premise rules without
+duals, say $(x^0,w)\to(z^0,w)$ and $(y^0,w)\to(z^1,w)$ with $z$ hidden, the
+three conditions hold for the empty antecedent, but $x=y=\Top$ produces an
+exclusion pair at $z$. No system has exactly these rules: by
+\cref{lem:lf-duality}, a system with these rules also has the duals
+$(z^1,w)\to(x^1,w)$ and $(z^0,w)\to(y^1,w)$, which expose the collision as the
+visible consequences $(x^0,w)\Rightarrow^*(y^1,w)$ and
+$(y^0,w)\Rightarrow^*(x^1,w)$, and \CondII\ fails.
+
+The conditions only need pure derivations of $\psi$, from extended seeds.
+
+\begin{lemma}[Pure forms]\label{lem:ch-pure}
+\leavevmode
+\begin{enumerate}[leftmargin=*]
+\item \CondU\ holds iff there are no visible atom $(p,u)$ that is live in
+  $\varphi$, word $\alpha$ and forbidden root $e$ of $\psi$ with
+  $(p,u\alpha)\to^*_\psi e$.
+\item \CondII\ holds iff $b\in\Cl_\varphi(p,u)$ for every visible atom
+  $(p,u)$ that is live in $\varphi$ and every visible atom $b$ with
+  $(p,u)\to^*_\psi b$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+If $(p,u)$ is live in $\varphi$, so is $(p,u\alpha)$, and
+$\Cl_\varphi(p,u\alpha)\subseteq\Cl_\varphi(p,u)$
+(\cref{lem:lf-closure}(4)). By \cref{lem:lf-ext-first}, $b\in \Reach_\psi(p,u)$
+iff $(p,u\alpha)\to^*_\psi b$ for some $\alpha$. Item (1) follows directly,
+since $(p,u\alpha)$ is again a live visible atom. For (2), the condition is
+clearly necessary. Conversely, if $b\in \Reach_\psi(p,u)|_X$ for a live $(p,u)$,
+then $(p,u\alpha)\to^*_\psi b$ for some $\alpha$, and the condition, applied
+to the live atom $(p,u\alpha)$, gives
+$b\in\Cl_\varphi(p,u\alpha)\subseteq\Cl_\varphi(p,u)$.
+\end{proof}
+
+\begin{example}[The consequent $x\le z\to z$]\label{ex:ch-arrow}
+For the arrow of \cref{ex:lf-arrow}, let $X=\{x\}$, $Z=\{z\}$ and
+$\psi=\{x\le z\to z\}$, the literal $x\le f(z,z)$. By
+\cref{tab:lf-clauses}, $\psi$ has the forbidden root $(x^0,\eps)$, no
+facts, and the pure moves
+\[
+ (x^0,0w)\to(z^1,w)\to(x^1,1w),\qquad (x^0,1w)\to(z^0,w)\to(x^1,0w).
+\]
+No pure move leaves a negative atom of $x$. So the pure derivations of $\psi$
+of positive length between visible atoms are exactly
+$(x^0,iw)\to^*(x^1,\bar\imath w)$, where $\bar\imath=1-i$: $\psi$ exchanges
+the first letter and the sign. Since $\mu_\psi=\varnothing$, \CondI\ holds for
+every antecedent, and $\psi$ is satisfiable, with $x=\Bot$.
+
+\emph{The empty antecedent.} Let $\varphi_0$ be empty. Then \CondU\ fails at
+$(x^0,\eps)$, with the countermodel $x=\Top$. Condition \CondII\ fails at
+$(x^0,0)$: $\psi$ derives $(x^1,1)$, but $\Cl_{\varphi_0}((x^0,0))$ consists of
+the atoms $(x^0,0w)$, the leaf pair $(0\Sigma^*,\varnothing)$ of the
+countermodel $x=\Bot\to\Omega$ (\cref{ex:lf-arrow}). Indeed
+$\Bot\to\Omega\le_c z\to z$ would require $z\le_c\Bot$ and $\Omega\le_c z$.
+The tree $\Bot\to\Top$, with leaf pair $(\Sigma^+,\varnothing)$, fails for a
+reason that a priori involves two seeds: the closures of $(x^0,0)$ and
+$(x^0,1)$ under $\psi$ contain the exclusion pair $(z^1,\eps)$ and
+$(z^0,\eps)$. Collision return reverses the second branch
+$(x^0,1)\to(z^0,\eps)$ into $(z^1,\eps)\to(x^1,1)$, which continues the first
+branch: the single seed $(x^0,0)$ derives $(x^1,1)$, the opposite of the
+second seed, and \CondII\ fails at $(x^0,0)$. The extension in
+\cref{lem:lf-collision} is needed in general. The atom $(x^0,\eps)$ derives
+$(z^0,\eps)$ through its extension $(x^0,1)$, which collides with the atom
+$(z^1,\eps)$ derived from $(x^0,0)$; collision return gives $(x^1,1)$, the
+opposite of an extension of $(x^0,\eps)$, whereas $(x^1,\eps)$ is not
+derivable from $(x^0,0)$.
+
+\emph{The antecedent $x\le x\to x$.} Let $\varphi_1=\{x\le x\to x\}$ be the
+system of \cref{ex:lf-clauses}. It is satisfiable. Condition \CondU\ holds,
+because $(x^0,\eps)$ is a forbidden root of $\varphi_1$ as well, hence dead.
+For \CondII, by \cref{lem:ch-pure} it suffices that
+$(x^1,\bar\imath w)\in\Cl_{\varphi_1}((x^0,iw))$ for every live $(x^0,iw)$,
+and $\varphi_1$ derives it: $(x^0,0w)\to(x^1,w)\to(x^1,1w)$ by $\mathrm{pop}_0$ and
+$\mathrm{push}_1$, and $(x^0,1w)\to(x^0,w)\to(x^1,0w)$ by $\mathrm{pop}_1$
+and $\mathrm{push}_0$. By \cref{thm:ch-characterization},
+$\varphi_1\models\exists z\,\psi$; indeed $z=x$ is a witness.
+\end{example}
+
+\subsection{Special Cases}\label{sec:ch-remarks}
+
+\begin{remark}[Covariant and joint-parity instances]\label{rem:ch-parity}
+A \emph{parity assignment} of a system $\chi$ is a map $\pi:V\to\{0,1\}$ with
+$\pi(u)=\pi(v)$ for every literal $u\le v$ and $\pi(a_i)=\pi(u)\oplus c(i)$
+for every $i$ and every literal $f(a_i)_i\le u$ or $u\le f(a_i)_i$ of $\chi$.
+By \cref{tab:lf-clauses}, every rule of $\chi$ then preserves the bit
+$\kappa(v^s,w)=s\oplus\pi(v)$ of an atom; for instance, $\mathrm{push}_i$ of
+$f(a_i)_i\le u$ leads from $\kappa=c(i)\oplus\pi(a_i)=\pi(u)$ to
+$\kappa=\pi(u)$. Opposite atoms have different bits. Hence no derivation
+leads from an atom to the opposite of one of its extensions: self-collisions,
+cause (c) of \cref{cor:lf-dead}, do not occur, and in a satisfiable system
+every dead atom is dead by support. Likewise, in \cref{lem:lf-collision}
+the two colliding seeds have different bits, so in the proof of
+\cref{thm:ch-characterization} two branches from the same seed never collide.
+
+More is true. Rename every atom $(v^s,w)$ to $(v^{s\oplus\pi(v)},w)$. By
+\cref{tab:lf-clauses}, this maps the rules, facts and forbidden
+roots of $\chi$ onto those of the following system $\chi^\pi$ for the
+covariant variance $c=0$: $\chi^\pi$ keeps every literal of $\chi$ whose root
+has $\pi=0$ and reverses every other one, where the root of $u\le v$, $u=\Bot$
+and $\Top\le u$ is $u$. Reversal turns $u\le v$ into $v\le u$, a lower
+constructor literal into the upper one with the same variables and
+conversely, and exchanges $u=\Bot$ and $\Top\le u$. On trees the renaming is
+$\rho(v)\mapsto\nu_{\pi(v)}\rho(v)$, read covariantly: the covariant leaf
+cone of sign $s\oplus\pi(v)$ of $\nu_{\pi(v)}\rho(v)$ is the cone $L^s$ of
+$\rho(v)$, because $(\nu_rt)^\partial=\nu_{1\oplus r}t$ by
+\cref{lem:bg-normalization}(1). So $\rho$ solves
+$\chi$ iff this assignment solves $\chi^\pi$, by \cref{lem:lf-clauses}. If
+$\varphi\wedge\psi$ has a \emph{joint} parity assignment, one renaming serves
+both systems and keeps visibility, and the instance is equivalent to a
+covariant instance of the same size, in every tree class, since $\nu_r$ is an
+involution that preserves finiteness and regularity
+(\cref{lem:bg-normalization}). The covariant case itself is $\pi=0$, where
+every rule keeps the sign and the rules of sign $1$ are the duals of the
+rules of sign $0$.
+
+\Cref{thm:ch-characterization} needs no parity assignment, and the system
+$x\le x\to x$ has none, since it would require $\pi(x)=\pi(x)\oplus c(0)$. Its
+self-collision $(x^0,00)\to(x^1,0)$ (\cref{ex:lf-least}) is exactly what a
+parity assignment excludes.
+\end{remark}
+
+\begin{remark}[One sign: the signature $\BF$]\label{rem:ch-one-sign}
+Let $f$ be covariant, and consider trees over $\BF$ and systems without
+literals $\Top\le u$ (\cref{sec:bg-trees}). Every leaf of such a tree has
+sign $1$, so $L^0_t=\varnothing$, and $L^1_t$ is the complement of the set
+$\Kpos(t)$ of positions labeled $f$ (\cref{thm:lf-representation}(4)). The
+trees over $\BF$ thus correspond to the extension-closed sets of negative
+atoms. All facts of such a system come from literals $u=\Bot$ and are
+negative atoms, and every rule keeps the sign, so the closure of a set of negative atoms consists of
+negative atoms, and an exclusion pair never arises. The models over $\BF$ are
+therefore the sets of negative atoms that contain the facts, are
+closed under the rules, and avoid the forbidden roots $(u^1,\eps)$ of the
+lower constructor literals $f(a_i)_i\le u$. \Cref{lem:lf-closure} and
+\cref{thm:ch-characterization} hold over $\BF$, with satisfiability over
+$\BF$, by the same proofs, in which the exclusion case is void, once every
+set of atoms is taken in the universe
+$\Conf^-_V=\{v^1:v\in V\}\times\Sigma^*$ of negative atoms: the seed sets,
+the visible sets, the models, the closures, liveness, and the atoms
+quantified in the three conditions are all negative. (Without this
+restriction the statement fails: for the empty system the closure of
+$(x^0,\eps)$ is consistent, but no $\Top$-free assignment contains it.)
+
+Read through complements, a negative atom $(v^1,w)$ says $w\notin\Kpos(v)$,
+and each rule on negative atoms is the contrapositive of a clause on
+constructor positions: $u\le v$ says $\Kpos(u)\subseteq\Kpos(v)$,
+$f(a_i)_i\le u$ says $\eps\in\Kpos(u)$ and $i\Kpos(a_i)\subseteq\Kpos(u)$,
+$u\le f(a_i)_i$ says that $iw\in\Kpos(u)$ implies $w\in\Kpos(a_i)$, $u=\Bot$
+says $\eps\notin\Kpos(u)$, and extensions say that $\Kpos(v)$ is prefix closed.
+In these terms, \CondI\ says that every visible position that some solution
+of $\varphi$ puts into a variable is put there by some solution of $\psi$;
+\CondU\ says that every visible position that every solution of $\psi$ puts
+into a variable is put there by every solution of $\varphi$; and \CondII,
+read contrapositively, says that every solution of $\varphi$ is closed under
+the visible consequences of the clauses of $\psi$. Over $\BF$ the three
+conditions therefore compare, respectively, the unions of all solutions, the
+least solutions, and the closures of single positions, for $\varphi$ and for
+the projection of $\psi$. In this picture the solution sets are closed under
+nonempty unions and intersections of constructor positions, no exclusions
+and no self-collisions occur, and the only obstructions are single seeds. The
+decision procedure of this paper does not treat $\BF$ separately; it reduces
+$\BF$ to $\BFT$ (\cref{sec:tc}).
+\end{remark}
+
+A forbidden root has the empty word, so the pure derivations in
+\cref{lem:ch-pure}(1) end with an empty stack. A failure of \CondII\ with a
+live seed $a$ and a consequence $b$ is thus witnessed by a pure derivation of
+$\psi$ from a live extension of $a$ to $b$, with $b$ outside the least model
+of $\varphi$ that contains that extension. \Cref{sec:sm,sec:un,sec:ex} turn the satisfiability tests, \CondI,
+\CondU\ and this form of \CondII\ into problems about finite automata.

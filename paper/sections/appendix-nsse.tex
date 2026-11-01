@@ -1,0 +1,525 @@
+%% appendix-nsse — results of Zhao26 (plain entailment) used beyond the
+%% background: satisfiability and clashes (with copy literals), cores, ordinary
+%% and symbolic states of derived monitors (the monitors, derivatives and label
+%% facts are in background.tex), the structure of the bounded-depth search, and
+%% its constants with the closed-form estimate.
+
+\section{Results Used from the Plain-Entailment Proof}\label{app:bg}
+
+This appendix collects what we use from the decidability proof for plain
+entailment of \citet{Zhao26} beyond \cref{sec:bg}: the satisfiability criteria
+and their extension to copy literals (\cref{app:bg-sat}); the cores of the
+canonical hierarchy (\cref{app:bg-cores}); the ordinary and symbolic states
+of derived monitors (\cref{app:bg-monitors}); the structure of the proof of
+\cref{thm:bg-search} in the precise terms that later sections extend
+(\cref{app:bg-search}); and the constants of its length bound
+(\cref{app:bg-constants}). The results are quoted
+with the hypotheses of that paper and proved there, for every arity and every
+variance; we give proofs only where we extend a result. Except in
+\cref{app:bg-sat}, nothing here uses a property of subtype constraints, and
+every alphabet may be infinite unless it is said to be finite.
+
+\subsection{Satisfiability}\label{app:bg-sat}
+
+In the syntax of \citet{Zhao26} a system has no copy literals
+(\cref{sec:bg-nsse}). For a covariant system $\chi$ without copy literals over a
+finite set $V$, the \emph{closure} $D^{\mathrm{cov}}_\chi$ is the least reflexive and
+transitive relation on $V$ such that, for every $i\in\Sigma$,
+\begin{equation}\label{eq:bg-decomp}
+ \frac{f(a_j)_j\le u\in\chi\qquad D^{\mathrm{cov}}_\chi(u,v)\qquad v\le f(b_j)_j\in\chi}
+      {D^{\mathrm{cov}}_\chi(a_i,b_i)} .
+\end{equation}
+It is computed by saturation in time polynomial in the size of $\chi$, since
+there are $\len V^2$ pairs. The \emph{path bounds} $\Up(\eta,u,v)$ and
+$\Lo(\eta,u,v)$, for words $\eta\in\Sigma^*$ and $u,v\in V$, are defined by
+$\Up(\eps,u,v)\iff\Lo(\eps,u,v)\iff D^{\mathrm{cov}}_\chi(u,v)$ and
+\begin{equation}\label{eq:bg-paths}
+\begin{aligned}
+ \Up(i\eta,u,v)&\iff\exists z,\bar b\ \bigl[D^{\mathrm{cov}}_\chi(u,z)\land
+   (z\le f(b_j)_j)\in\chi\land\Up(\eta,b_i,v)\bigr],\\
+ \Lo(i\eta,u,v)&\iff\exists\bar a,z\ \bigl[(f(a_j)_j\le z)\in\chi\land
+   D^{\mathrm{cov}}_\chi(z,v)\land\Lo(\eta,u,a_i)\bigr].
+\end{aligned}
+\end{equation}
+In every solution, $\Up(\eta,u,v)$ says that the subtree of $u$ at $\eta$, when
+it exists, is below $v$, and $\Lo(\eta,u,v)$ says that $u$ is below the subtree
+of $v$ at $\eta$, when it exists \nssecite{Lemma ``Path rules''}. A \emph{label clash} is a
+literal $f(\bar a)\le u$ or $\Top\le u$ of $\chi$, with \emph{root label} $f$ or
+$\Top$, and a literal $v\le f(\bar b)$ or $v=\Bot$, with root label $f$ or
+$\Bot$, such that $D^{\mathrm{cov}}_\chi(u,v)$ and the first root label is greater than the
+second; that is, every such pair except two constructor literals. A
+\emph{cycle clash} is a nonempty word $\eta$ and variables $a,b$ with
+\begin{equation}\label{eq:bg-cycle-clash}
+ \Lo(\eta,a,a),\qquad D^{\mathrm{cov}}_\chi(a,b),\qquad \Up(\eta,b,b).
+\end{equation}
+
+\begin{theorem}[Satisfiability criteria {\nssecite{Sect.\ ``Closure and Supported Path Bounds''; Theorems ``Least shape and satisfiability'', ``Covariant finite satisfiability'' and ``Regular countermodel transfer''; Lemma ``Common shape and selection''; Lemma ``Finite signed correspondence''}}]\label{thm:bg-nsse-sat}
+For every arity and every variance:
+\begin{enumerate}[leftmargin=*]
+\item Let $\chi$ be a covariant system without copy literals. In every
+  solution $\sigma$ of $\chi$, $D^{\mathrm{cov}}_\chi(u,v)$ implies $\sigma(u)\le\sigma(v)$.
+  The system $\chi$ has a solution iff it has no label clash, and a finite
+  solution iff it has neither a label clash nor a cycle clash. A cycle clash
+  exists iff the finite graph on the pairs $(a,b)$ with $D^{\mathrm{cov}}_\chi(a,b)$, with an
+  edge from $(a,b)$ to $(a',b')$ whenever $\Lo(i,a',a)$ and $\Up(i,b,b')$ for
+  some letter $i$, has a cycle; it suffices to test words $\eta$ of lengths $1$
+  through $\len V^2$.
+\item For every system $\chi$ without copy literals and every variance
+  $c$, $\Sat_c(\chi)\iff\Sat(\chi^\pm)$ and
+  $\Sat_{\mathrm{fin},c}(\chi)\iff\Sat_{\mathrm{fin}}(\chi^\pm)$.
+\item Every system without copy literals that has a solution has a regular
+  solution.
+\end{enumerate}
+\end{theorem}
+
+The signed system of a system without copy literals again has no copy
+literals, so part (1) decides both satisfiability problems of part (2). The
+following lemma extends parts (2) and (3) to copy literals and to all three
+tree classes.
+
+\begin{lemma}[Signed satisfiability]\label{lem:bg-signed-sat}
+For every arity $n\ge0$, every variance $c$, every system $\chi$ over $\BFT$,
+copy literals included, and every tree class $\mathcal D$,
+\[
+ \Sat_{\mathcal D,c}(\chi)\iff\Sat_{\mathcal D}(\chi^\pm),
+ \qquad\text{and}\qquad
+ \Sat_c(\chi)\iff\Sat_{\mathrm{reg},c}(\chi).
+\]
+\end{lemma}
+\begin{proof}
+If $\rho$ is a $\mathcal D$-solution of $\chi$, then $\rho^\pm$ is a
+$\mathcal D$-solution of $\chi^\pm$ by \cref{lem:bg-signed}. For the converse
+let $\sigma$ be a $\mathcal D$-solution of $\chi^\pm$.
+
+For $n=0$ there are no children, so the literals of $\chi^\pm$ of sign $+$ in
+\cref{tab:bg-signed} are the literals of $\chi$ with every variable $v$ replaced
+by $v^+$, and the order is the same chain for every variance. Hence
+$v\mapsto\sigma(v^+)$ solves $\chi$, and the three classes coincide.
+
+Let $n\ge1$, and let $\chi^\flat$ be obtained by \cref{lem:bg-sandwich}, with
+fresh variables $y,o$ for each copy literal $u\le v$ and the literals
+$f(a_i)_i\le y$ and $y\le f(b_i)_i$. We extend $\sigma$ to a $\mathcal
+D$-solution of $(\chi^\flat)^\pm$. The four signed literals of the two new
+literals are
+\[
+ f(a_i^{c(i)})_i\le y^+,\quad y^-\le f(a_i^{\bar c(i)})_i,\quad
+ y^+\le f(b_i^{c(i)})_i,\quad f(b_i^{\bar c(i)})_i\le y^- .
+\]
+Put $\sigma(o^+)=\sigma(o^-)=\Bot$, $\sigma(y^+)=f(\sigma(a_i^{c(i)}))_i$, and
+$\sigma(y^-)=f(\sigma(b_i^{\bar c(i)}))_i$. The first and fourth literals hold
+with equality. The other two hold iff
+$\sigma(a_i^{c(i)})\le\sigma(b_i^{c(i)})$ and
+$\sigma(b_i^{\bar c(i)})\le\sigma(a_i^{\bar c(i)})$ for every $i$. For $i\ge1$
+both sides are $\sigma(o^\pm)$. For $i=0$ these are the two inequalities
+$\sigma(u^+)\le\sigma(v^+)$ and $\sigma(v^-)\le\sigma(u^-)$, in either case of
+$c(0)$, and they hold because $u^+\le v^+$ and $v^-\le u^-$ are the signed
+literals of $u\le v$. The new values lie in $\mathcal D$.
+
+So $(\chi^\flat)^\pm$ is $\mathcal D$-satisfiable, and in particular satisfiable.
+By \cref{thm:bg-nsse-sat}(2), $\chi^\flat$ has a solution, and a finite one
+if $\mathcal D=\Trees_{\mathrm{fin}}$; by \cref{thm:bg-nsse-sat}(3) it has a
+regular one. In each case $\chi^\flat$ has a $\mathcal D$-solution for the
+variance $c$, whose restriction to the variables of $\chi$ is a
+$\mathcal D$-solution of $\chi$ by \cref{lem:bg-sandwich}.
+
+Finally, if $\chi$ has a solution, then so has $\chi^\flat$ by
+\cref{lem:bg-sandwich}, hence a regular one by \cref{thm:bg-nsse-sat}(3),
+and its restriction is a regular solution of $\chi$.
+\end{proof}
+
+\subsection{Cores}\label{app:bg-cores}
+
+Let $w$ be a nonempty word with canonical hierarchy $(w_j,\ell_j)$. Every
+position of $w_j$ carries a \emph{core}, which is either a cut of $w$, an
+\emph{ordinary core}, or a symbolic \emph{start core}. At level $0$, position
+$i$ has core $i$. At level $j+1$, the first position has a new start core
+$\star_{j+1}$, and position $i\ge1$ inherits the core of the $(i-1)$st
+occurrence of $\ell_j$ in $w_j$, counting occurrences from $0$; this is the
+marker that closes the block $X_{i-1}$, and the block $X_i$ is read from it.
+Let $\Cores_j$ be the set of ordinary cores of $w_j$.
+
+\begin{lemma}[Cores {\nssecite{Lemma ``Cores''}}]\label{lem:bg-cores}
+\leavevmode
+\begin{enumerate}[leftmargin=*]
+\item $\Cores_{j+1}\subseteq\Cores_j$. The start cores of $w_j$ occupy an
+  initial segment of its positions, are pairwise distinct, and number at most
+  $j$; the ordinary cores increase from left to right.
+\item If $\Cores_j\ne\varnothing$ and $e_j=\max\Cores_j$, then
+  \[
+   \Cores_{j+1}=\{p : p<e_j\text{ and }\wsuf w{e_j}\pre\wsuf wp\}.
+  \]
+  In particular, $(p,e_j)$ is a comparison of $w$ for every
+  $p\in\Cores_{j+1}$. If $\Cores_j=\varnothing$, then
+  $\Cores_{j+1}=\varnothing$.
+\end{enumerate}
+\end{lemma}
+
+The cut $e_j$ is the \emph{terminal core} of level $j$, the core of the last
+position of $w_j$. Thus each level collects the left ends of the comparisons
+whose right end is the terminal core of the level below. The proof of
+\cref{thm:bg-depth} combines this lemma with \cref{lem:bg-return-gap}. Both
+lemmas hold for every word, respectively every rejected word, and every reader.
+
+\subsection{Lettered Monitors and Derivatives}\label{app:bg-monitors}
+
+Lettered monitors (\cref{def:bg-monitor}), the lettered monitor of a reader,
+which has the same nonempty holes as the reader, shifted blocks, derivatives
+(\cref{def:bg-derivative}), the label facts \cref{eq:bg-label-facts} and the
+desubstitution lemma (\cref{lem:bg-desub}) are stated in
+\cref{sec:bg-hierarchy}. We add the structure of the states along a
+hierarchy.
+
+\paragraph{Ordinary and symbolic states}
+Along a hierarchy, the states of $\mathcal M_i$ are the $N$ states of
+$\mathcal M_0$, the \emph{ordinary} states, and the $i$ \emph{symbolic} states
+$\star_1,\ldots,\star_i$ added by the derivatives. The ordinary states form a
+closed copy: a derived transition from an ordinary state runs the previous
+monitor over $\ell X$, so it stays ordinary. The \emph{entry state} of a
+position $x$ of $w_i$ is the state of $\mathcal M_i$ at the cut $x$, from which
+its letter is read. By the label facts and the core recursion, a position with
+an ordinary core $p$ has as entry state the state of $\mathcal M_0$ at the cut
+$p$ of $w$, and a position with a start core has a symbolic entry state
+\nssecite{Appendix ``Details of the Bounded-Depth Compression''}.
+
+\subsection{Structure of the Bounded-Depth Search}\label{app:bg-search}
+
+Let $\mathcal M_0$ be a lettered monitor with $N\ge1$ states, for instance the
+monitor of a reader, and let $w$ be a nonempty hole of depth $D\le d$, with
+hierarchy $(w_i,\ell_i)$ and derived monitors $\mathcal M_i$. The proof of
+\cref{thm:bg-search} has the five steps sketched in \cref{sec:bg-hierarchy}.
+
+\paragraph{Step 1: derivatives}
+By \cref{lem:bg-desub}, $w_i$ is a hole of $\mathcal M_i$, which has $N+i$
+states.
+
+\paragraph{Step 2: dictionary normal form}
+For a word $v$ let $\alphof(v)$ be its set of letters. The level-$i$
+\emph{dictionary} is $\mathcal A_i=\alphof(w_i)$, and $g_i=\len{\mathcal A_i}$.
+The \emph{start count} $s_i\le i$ is the number of positions of $w_i$ with a
+start core; by \cref{lem:bg-cores} they form the \emph{start prefix}
+$\wpre{w_i}{s_i}$. The set $U_i$ of \emph{entry states} is the set of ordinary
+states together with the symbolic states that are entry states of positions in
+the start prefix, so $\len{U_i}\le N+s_i$. Every entry state occurring in $w_i$
+lies in $U_i$. The \emph{protected} letters are
+\[
+ P_i=\{\ell_i\}\cup\alphof(\wpre{w_i}{s_i}),\qquad\len{P_i}\le s_i+1 .
+\]
+An unprotected letter occurs only outside the start prefix, so all its
+occurrences have ordinary entry states. A comparison $(s,e)$ of $w_i$ is
+\emph{left maximal} if $s\ge1$ and its predecessor letters $w_i[s-1]$ and
+$w_i[e-1]$ differ. The \emph{boundary pairs} $\operatorname{BP}_i$ are the
+ordered pairs $(w_i[s-1],w_i[e-1])$ over the left-maximal comparisons with
+$e<\len{w_i}$, and the \emph{endpoint pairs} $\operatorname{EP}_i$ the same
+pairs over those with $e=\len{w_i}$; each pair is counted once, and
+$b_i=\len{\operatorname{BP}_i}$. Endpoint pairs have $\ell_i$ as second
+component. A letter $a\in\mathcal A_i\setminus P_i$ is \emph{isolated} if no pair
+in $\operatorname{BP}_i$ has $a$ as one component and a letter outside $P_i$ as
+the other; then all unequal comparison partners of $a$, endpoint partners
+included, are protected. The \emph{exchange type} of an unprotected letter $a$
+consists of the following tables of $\mathcal M_i$:
+\begin{itemize}[leftmargin=*]
+\item the transition $\zeta\mapsto\delta_i(\zeta,a)$ and the target
+  $\Tfin_i(\zeta,a)$ for every ordinary state $\zeta$;
+\item for each $R\in\{\Lambda_i,\Lfin_i\}$, the \emph{self table}
+  $R((\zeta,a),(\zeta',a))$ for ordinary $\zeta,\zeta'$;
+\item for each such $R$, the \emph{protected rows} $R((\zeta,a),(\vartheta,z))$
+  and $R((\vartheta,z),(\zeta,a))$ for ordinary $\zeta$, $\vartheta\in U_i$, and
+  $z\in P_i$;
+\item for each such $R$, the \emph{initial row} $R(\triangleright,(\zeta,a))$
+  for ordinary $\zeta$, which is false at every level $i\ge1$.
+\end{itemize}
+
+\begin{lemma}[Exchange types {\nssecite{Lemma ``Exchange types''}}]\label{lem:bg-exchange-types}
+At every level $1\le i<D\le d$ there are at most $\mathsf C(N,d)$ exchange
+types, with $\mathsf C$ from \cref{eq:bg-col}.
+\end{lemma}
+
+\begin{lemma}[Comparison-preserving maps {\nssecite{Lemma ``Comparison-preserving maps''}}]\label{lem:bg-comparison-map}
+Let $v$ be a nonempty word with last letter $\ell$, and $h$ a letter map that
+\emph{identifies no unequal predecessor pair}: for every comparison $(s,e)$ of
+$v$ with $s\ge1$, terminal ones included, $h(v[s-1])=h(v[e-1])$ implies
+$v[s-1]=v[e-1]$. Then $v$ and $h(v)$ have exactly the same comparisons, and on
+the letters of $v$, $h(a)=h(\ell)$ implies $a=\ell$.
+\end{lemma}
+
+A \emph{level map} at level $i$ is a map $h$ from $\mathcal A_i$ into itself. It
+acts letterwise on $w_i$, and $h(w_i)$ is expanded with the original lower
+markers $\ell_{i-1},\ldots,\ell_0$ to a new word $w'$. The induced maps on the
+higher levels are $h_0=h$ and $h_{r+1}([X])=[h_r^*(X)]$, where $h_r^*$ applies
+$h_r$ letterwise to a block.
+
+\begin{lemma}[Shape under a level map {\nssecite{Lemma ``Shape under a level map''}}]\label{lem:bg-level-maps}
+Let $h$ be a level map at level $i$ that identifies no unequal predecessor pair
+of $w_i$, fixes the start prefix $\wpre{w_i}{s_i}$ letterwise, preserves the
+level-$i$ state run, and makes $h(w_i)$ a hole of $\mathcal M_i$. Then $w'$ is a
+hole of $\mathcal M_0$, its markers below $i$ are unchanged, and its dictionaries
+below $i$ are subsets of the old ones. For every $r\ge0$,
+$w'_{i+r}=h_r(w_{i+r})$, $\ell'_{i+r}=h_r(\ell_{i+r})$, and $h_r$ identifies no
+unequal predecessor pair of $w_{i+r}$. Every start count is unchanged, and
+exactly the same levels are unary; in particular $w'$ has depth $D$ and no
+dictionary of $w'$ is larger than the corresponding one of $w$.
+\end{lemma}
+
+\begin{lemma}[Isolated exchange {\nssecite{Lemma ``Isolated exchange''}}]\label{lem:bg-isolated-exchange}
+Let $1\le i<D$, and let distinct isolated letters $a,b$ of $w_i$ have the same
+exchange type. The level map that replaces $a$ by $b$ satisfies the hypotheses
+of \cref{lem:bg-level-maps}, so the resulting word is a hole of depth $D$ with
+every start count unchanged and no dictionary larger; its level-$i$ dictionary
+is strictly smaller. Choosing, between the two directions, the letter with the
+shorter level-zero expansion as the image also makes the word no longer.
+\end{lemma}
+
+A hole is \emph{normal} if, at every level $1\le i<D$, distinct isolated
+letters have distinct exchange types, computed in its own hierarchy.
+
+\begin{lemma}[Dictionary normal form and bounded dictionaries {\nssecite{Lemmas ``Dictionary normal form'', ``Dictionary counting and propagation'' and ``Bounded dictionaries''}}]\label{lem:bg-dictionary}
+\leavevmode
+\begin{enumerate}[leftmargin=*]
+\item Every nonempty hole has a normal hole of the same depth, no greater
+  length, the same start counts, and no larger dictionary at any level.
+\item For a normal hole of depth $D\le d$ and $1\le i<D$,
+  $g_i\le\mathsf A(N,d)+2b_i$. For every nonempty word and every level $i$,
+  $b_i\le b_{i+1}+g_{i+1}-1$.
+\item For a normal hole of depth $D\le d$, with $\mathsf A=\mathsf A(N,d)$, at
+  every $1\le i<D$,
+  \[
+   2b_i\le(\mathsf A-1)(3^{D-1-i}-1),\qquad g_i\le1+(\mathsf A-1)3^{D-1-i}.
+  \]
+  Consequently every nonempty hole of depth $D\le d$ has a hole of depth $D$ and
+  no greater length with $g_i\le\mathsf G(N,d)$ for every $1\le i\le D$.
+\end{enumerate}
+\end{lemma}
+
+The counting in part (2) partitions $\mathcal A_i$ into the at most $d+1$
+protected letters, the isolated letters, at most one per exchange type, and the
+remaining letters, each of which is a component of a boundary pair with both
+components unprotected. For the propagation, \cref{lem:bg-alignment} shows
+that every boundary pair of level $i$ consists of the first unequal letters,
+scanning from the right, of the two blocks of a boundary or endpoint pair of
+level $i+1$, with $\ell_i$ standing for an exhausted block. No bound on $g_0$
+is needed.
+
+\paragraph{Step 3: the top level}
+
+\begin{lemma}[Unary words {\nssecite{Appendix ``Details of the Bounded-Depth Compression''}}]\label{lem:bg-unary}
+Let $z^m$ be a hole of a lettered monitor with state set $\mathcal Q$. If two of
+the nonfinal cuts $i<i'\le m-1$ have equal states, deleting the letters between
+them gives a hole whose labels are a subsequence of those of $z^m$ with the same
+last label. Repeating this gives a unary hole $z^{m'}$ with
+$1\le m'\le\len{\mathcal Q}$.
+\end{lemma}
+
+Every pair of cuts of a unary word is a comparison, so this deletion creates no
+new kind of label pair. Applied to $w_D$ in $\mathcal M_D$, it gives at most
+$N+D$ letters.
+
+\paragraph{Step 4: simultaneous compression}
+Let $\mathcal M$ be a lettered monitor with state set $\mathcal Q$ and start
+$\zeta_0$, and $\ell$ a marker. Write $\lab_0(\zeta)$ for the initial
+shifted-block label: $(\zeta,\ell)$ for $\zeta\in\mathcal Q$ and $\triangleright$
+for $\star$. For blocks $X_1,\ldots,X_k$ avoiding $\ell$, their \emph{summary}
+is the tuple of the four functions
+\[
+\begin{aligned}
+ \fexit_a(\zeta)&\in\mathcal Q,&&\text{the exit of the shifted block of }X_a
+   \text{ read from }\zeta,\\
+ \fterm_a(\zeta,\zeta'')&\in\{0,1\},&&\text{whether some label of it is related
+   by }\Lfin\text{ to }(\zeta'',\ell),\\
+ \feq(a,b)&\in\{0,1\},&&\text{whether }X_a=X_b,\\
+ \fadm(a,b,\zeta,\zeta')&\in\{0,1\},&&\text{whether }\Lambda_\ell\text{ relates }
+   (\zeta,X_a)\text{ and }(\zeta',X_b),
+\end{aligned}
+\]
+for blocks $a,b$, entry states $\zeta,\zeta'\in\mathcal Q\sqcup\{\star\}$, and
+states $\zeta''\in\mathcal Q$. It determines the restriction of $\mathcal M_\ell$
+to the letters $X_1,\ldots,X_k$, together with their equalities, and it has at
+most $\mathsf{col}(\len{\mathcal Q},k)$ values \cref{eq:bg-col}.
+
+The \emph{column word} of the tuple aligns the blocks at their right ends, pads
+them on the left, and reads the resulting word of $k$-tuples of optional
+letters, the \emph{columns}, from left to right. It is \emph{valid} if every
+track consists of absent entries followed by letters; a subsequence of a valid
+column word is valid. A deterministic automaton computes the summary along the
+column word. The tuple of $k$ empty blocks has
+$\fexit_a(\zeta)=\delta(\zeta,\ell)$ for $\zeta\in\mathcal Q$,
+$\fexit_a(\star)=\zeta_0$, $\fterm_a(\zeta,\zeta'')=
+\Lfin(\lab_0(\zeta),(\zeta'',\ell))$, all blocks equal, and
+$\fadm(a,b,\zeta,\zeta')=\Lambda(\lab_0(\zeta),\lab_0(\zeta'))$. Reading a column
+$\gamma$ updates all components simultaneously, from the old values. If
+$\gamma_a$ is absent, the components of block $a$ are unchanged. If
+$\gamma_a=z$, then
+\[
+ \fexit'_a(\zeta)=\delta(\fexit_a(\zeta),z),\qquad
+ \fterm'_a(\zeta,\zeta'')=\fterm_a(\zeta,\zeta'')\lor
+   \Lfin\bigl((\fexit_a(\zeta),z),(\zeta'',\ell)\bigr).
+\]
+Equality becomes $\feq(a,b)\land\gamma_a=\gamma_b$. If $\gamma_a=z$ and
+$\gamma_b=z'$ are both present,
+\[
+ \fadm'(a,b,\zeta,\zeta')=
+ \Lambda\bigl((\fexit_a(\zeta),z),(\fexit_b(\zeta'),z')\bigr)
+ \lor\bigl(z=z'\land\fadm(a,b,\zeta,\zeta')\bigr);
+\]
+if only $\gamma_a=z$ is present,
+$\fadm'(a,b,\zeta,\zeta')=\Lambda((\fexit_a(\zeta),z),\lab_0(\zeta'))$; if only
+$\gamma_b=z'$ is present,
+$\fadm'(a,b,\zeta,\zeta')=\Lambda(\lab_0(\zeta),(\fexit_b(\zeta'),z'))$; and if
+both are absent, the bit is unchanged. The update is correct because
+$\Lambda_\ell$ compares positions at the same distance from the ends of two
+blocks, with equal letters after them: appending a column either relates the
+two new last positions, or extends the common suffix of a pair related earlier
+by an equal letter.
+
+\begin{lemma}[Column shortening {\nssecite{Appendix ``Details of the Bounded-Depth Compression''}}]\label{lem:bg-columns}
+Deleting the columns between two cuts of a valid column word with equal
+summaries gives a valid column word with the same final summary. Hence every
+tuple of $k$ blocks avoiding $\ell$ can be replaced by subsequences, one per
+block, with the same summary and all lengths below
+$\mathsf{col}(\len{\mathcal Q},k)$. The replacement is injective on the
+letters, preserves marker avoidance, maps holes of $\mathcal M_\ell$ over these
+letters to holes, and keeps a unary level unary.
+\end{lemma}
+
+For lettered monitors $\mathcal U,\mathcal V$ with the same state set, a finite
+set $E$ of letters, and a map $\rho$ from $E$ into the alphabet of $\mathcal V$,
+\emph{agreement} $\mathcal U\equiv_{E,\rho}\mathcal V$ means: their start states
+coincide, $\rho$ is injective on $E$, and for every $a\in E$ and every state
+$\zeta$,
+\begin{equation}\label{eq:bg-agreement}
+ \delta_{\mathcal V}(\zeta,\rho(a))=\delta_{\mathcal U}(\zeta,a),\quad
+ \Tfin_{\mathcal V}(\zeta,\rho(a))\iff\Tfin_{\mathcal U}(\zeta,a),\quad
+ R_{\mathcal V}(\widehat\rho L,\widehat\rho L')\iff R_{\mathcal U}(L,L')
+\end{equation}
+for $R\in\{\Lambda,\Lfin\}$ and all labels $L,L'$ whose letters lie in $E$,
+the start label included; here $\widehat\rho(\triangleright)=\triangleright$ and
+$\widehat\rho(\zeta,a)=(\zeta,\rho(a))$, and states are not renamed. Agreement
+preserves runs, labels up to $\widehat\rho$, and holes of words over $E$, and
+agreements compose.
+
+\begin{lemma}[Agreement under derivation {\nssecite{Lemma ``Agreement under derivation''}}]\label{lem:bg-agreement}
+If $\mathcal U\equiv_{E,\rho}\mathcal V$ and $\ell\in E$, then for every finite
+family $F$ of blocks over $E$ avoiding $\ell$, the letterwise map $\rho^*$ gives
+$\mathcal U_\ell\equiv_{F,\rho^*}\mathcal V_{\rho(\ell)}$, and the image blocks
+avoid $\rho(\ell)$.
+\end{lemma}
+
+For markers $\boldsymbol\ell=(\ell_0,\ldots,\ell_{j-1})$ write
+$\mathcal M^{\boldsymbol\ell}_0=\mathcal M_0$ and
+$\mathcal M^{\boldsymbol\ell}_{h+1}=(\mathcal M^{\boldsymbol\ell}_h)_{\ell_h}$. A
+finite family of level-$j$ letters is \emph{valid} for the markers if every
+block avoids the marker of its level and its letters are, recursively, valid
+letters of the level below; $\Exp_{\boldsymbol\ell,j}(a)$ is the level-zero
+word obtained by expanding a valid level-$j$ letter $a$, each block followed by
+its marker.
+
+\begin{lemma}[Supported simultaneous compression {\nssecite{Lemma ``Supported simultaneous compression''}}]\label{lem:bg-compression}
+Fix a nonempty word $w$ with hierarchy markers $\boldsymbol\ell$ and
+dictionaries $\mathcal A_h$, and $j\le d$. Suppose $\len{\mathcal A_h}\le g$ for
+$1\le h\le j$, and put $\kappa=\mathsf{col}(N+d+1,g)$. For every set
+$E_j\subseteq\mathcal A_j$ there are new markers $\widetilde{\boldsymbol\ell}$
+and a map $\rho_j$, injective on $E_j$, such that
+\[
+ \mathcal M^{\boldsymbol\ell}_j\equiv_{E_j,\rho_j}
+ \mathcal M^{\widetilde{\boldsymbol\ell}}_j,
+ \qquad
+ \len{\Exp_{\widetilde{\boldsymbol\ell},j}(\rho_j(a))}\le\kappa^j\quad(a\in E_j),
+\]
+and the image family is valid for the new markers. The recursion keeps at each
+level $h<j$ the support
+\[
+ E_h=\{\ell_h\}\cup\bigcup_{X\in E_{h+1}}\alphof(\tau_h(X))\ \subseteq\ \mathcal A_h,
+\]
+where $\tau_h(X)$ is the subsequence of $X$ produced by \cref{lem:bg-columns};
+at level zero no cardinality bound is needed. Agreement holds at every state,
+not only at the states visited by $w$.
+\end{lemma}
+
+\paragraph{Step 5: the bound}
+Normalize the given hole by \cref{lem:bg-dictionary}, so that $g_i\le
+\mathsf G=\mathsf G(N,d)$ for $1\le i\le D$, and keep it fixed as the original
+hierarchy; put $\kappa=\mathsf{col}(N+d+1,\mathsf G)$. \Cref{lem:bg-unary} gives
+a hole $z^m$ of $\mathcal M_D$ with $1\le m\le N+D$. Compressing $E_D=\{z\}$ by
+\cref{lem:bg-compression}, agreement makes $\rho_D(z)^m$ a hole of the new
+level-$D$ monitor, and validity allows its exact expansion by
+\cref{lem:bg-desub} to a nonempty hole of $\mathcal M_0$. Cutting that expansion
+recovers the unary word $\rho_D(z)^m$ at level $D$, so the depth is at most $D$,
+and the length is at most
+\[
+ m\kappa^D\le(N+D)\kappa^D\le(N+d+1)\kappa^d=\holeBound(N,d).
+\]
+No step uses finiteness of the alphabet, and the alphabet size does not enter
+the bound.
+
+\subsection{Constants}\label{app:bg-constants}
+
+For integers $N\ge1$, $d\ge0$, and $k\ge0$ put
+\begin{equation}\label{eq:bg-col}
+\begin{aligned}
+ \mathsf{col}(N,k)&=N^{(N+1)k}\cdot2^{N(N+1)k}\cdot2^{k^2}\cdot2^{(N+1)^2k^2},
+ &\mathsf C(N,d)&=N^N\,2^{2N^2+4N(N+d)(d+1)+3N},\\
+ \mathsf A(N,d)&=d+1+\mathsf C(N,d),
+ &\mathsf G(N,d)&=2+\mathsf A(N,d)\,3^d,
+\end{aligned}
+\end{equation}
+and
+\begin{equation}\label{eq:bg-len}
+ \holeBound(N,d)=(N+d+1)\cdot\mathsf{col}\bigl(N+d+1,\mathsf G(N,d)\bigr)^d .
+\end{equation}
+All five functions are nondecreasing in each argument. Their meaning is as
+follows; $D\le d$ is the depth of the hole being shortened.
+\begin{itemize}[leftmargin=*]
+\item $\mathsf{col}(N,k)$ bounds the number of summary values of a $k$-tuple of
+  blocks for a lettered monitor with $N$ states. It is the product of the
+  numbers of values of the summary fields:
+  \begin{center}
+  \begin{tabular}{@{}ll@{}}
+  \toprule
+  Factor & Summary field\\
+  \midrule
+  $N^{(N+1)k}$ & exits: $k$ blocks, $N+1$ entry states\\
+  $2^{N(N+1)k}$ & terminal-comparison bits, also for $N$ final-marker states\\
+  $2^{k^2}$ & equality bits for ordered pairs of blocks\\
+  $2^{(N+1)^2k^2}$ & derived-admission bits for pairs of blocks and entry states\\
+  \bottomrule
+  \end{tabular}
+  \end{center}
+\item $\mathsf C(N,d)$ bounds the number of exchange types at a level $1\le i<D$
+  (\cref{lem:bg-exchange-types}). The transition table of the ordinary states
+  has $N^N$ values; the target table uses $N$ bits, the two self tables $2N^2$
+  bits, the protected rows $4N\len{U_i}\len{P_i}$ bits, where $\len{P_i}\le d+1$
+  and $\len{U_i}\le N+d$, and the initial rows $2N$ bits.
+\item $\mathsf A(N,d)$ bounds the protected letters, at most $d+1$, together with
+  one isolated letter for each exchange type.
+\item $\mathsf G(N,d)$ bounds the dictionary at every level $1\le i\le D$ of a
+  suitable normal hole (\cref{lem:bg-dictionary}).
+\item $\holeBound(N,d)$ is the length bound. The top level of the shortened hole
+  has at most $N+D\le N+d+1$ letters, and each of the at most $d$ expansion
+  steps multiplies the length by at most $\mathsf{col}(N+d+1,\mathsf G(N,d))$,
+  which bounds the summary values of the level-$j$ monitors, with $N+j$ states,
+  for every $j\le d$. For $d=0$ the bound is $N+1$: a hole of depth $0$ is unary
+  and is its own top level.
+\end{itemize}
+
+\begin{lemma}[Elementary estimate {\nssecite{Lemma ``Elementary estimate''}}]\label{lem:bg-estimate}
+Put $\Xi(N,d)=3N^2+4N(N+d)(d+1)+3N+3d+4$. Then
+$\mathsf G(N,d)\le2^{\Xi(N,d)}$ and $\holeBound(N,d)\le2^{2^{5\Xi(N,d)+3}}$. For
+$N\ge1$ and $d_N=2N(4N-1)-1$,
+\[
+ \holeBound(N,d_N)\le2^{2^{1280(N+1)^5}} .
+\]
+\end{lemma}
+\begin{proof}
+Write $\Xi=\Xi(N,d)$ and $\Xi_0=3N^2+4N(N+d)(d+1)+3N$. From $N\le2^N$ we get
+$\mathsf C(N,d)\le2^{\Xi_0}$; a sum of two quantities bounded by $2^p$ and $2^q$
+is at most $2^{p+q+1}$, and $d+1\le2^{d+1}$, so $\mathsf A(N,d)\le2^{\Xi_0+d+2}$;
+with $3^d\le2^{2d}$ this gives $\mathsf G(N,d)\le2^{\Xi_0+3d+3}\le2^\Xi$. Put
+$M=N+d+1$, $g=\mathsf G(N,d)$, and $P=2^\Xi$. Then $M+1\le\Xi$, so
+$M,M+1,d,g\le P$. Replacing $M$ by $2^M$ in the first factor of
+\cref{eq:bg-col} yields
+$\mathsf{col}(M,g)\le2^{2M(M+1)g+g^2+(M+1)^2g^2}\le2^{4P^4}=2^{2^{4\Xi+2}}$.
+Therefore $\holeBound(N,d)\le2^{\Xi+d2^{4\Xi+2}}\le2^{2^{5\Xi+3}}$, because
+$d\le2^\Xi$ and $\Xi\le2^{5\Xi+2}$. For $d_N=8N^2-2N-1$ we have $d_N$,
+$N+d_N$, $d_N+1\le8N^2$, so $4N(N+d_N)(d_N+1)\le256N^5$ and
+$\Xi(N,d_N)\le256N^5+27N^2+3N+4$. Hence $5\Xi(N,d_N)+3\le1280N^5+135N^2+15N+23
+\le1280(N+1)^5$.
+\end{proof}

@@ -1,0 +1,31 @@
+%% abstract -- body only; input inside the abstract environment of main.tex.
+Existential subtype entailment asks whether every solution of a finite system
+$\varphi$ of subtype constraints extends to a solution of a second system
+$\psi$ over additional hidden variables, that is, whether
+$\varphi\models\exists\bar z\,\psi$. Subsumption between constrained type
+schemes and the correctness of constraint simplification are instances of this
+question. For non-structural subtyping the problem has been open since 1996,
+and it has been suggested that it might be undecidable. We prove that it is
+decidable for one constructor $f$ of every arity and every variance, with
+bottom and top, over finite, regular, and arbitrary trees, and also with bottom
+only when $f$ is covariant. In particular, subsumption of constrained types
+over arrows, bottom and top is decidable, with no restriction on the polarity
+of the variables. When both systems are satisfiable in the tree class
+considered and the entailment fails, a counterexample word of length triply
+exponential in the number of variables after flattening certifies the failure,
+uniformly in the arity.
+
+We represent each tree by two cones of words, those that meet a leaf of either
+sign, which turns every system into a Horn system with unary rules, and we
+characterize the entailment by three conditions on single seeds. Two of them
+become hole problems for finite readers: one for a single word, and one for two
+words that share a suffix, in which a word may also obstruct itself through a
+comparison with its own suffixes. For two words, outside one hard case, finite
+automata and a pumping argument give singly exponential holes. In the hard
+case, the mortal holes, we write the two words as one word around a separator, bound its
+hierarchical depth, and extend the bounded-depth compression from the decision
+procedure for plain entailment so that it preserves a comparison anchored at the
+separator. A search over compression summaries decides the problem in
+2-EXPSPACE, and in PSPACE for a unary constructor. Shortest counterexamples can
+be exponentially long, and for a covariant constructor the problem is
+PSPACE-hard for every fixed arity at least two.

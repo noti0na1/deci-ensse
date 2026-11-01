@@ -1,0 +1,91 @@
+\begin{figure}[tbp]
+\centering
+\begin{tikzpicture}[>=Stealth,font=\small,
+    every node/.style={inner sep=1.5pt},
+    var/.style={draw,circle,minimum size=6.5mm,inner sep=0pt},
+    hid/.style={var,dashed},
+    tree/.style={level distance=6.5mm,
+      level 1/.style={sibling distance=11mm},
+      level 2/.style={sibling distance=6mm},
+      level 3/.style={sibling distance=5mm}},
+    hl/.style={draw,rounded corners=1pt,fill=black!12},
+    lb/.style={font=\footnotesize,align=center},
+    e0/.style={left,font=\scriptsize,inner sep=1pt,pos=0.45},
+    e1/.style={right,font=\scriptsize,inner sep=1pt,pos=0.45}]
+  % the consequent: visible x, y and hidden z
+  \node[var] (x) at (0,0.2) {$x$};
+  \node[hid] (z) at (1.35,0.2) {$z$};
+  \node[var] (y) at (2.7,0.2) {$y$};
+  \draw[->] (x) -- node[above]{$\le$} (z);
+  \draw[->] (z) -- node[above]{$\le$} (y);
+  \path (z) edge[->,loop below,min distance=7mm,in=-120,out=-60] (z);
+  \node[lb] at (1.35,-0.85) {$z\le f(z,z)$};
+  \node[lb,text width=3.3cm] at (1.35,-1.75)
+    {$x,y$ visible: fixed by\\ a solution of $\varphi$;\\
+     $z$ hidden: chosen after};
+  % row (a)
+  \node[anchor=east,font=\small] at (4.1,1.9) {(a)};
+  \begin{scope}[tree]
+    \node (a1) at (5.4,2.5) {$f$}
+      child {node {$f$} child {node {$\Bot$} edge from parent node[e0]{0}}
+                        child {node {$\Bot$} edge from parent node[e1]{1}}
+             edge from parent node[e0]{0}}
+      child {node {$\Bot$} edge from parent node[e1]{1}};
+    \node (a2) at (10.2,2.5) {$f$}
+      child {node {$f$} child {node {$\Bot$} edge from parent node[e0]{0}}
+                        child {node {$\Bot$} edge from parent node[e1]{1}}
+             edge from parent node[e0]{0}}
+      child {node {$\Bot$} edge from parent node[e1]{1}};
+  \end{scope}
+  \node[lb,anchor=south] at (5.4,2.65) {$x=y$};
+  \node[lb,anchor=south] at (10.2,2.65) {least witness $z=x$};
+  \node[lb] at (5.4,0.8) {$\Kpos(x)=\{\eps,0\}$};
+  \node[lb] at (10.2,0.8) {$\Kpos(z)=\{\eps,0\}$};
+  \draw[->] (6.6,1.9) -- node[above,lb]{join of all} node[below,lb]{subtrees $x\cdot\eta$} (9.0,1.9);
+  % row (b)
+  \node[anchor=east,font=\small] at (4.1,-1.1) {(b)};
+  \begin{scope}[tree]
+    \node (b1) at (5.4,-0.5) {$f$}
+      child {node {$f$} child {node {$\Bot$} edge from parent node[e0]{0}}
+                        child {node {$f$} child {node {$\Bot$} edge from parent node[e0]{0}}
+                                          child {node {$\Bot$} edge from parent node[e1]{1}}
+                               edge from parent node[e1]{1}}
+             edge from parent node[e0]{0}}
+      child {node[hl] (b1r) {$\Bot$} edge from parent node[e1]{1}};
+    \node (b2) at (10.2,-0.5) {$f$}
+      child {node {$f$} child {node {$\Bot$} edge from parent node[e0]{0}}
+                        child {node {$f$} child {node {$\Bot$} edge from parent node[e0]{0}}
+                                          child {node {$\Bot$} edge from parent node[e1]{1}}
+                               edge from parent node[e1]{1}}
+             edge from parent node[e0]{0}}
+      child {node[hl] (b2r) {$f$} child {node {$\Bot$} edge from parent node[e0]{0}}
+                                  child {node {$\Bot$} edge from parent node[e1]{1}}
+             edge from parent node[e1]{1}};
+  \end{scope}
+  \node[lb,anchor=south] at (5.4,-0.35) {$x=y$};
+  \node[lb,anchor=south] at (10.2,-0.35) {least candidate for $z$};
+  \node[lb] at (5.4,-2.9) {$\Kpos(x)=\{\eps,0,01\}$};
+  \node[lb] at (10.2,-2.9) {$\Kpos(z)=\{\eps,0,1,01\}$};
+  \draw[->] (6.6,-1.1) -- node[above,lb]{join of all} node[below,lb]{subtrees $x\cdot\eta$} (9.0,-1.1);
+  \node[lb,anchor=west] at (11.5,-1.25) {$\not\le y$};
+\end{tikzpicture}
+\caption{The shift closure of \cref{ex:intro-shift} over $\BF$. A solution of
+$\varphi$ fixes the visible variables $x$ and $y$; the hidden $z$ is chosen
+afterwards and depends on it. The literal $z\le f(z,z)$ makes the
+constructor positions of $z$ closed under suffixes, so $z$ must lie above every
+subtree of $x$, and their join is the least candidate. (a) For
+$x=y=f(f(\Bot,\Bot),\Bot)$ the candidate is $x$ itself, which fits below $y$.
+(b) For $x=y=f(f(\Bot,f(\Bot,\Bot)),\Bot)$, the countermodel of $\varphi_1$, the
+position $01$ of $x$ forces a constructor of $z$ at its suffix $1$ (shaded),
+where $y$ has the leaf $\Bot$; no $z$ exists.}
+\Description{On the left, three circles x, z and y joined by arrows labeled
+less or equal, with a loop at z for z below f of z and z; the circle of z is
+dashed because z is hidden. On the right, two rows. In row a, the tree
+f of f of bottom and bottom, and bottom, which is both x and y, is joined by an arrow
+labeled join of all subtrees to the same tree, the least witness for z. In
+row b, the tree of x and y has constructor positions epsilon, 0 and 01, and
+the arrow leads to a tree with an extra constructor at position 1, shaded
+together with the leaf bottom of y at position 1; the least candidate for z is not below
+y.}
+\label{fig:intro-shift}
+\end{figure}

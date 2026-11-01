@@ -1,0 +1,303 @@
+%% appendix-classes -- proofs for the tree classes section, including the
+%% closure under intersection of leaf cones (prop:ch-meet).
+
+\section{Proofs for Tree Classes}\label{app:tc}\label{app:classes}
+
+This appendix proves the results of \cref{sec:tc} whose proofs were
+deferred, in its notation. For a covariant tree $t$, $\nu_0t=t$ and
+$\nu_1t=t^\partial$, so $L^0_t$ is the set of words with a prefix labeled
+$\Top$ in $t$, and $L^1_t$ the set of words with a prefix labeled $\Bot$. By
+\cref{lem:bg-normalization}(3), duality reverses the covariant order, and it
+commutes with the constructor, $f(t_i)_i^\partial=f(t_i^\partial)_i$, since it
+exchanges labels position by position.
+
+\subsection{Observation Pins}\label{app:tc-pins}
+
+\begin{proof}[Proof of \cref{lem:tc-pins}]
+Let $\operatorname{Pref}(w)$ be the set of prefixes of $w$, including $w$, and
+let $\operatorname{Off}(w)=\Sigma^*\setminus(\operatorname{Pref}(w)\cup
+w\Sigma^*)$ be the set of words that leave the pin path, that is, the words
+$\wpre wk\,j\,v$ with $k<\len w$ and $j\ne w[k]$. The positions of
+$\emb_b(w,g)$ are the words of $\operatorname{Pref}(w)$, of which the proper
+prefixes of $w$ are labeled $f$; the children $\wpre wk\,j$ off the pin path,
+labeled $b$; and $w$ followed by the positions of $g$. A word of
+$\operatorname{Off}(w)$ passes a child off the pin path, a proper prefix of $w$
+passes no leaf, and an extension of $w$ follows $g$. Hence the four trees of
+\cref{eq:tc-pins} have the following cones:
+\[
+\begin{array}{lll}
+ \text{tree}&L^0&L^1\\\hline
+ g_1=\emb_\Bot(w,\Top)&w\Sigma^*&\operatorname{Off}(w)\\
+ g_2=\emb_\Top(w,f(\Top^n))&\Sigma^*\setminus\operatorname{Pref}(w)&\varnothing\\
+ g_3=\emb_\Top(w,\Bot)&\operatorname{Off}(w)&w\Sigma^*\\
+ g_4=\emb_\Bot(w,f(\Bot^n))&\varnothing&\Sigma^*\setminus\operatorname{Pref}(w)
+\end{array}
+\]
+We use \cref{thm:lf-representation}(1,2): the cones of $t$ are extension
+closed and disjoint, and $t\le u$ iff $L^0_t\subseteq L^0_u$ and
+$L^1_u\subseteq L^1_t$.
+\begin{itemize}[leftmargin=*]
+\item $g_1\le t$ iff $w\Sigma^*\subseteq L^0_t$ and
+  $L^1_t\subseteq\operatorname{Off}(w)$. If $w\in L^0_t$, then
+  $w\Sigma^*\subseteq L^0_t$ by extension closure;
+  $L^1_t$ contains no extension of $w$, by disjointness, and no proper prefix
+  of $w$, since otherwise it would contain $w$; so $L^1_t\subseteq\operatorname{Off}(w)$.
+  Conversely, $g_1\le t$ gives $w\in L^0_t$.
+\item $t\le g_2$ iff $L^0_t\subseteq\Sigma^*\setminus\operatorname{Pref}(w)$, since the
+  condition on the cones of sign $1$ is vacuous. By extension closure, $L^0_t$
+  meets $\operatorname{Pref}(w)$ iff $w\in L^0_t$.
+\item $t\le g_3$ iff $L^0_t\subseteq\operatorname{Off}(w)$ and $w\Sigma^*\subseteq L^1_t$;
+  this is the first case with the two cones exchanged.
+\item $g_4\le t$ iff $L^1_t\subseteq\Sigma^*\setminus\operatorname{Pref}(w)$, iff
+  $w\notin L^1_t$, as in the second case.
+\end{itemize}
+The pin path has $\len w+1$ positions, there are $(n-1)\len w$ children off
+the pin path, and the end of the pin path has at most $n$ children. So each tree has at
+most $1+n(\len w+1)$ positions.
+
+For the consequence, let $x$ be a visible variable and $\rho$ an assignment.
+The cones of $\rho(x)$ are the covariant cones of $t=\nu_0\rho(x)$, since
+$\nu_1\rho(x)=t^\partial$ by \cref{lem:bg-normalization}(1). So an observation
+with variable $x$ and word $w$ is equivalent to one of the four inequalities
+between $t$ and a tree $g_k$ of \cref{eq:tc-pins}. By
+\cref{lem:bg-normalization}(1,2), $g_k\le\nu_0\rho(x)$ iff
+$\nu_0g_k\le_c\rho(x)$, and $\nu_0\rho(x)\le g_k$ iff $\rho(x)\le_c\nu_0g_k$.
+The tree $\nu_0g_k$ has the domain of $g_k$.
+\end{proof}
+
+\subsection{Signed Bounds and Medians}\label{app:tc-signed}
+
+\begin{proof}[Proof of \cref{lem:tc-signed}]
+(1) By \cref{lem:bg-signed}, $\rho$ solves $\chi$ iff $\rho^\pm$ solves
+$\chi^\pm$. For a lower bound, \cref{lem:bg-normalization}(2) gives
+$g\le_c\rho(x)$ iff $\nu_+g\le\nu_+\rho(x)$ iff $\nu_-\rho(x)\le\nu_-g$; these
+are the two bounds of \cref{eq:tc-signed-bounds} at $\rho^\pm$. Upper bounds
+are symmetric.
+
+(2) Since duality is an involution, so is $\iota$. Let $\sigma$ be an assignment
+of $V^\pm$. In every row of \cref{tab:bg-signed}, and for the two bounds of
+each pair in \cref{eq:tc-signed-bounds}, $\iota\sigma$ satisfies one entry iff
+$\sigma$ satisfies the other, because duality reverses the covariant order,
+commutes with the constructor, exchanges $\Bot$ and $\Top$, and maps $\nu_+g$
+to $\nu_-g$. For instance, $\iota\sigma$ satisfies $u^+\le v^+$ iff
+$\sigma(u^-)^\partial\le\sigma(v^-)^\partial$, iff $\sigma(v^-)\le\sigma(u^-)$;
+it satisfies $f(a_i^{c(i)})_i\le u^+$ iff
+$f(\sigma(a_i^{\bar c(i)})^\partial)_i\le\sigma(u^-)^\partial$, iff
+$\sigma(u^-)\le f(\sigma(a_i^{\bar c(i)}))_i$; it satisfies $u^+=\Bot$ iff
+$\sigma(u^-)=\Top$; and it satisfies $\nu_+g\le x^+$ iff
+$\nu_+g\le\sigma(x^-)^\partial$, iff $\sigma(x^-)\le\nu_-g$. The remaining
+entries are the same computation. Both entries of every row and both bounds of
+every pair belong to $\chi^\pm\cup B^\pm$, so $\iota$ preserves its solutions.
+Finally, $(\iota\rho^\pm)(v^\pm)=(\nu_\mp\rho(v))^\partial=\nu_\pm\rho(v)$ by
+\cref{lem:bg-normalization}(1).
+
+(3) If $\iota\sigma=\sigma$, then $\sigma(v^-)=\sigma(v^+)^\partial$ for every $v$,
+and \cref{lem:bg-signed} gives $\sigma=\rho^\pm$ for
+$\rho(v)=\nu_+\sigma(v^+)$, and the preservation of finiteness.
+\end{proof}
+
+\begin{proof}[Proof of \cref{lem:tc-median}]
+Write $\operatorname{maj}(L_1,L_2,L_3)$ for the set of words that lie in at
+least two of the sets $L_j$. It is symmetric and monotone for inclusion, and
+$\operatorname{maj}(L,L,L')=L$.
+
+(1) Symmetry is clear. If $t_j\le t'_j$ for $j=1,2,3$, then
+$L^0_{t_j}\subseteq L^0_{t'_j}$ and $L^1_{t'_j}\subseteq L^1_{t_j}$ by
+\cref{thm:lf-representation}(2), so the same inclusions hold between the
+cones of the medians, and $\tcmed(t_1,t_2,t_3)\le\tcmed(t'_1,t'_2,t'_3)$. The
+identity $\tcmed(t,t,u)=t$ follows from $\operatorname{maj}(L,L,L')=L$.
+
+(2) By \cref{thm:lf-representation}(3), with $f$ covariant, a word $iv$ lies
+in $L^s_{f(a^j_i)_i}$ iff $v\in L^s_{a^j_i}$, and $\eps$ lies in no cone of a
+constructor tree. So the majority of the three cones $L^s_{f(a^j_i)_i}$ is the
+union over $i$ of the sets
+$i\operatorname{maj}(L^s_{a^1_i},L^s_{a^2_i},L^s_{a^3_i})$, which is
+$L^s_{f(m_i)_i}$ for $m_i=\tcmed(a^1_i,a^2_i,a^3_i)$; by
+\cref{thm:lf-representation}(1) the two trees are equal. For duality,
+$L^s_{t^\partial}=L^{1-s}_t$, and $\operatorname{maj}$ is applied to each sign
+separately. For assignments of signed variables,
+$(\iota\tcmed(\alpha,\beta,\gamma))(v^\pm)=\tcmed(\alpha(v^\mp),\beta(v^\mp),\gamma(v^\mp))^\partial
+=\tcmed((\iota\alpha)(v^\pm),(\iota\beta)(v^\pm),(\iota\gamma)(v^\pm))$.
+
+(3) For $n=0$ every tree is finite. Let $n\ge1$, let $t_1,t_2,t_3$ be finite,
+and let $h$ bound the lengths of their positions. A word $w$ of length $h+1$
+is a position of no $t_j$, so its longest prefix in the domain of $t_j$ is a
+leaf, labeled $\Bot$ or $\Top$; thus $w\in L^0_{t_j}\cup L^1_{t_j}$ for each
+$j$. Two of the three trees put $w$ in the same cone $L^s$, so $w$ lies in the
+cone $L^s$ of the median, and some prefix of $w$ is a leaf of the median.
+Every proper prefix of a position is labeled $f$, so no word of length $h+2$
+is a position of the median, which is therefore finite.
+
+(4) Let $\alpha,\beta,\gamma$ solve a covariant system together with covariant
+ground bounds. A literal $u\le v$ holds in their median $\tcmed(\alpha,\beta,\gamma)$
+by monotonicity. For $f(a_i)_i\le u$, monotonicity gives
+$\tcmed(f(\alpha(a_i))_i,f(\beta(a_i))_i,f(\gamma(a_i))_i)\le
+\tcmed(\alpha,\beta,\gamma)(u)$, and the left side is
+$f(\tcmed(\alpha,\beta,\gamma)(a_i))_i$ by (2); the upper constructor literals are
+symmetric. The extreme literals hold since $\tcmed(\Bot,\Bot,\Bot)=\Bot$ and
+$\tcmed(\Top,\Top,\Top)=\Top$. For a lower bound $G\le p$,
+$G=\tcmed(G,G,G)\le\tcmed(\alpha,\beta,\gamma)(p)$, and upper bounds are
+symmetric.
+\end{proof}
+
+\subsection{Covariant Finite-Bound Pinning}\label{app:tc-covariant}
+
+In this subsection $f$ is covariant and $n\ge1$; for $n=0$,
+\cref{lem:tc-pinning-covariant} is trivial because every tree is finite. We use
+the closure $D^{\mathrm{cov}}_\chi$, the path bounds $\Lo$ and $\Up$, label clashes and cycle
+clashes of a covariant system without copy literals, as defined in
+\cref{app:bg-sat}, and \cref{thm:bg-nsse-sat}(1): such a system has a
+solution iff it has no label clash, and a finite solution iff it has neither a
+label clash nor a cycle clash.
+
+\begin{proof}[Proof of \cref{lem:tc-pinning-covariant}]
+Let $F$ be a covariant system over $V$ with a finite solution $\delta$, let $B$
+be a finite set of ground bounds on $V$, and let $\rho$ be a solution of
+$F\cup B$.
+
+\emph{Copy literals.} Let $F_0=F^\flat$ be obtained by
+\cref{lem:bg-sandwich}, applied to every copy literal of $F$. The variables of
+$F_0$ are called \emph{old}. By \cref{lem:bg-sandwich}, $\delta$ extends to a
+finite solution of $F_0$, $\rho$ extends to a solution of $F_0\cup B$, and
+every solution of $F_0\cup B$ restricts to a solution of $F\cup B$.
+
+\emph{Encoding the bounds.} For a finite ground tree $g$ and a variable $x$
+define systems $L(g,x)$, expressing $g\le x$, and $U(x,g)$, expressing $x\le
+g$, with fresh variables:
+\[
+\begin{aligned}
+ L(\Bot,x)&=\varnothing,\quad L(\Top,x)=\{\Top\le x\},\quad
+ L(f(g_i)_i,x)=\{f(y_i)_i\le x\}\cup\textstyle\bigcup_iL(g_i,y_i),\\
+ U(x,\Top)&=\varnothing,\quad U(x,\Bot)=\{x=\Bot\},\quad
+ U(x,f(g_i)_i)=\{x\le f(y_i)_i\}\cup\textstyle\bigcup_iU(y_i,g_i).
+\end{aligned}
+\]
+Each fresh variable stands for a nonempty position $\pi$ of $g$, and its
+\emph{rank} is $\len\pi$; old variables have rank $0$. By induction on $g$, an
+assignment that satisfies $L(g,x)$ satisfies $g\le x$, since $f(g_i)_i\le
+f(y_i)_i\le x$ by monotonicity of the covariant constructor; conversely, an
+assignment that satisfies $g\le x$ extends to $L(g,x)$ by giving each fresh
+variable the subtree of $g$ at its position. The same holds for $U(x,g)$. Let
+$F''$ be $F_0$ together with the encodings of all bounds of $B$, with distinct
+fresh variables. Then $F''$ has a solution, which extends one of $F_0\cup B$,
+and every solution of $F''$ restricts to a solution of $F_0\cup B$. The fresh
+variables of the systems $L$ are \emph{sources}, those of the systems $U$ are
+\emph{sinks}, and the literals of $F''$ outside $F_0$ are \emph{new}. The
+system $F''$ has no copy literals, and by construction:
+\begin{enumerate}[label=(O\arabic*),leftmargin=*]
+\item the literals of $F_0$ contain only old variables;
+\item the new lower literals are $f(y_i)_i\le x$ and $\Top\le x$, where $x$ is
+  old or a source and every $y_i$ is a source of rank one more than $x$; the
+  new upper literals are $x\le f(y_i)_i$ and $x=\Bot$, where $x$ is old or a
+  sink and every $y_i$ is a sink of rank one more than $x$.
+\end{enumerate}
+In particular, the children of a lower constructor literal are all old or all
+sources, and the children of an upper constructor literal are all old or all
+sinks.
+
+\emph{Separation.} Write $D=D^{\mathrm{cov}}_{F''}$, $\Lo$, $\Up$ for the
+closure and the path bounds of $F''$, and $D_0=D^{\mathrm{cov}}_{F_0}$, $\Lo_0$,
+$\Up_0$ for those of $F_0$. We show by
+induction on the derivation of $D(a,b)$:
+(a) if $b$ is a source, then $a=b$;
+(b) if $a$ is a sink, then $b=a$;
+(c) if $a$ and $b$ are old, then $D_0(a,b)$.
+Reflexivity is clear. Let $D(a,b)$ follow from $D(a,m)$ and $D(m,b)$. For (a),
+the induction hypothesis gives $m=b$ and then $a=m$; (b) is symmetric. For (c),
+$m$ is not a source, since (a) would give $a=m$, and not a sink, since (b)
+would give $b=m$; so $m$ is old, and $D_0(a,m)$ and $D_0(m,b)$. Let
+$D(a_i,b_i)$ follow by \cref{eq:bg-decomp} from literals $f(a_j)_j\le u$ and
+$v\le f(b_j)_j$ and $D(u,v)$. Then $b_i$ is old or a sink and $a_i$ is old or
+a source, so (a) and (b) hold vacuously. If $a_i$ and $b_i$ are old, the two
+literals have old children; by (O2) they are not new, so they are literals of
+$F_0$, and $u,v$ are old by (O1). By the induction hypothesis $D_0(u,v)$, hence
+$D_0(a_i,b_i)$. Conversely $D_0\subseteq D$, so $D$ and $D_0$ agree on old
+variables.
+
+\emph{Paths.} We show by induction on $\eta$:
+(d) if $\Lo(\eta,a,s)$ and $s$ is a source, then $a$ is a source of rank
+$\operatorname{rank}(s)+\len\eta$;
+(e) if $\Up(\eta,t,b)$ and $t$ is a sink, then $b$ is a sink of rank
+$\operatorname{rank}(t)+\len\eta$;
+(f) if $a,b$ are old, then $\Lo(\eta,a,b)$ implies $\Lo_0(\eta,a,b)$ and
+$\Up(\eta,a,b)$ implies $\Up_0(\eta,a,b)$.
+For $\eta=\eps$ use (a)--(c). For (d), by \cref{eq:bg-paths},
+$\Lo(i\eta,a,s)$ gives a literal $f(a'_j)_j\le z$ with $D(z,s)$ and
+$\Lo(\eta,a,a'_i)$. By (a), $z=s$, so the literal has a source as its root; by
+(O1) it is new, and by (O2) $a'_i$ is a source of rank
+$\operatorname{rank}(s)+1$. The induction hypothesis applies to
+$\Lo(\eta,a,a'_i)$. (e) is symmetric, using (b). For (f), $\Lo(i\eta,a,b)$
+gives $f(a'_j)_j\le z$ with $D(z,b)$ and $\Lo(\eta,a,a'_i)$. If the literal
+were new, $a'_i$ would be a source, and (d) would make $a$ a source. So it is a
+literal of $F_0$, $z$ and $a'_i$ are old, $D_0(z,b)$ by (c), and
+$\Lo_0(\eta,a,a'_i)$ by the induction hypothesis. The case of $\Up$ is
+symmetric, using (e).
+
+\emph{No cycle clash.} Suppose that $F''$ had a cycle clash
+\cref{eq:bg-cycle-clash}: $\eta\ne\eps$, $\Lo(\eta,a,a)$, $D(a,b)$ and
+$\Up(\eta,b,b)$. If $a$ were a source, (d) would give
+$\operatorname{rank}(a)=\operatorname{rank}(a)+\len\eta$. If $b$ were a sink,
+(e) would give the same contradiction for $b$. If $a$ were a sink, (b) would
+give $b=a$, a sink; if $b$ were a source, (a) would give $a=b$, a source. So
+$a$ and $b$ are old, and by (c) and (f) the clash is a cycle clash of $F_0$.
+But $F_0$ has a finite solution, so it has no cycle clash.
+
+\emph{Conclusion.} The system $F''$ has a solution, so it has no label clash,
+and it has no cycle clash. Hence it has a finite solution, whose restriction is
+a finite solution of $F_0\cup B$ and then of $F\cup B$.
+\end{proof}
+
+The proof extends the argument of
+\nssecite{Theorem ``Finite countermodel transfer''}, where the bounds are the
+pin paths of a single word, to arbitrary finite ground bounds. The finite solution
+of $F$ is used only to exclude cycle clashes among old variables; label clashes
+are excluded by the solution of $F\cup B$.
+
+\subsection{Closure under Intersection}
+
+\begin{proof}[Proof of \cref{prop:ch-meet}]
+(1) Let $\mathcal M$ be a nonempty family of models of $\chi$ and
+$M=\bigcap\mathcal M$. If the premise of a rule lies in $M$, it lies in every
+member of $\mathcal M$, hence so does its conclusion; so $M$ is closed under
+the rules. It contains $\Fact_\chi$, since every member does, and it is
+consistent, since it is contained in a member. For the projected family, let
+$S_j=U_j|_X$ with $U_j\in\Mod(\psi)$ for $j$ in a nonempty index set; then
+$\bigcap_jU_j$ is a model of $\psi$ with visible part $\bigcap_jS_j$. For
+assignments, $S_{\rho\leafmeet\tau}=S_\rho\cap S_\tau$ by definition, so
+\cref{lem:lf-clauses} turns the first two claims into the closure of
+solutions and of extensible visible assignments under $\leafmeet$: if $\rho$
+and $\tau$ extend to solutions $\rho'$ and $\tau'$ of $\psi$, then
+$\rho'\leafmeet\tau'$ is a solution of $\psi$ that extends
+$\rho\leafmeet\tau$.
+
+(2) Commutativity, associativity and idempotence hold coordinatewise. If
+$t\le_c t'$, then $L^0_t\cap L^0_u\subseteq L^0_{t'}\cap L^0_u$ and
+$L^1_{t'}\cap L^1_u\subseteq L^1_t\cap L^1_u$, so
+$t\leafmeet u\le_c t'\leafmeet u$ by \cref{thm:lf-representation}(2). For the
+constructor, \cref{thm:lf-representation}(3) gives
+$L^s_{f(t_i)_i}=\bigcup_iiL^{s\oplus c(i)}_{t_i}$, a union of sets of words
+with distinct first letters. Intersection therefore distributes over these
+unions, and the leaf pairs of both sides of the identity agree; by
+\cref{thm:lf-representation}(1) the trees agree.
+
+For the median, observe that the pairs
+$(L^0_t\cup L^0_u,\ L^1_t\cap L^1_u)$ and
+$(L^0_t\cap L^0_u,\ L^1_t\cup L^1_u)$ are disjoint and extension closed: for
+instance, a word of $L^0_t$ in $L^1_t\cap L^1_u$ would lie in both cones of
+$t$. By \cref{thm:lf-representation}(1,2) they are the leaf pairs of the least
+upper bound $t\vee u$ and the greatest lower bound $t\wedge u$ of $t$ and $u$
+for $\le_c$. So the trees form a lattice whose joins and meets act on the
+cone of sign $0$ by union and intersection and on the cone of sign $1$ by
+intersection and union; in particular this lattice is distributive. The
+median $(t\wedge u)\vee(u\wedge v)\vee(v\wedge t)$ of three trees therefore
+has, as each of its two cones, the set of words that lie in the corresponding
+cones of at least two of $t$, $u$ and $v$. For $v=\Omega$, whose cones are
+empty, these are the words that lie in the cones of both $t$ and $u$, so the
+median is $t\leafmeet u$.
+
+(3) Regular languages are closed under intersection, so the first claim
+follows from \cref{thm:lf-representation}(4). The cones of $\Bot\leafmeet\Top$
+are $\varnothing\cap\Sigma^*$ and $\Sigma^*\cap\varnothing$, so it is $\Omega$,
+all of whose words are positions labeled $f$; for $n\ge1$ there are infinitely
+many.
+\end{proof}

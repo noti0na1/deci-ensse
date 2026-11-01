@@ -1,0 +1,400 @@
+%% leaf -- signed leaf cones: the representation and the order, the clause
+%% form of every literal, least closures with one seed per atom, duality,
+%% extensions first, and collision return. Long proofs are in appendix-leaf.
+
+\section{Signed Leaf Cones}\label{sec:lf}
+
+This section represents trees, and the solutions of systems, by sets of
+propositional atoms. In these coordinates every system over $\BFT$, of any
+arity and any variance, becomes a set of Horn clauses: implications with one
+premise, unit clauses (facts and forbidden roots), and one fixed family of binary
+exclusions. The representation has two consequences on which the rest of the
+paper rests. Least solutions are computed by closing a set of seeds, and every
+atom of a closure has a single seed (\cref{sec:lf-least}). Every pure move
+has a dual with both signs flipped, so two derivations that collide can be
+merged into one (\cref{sec:lf-duality}).
+
+We use the notation of \cref{sec:bg-trees,sec:bg-constraints}, in
+particular the directions $\Sigma=\{0,\dots,n-1\}$, the variance $c$, the
+polarity $\parity(w)$, the order $\le_c$, the normalizations $\nu_s$, the dual
+$t^\partial$ and the full constructor tree $\Omega$, and we put
+$\Sigma^+=\Sigma^*\setminus\{\eps\}$.
+In this section and the next, all trees are trees over $\BFT$, and
+assignments range over arbitrary trees; regular and finite trees are treated
+in \cref{sec:tc}. Proofs omitted here are in \cref{app:lf}.
+
+The positions of a tree $t$ labeled $\Bot$ or $\Top$ are its \emph{leaves}. We
+use the \emph{chain property}: for every tree $t$ and every word $w$, at most
+one prefix of $w$ is a leaf of $t$, and if none is, then $w$ is a position of
+$t$ labeled $f$. Indeed, by induction on its prefixes, a prefix of $w$ is a
+position as long as no shorter prefix is a leaf, and a position that is not a
+leaf has all its children.
+
+\subsection{Leaf Cones}\label{sec:lf-cones}
+
+\begin{definition}[Signed leaf cones]\label{def:lf-cones}
+For a tree $T$, the \emph{top-leaf cone} $A_T$ is the set of words $w$ such
+that some prefix of $w$ is a position of $T$ labeled $\Top$. For a tree $t$
+and a sign $s\in\{0,1\}$, the \emph{leaf cone of sign $s$} of $t$ is
+\[
+ L^s_t=A_{\nu_st}.
+\]
+We also write $L^+_t=L^0_t$ and $L^-_t=L^1_t$, and call $(L^0_t,L^1_t)$ the
+\emph{leaf pair} of $t$.
+\end{definition}
+
+The cones have a direct description. The \emph{sign} of a leaf $v$ of $t$ is
+$b\oplus\parity(v)$, where $b=0$ if $t(v)=\Top$ and $b=1$ if $t(v)=\Bot$.
+The tree $\nu_st$ carries the label $\Top$ at a leaf $v$ iff $v$ has sign $s$.
+By the chain property, therefore,
+\begin{equation}\label{eq:lf-direct}
+ w\in L^s_t\quad\Longleftrightarrow\quad
+ \text{the path $w$ meets a leaf of $t$ of sign $s$.}
+\end{equation}
+Since $\nu_1t=(\nu_0t)^\partial$ (\cref{lem:bg-normalization}(1)), the cone
+$L^1_t$ is the bottom-leaf cone of $\nu_0t$: the two cones belong to the same normalized tree. The variance
+enters only through the sign of each leaf, and the parity that determines this
+sign accumulates along the path and stops at the leaf. There are two cones per
+tree, whatever the arity, not one per assignment of signs to the children.
+In terms of the signed correspondence (\cref{lem:bg-signed}),
+$L^s_{\rho(v)}$ is the top-leaf cone of the covariant tree $\rho^\pm(v^s)$.
+
+\begin{theorem}[Leaf representation]\label{thm:lf-representation}
+\leavevmode
+\begin{enumerate}[leftmargin=*]
+\item For every tree $t$, the sets $L^0_t$ and $L^1_t$ are disjoint, and each
+  is \emph{extension closed}: $w\in L^s_t$ implies $wi\in L^s_t$ for every
+  letter $i$. Conversely, every pair $(L^0,L^1)$ of disjoint extension-closed
+  sets of words is the leaf pair of exactly one tree.
+\item For all trees $t$ and $u$,
+  \[
+   t\le_c u\quad\Longleftrightarrow\quad
+   L^0_t\subseteq L^0_u\ \text{ and }\ L^1_u\subseteq L^1_t .
+  \]
+\item $L^0_\Top=L^1_\Bot=\Sigma^*$, $L^1_\Top=L^0_\Bot=\varnothing$, and
+  $L^s_{t^\partial}=L^{1-s}_t$. If $t=f(t_i)_i$, then neither cone of $t$
+  contains $\eps$, and for every letter $i$, word $w$, and sign $s$,
+  \[
+   iw\in L^s_t\quad\Longleftrightarrow\quad w\in L^{s\oplus c(i)}_{t_i}.
+  \]
+  In particular, $\eps\in L^0_t$ iff $t=\Top$, and $\eps\in L^1_t$ iff
+  $t=\Bot$.
+\item The positions of $t$ labeled $f$ are exactly the words outside
+  $L^0_t\cup L^1_t$. Hence $t$ is finite iff
+  $\Sigma^*\setminus(L^0_t\cup L^1_t)$ is finite, and $t$ is regular iff
+  $L^0_t$ and $L^1_t$ are regular languages.
+\end{enumerate}
+\end{theorem}
+
+By (2), the order adds leaves of sign $0$ and removes leaves of sign $1$ as
+it goes up: after normalization, larger trees have more top leaves and fewer
+bottom leaves. The order is therefore not the inclusion of both cones.
+Inclusion of both cones is an \emph{information order}, whose least element
+is the tree without leaves, $\Omega$, with the leaf pair
+$(\varnothing,\varnothing)$. The least solutions of \cref{sec:lf-least} are
+least in the information order.
+
+\begin{example}[Leaf cones of arrows]\label{ex:lf-arrow}
+For the arrow, $n=2$ and $f(a_0,a_1)=a_0\to a_1$ with $c(0)=1$ and $c(1)=0$, so
+$\parity(w)$ is the parity of the number of letters $0$ in $w$. The leaf pairs
+of $\Top$, $\Bot$ and $\Omega$ are $(\Sigma^*,\varnothing)$,
+$(\varnothing,\Sigma^*)$ and $(\varnothing,\varnothing)$. In $\Top\to\Bot$, the
+leaf $0$ is labeled $\Top$ and has polarity $1$, and the leaf $1$ is labeled
+$\Bot$ and has polarity $0$; both have sign $1$, so the leaf pair is
+$(\varnothing,\Sigma^+)$. Likewise $\Bot\to\Top$ has the leaf pair
+$(\Sigma^+,\varnothing)$, and $\Bot\to\Omega$ has $(0\Sigma^*,\varnothing)$. By
+\cref{thm:lf-representation}(3), both cones of every tree $f(a_0,a_1)$ lie in
+$\Sigma^+$, so (2) gives $\Top\to\Bot\le_c f(a_0,a_1)\le_c\Bot\to\Top$: these
+are the least and the greatest arrow types.
+\end{example}
+
+\Cref{fig:lf-cones} follows three arrow types up to the greatest one,
+$\Bot\to\Top$. The sign of each leaf is read off its label and its path, and
+each step up either removes a leaf of sign~$1$ or adds a leaf of sign~$0$, even
+where a subtree at a contravariant position becomes smaller.
+
+\input{figures/lf-cones}
+
+\subsection{Atoms and Clauses}\label{sec:lf-clauses}
+
+Let $V$ be a finite set of variables, and recall the signed variables $v^s$,
+their set $V^\pm$, and the flip $\overline{v^s}=v^{1-s}$
+(\cref{sec:bg-constraints}); we put $\sgn(v^s)=s$. An \emph{atom} is a pair
+$(p,w)\in\Conf_V=V^\pm\times\Sigma^*$, and its \emph{opposite} is
+$\overline{(p,w)}=(\bar p,w)$. An assignment $\rho$ of trees to $V$
+determines the set of atoms
+\[
+ S_\rho=\{(v^s,w):w\in L^s_{\rho(v)}\},
+\]
+and an atom \emph{holds} in $\rho$ if it lies in $S_\rho$. An atom of sign
+$0$ is \emph{positive}, and an atom of sign $1$ is \emph{negative}. Opposite atoms are
+incompatible but not complementary: in $\Omega$ neither holds. For
+$U\subseteq V$ and $S\subseteq\Conf_V$ we put $S|_U=S\cap\Conf_U$. We read
+the word of an atom as a stack whose top is its first letter.
+
+A set $S$ of atoms is \emph{extension closed} if $(p,w)\in S$ implies
+$(p,wi)\in S$ for every letter $i$, and an \emph{exclusion pair} of $S$ is a
+pair $a,\bar a$ of opposite atoms that both lie in $S$. By
+\cref{thm:lf-representation}(1), applied to each variable, $\rho\mapsto
+S_\rho$ is a bijection from the assignments of trees to $V$ onto the
+extension-closed subsets of $\Conf_V$ without exclusion pairs.
+
+\begin{table}[t]
+\caption{The clause form of a literal, for all words $w$ and all letters
+$i\in\Sigma$; here $\bar c(i)=1\oplus c(i)$. Every system also has the
+extensions $(p,w)\to(p,wi)$ for all $p\in V^\pm$, $w\in\Sigma^*$ and
+$i\in\Sigma$.}
+\label{tab:lf-clauses}
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+Literal & Pure moves & Root unit\\
+\midrule
+$u\le v$ & copies: $(u^0,w)\to(v^0,w)$ and $(v^1,w)\to(u^1,w)$ & none\\[2pt]
+$f(a_i)_i\le u$ & $\mathrm{push}_i$: $(a_i^{c(i)},w)\to(u^0,iw)$
+ & forbidden root $(u^1,\eps)$\\
+ & $\mathrm{pop}_i$: $(u^1,iw)\to(a_i^{\bar c(i)},w)$ & \\[2pt]
+$u\le f(a_i)_i$ & $\mathrm{pop}_i$: $(u^0,iw)\to(a_i^{c(i)},w)$
+ & forbidden root $(u^0,\eps)$\\
+ & $\mathrm{push}_i$: $(a_i^{\bar c(i)},w)\to(u^1,iw)$ & \\[2pt]
+$u=\Bot$ & none & fact $(u^1,\eps)$\\
+$\Top\le u$ & none & fact $(u^0,\eps)$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The literals of a system $\chi$ over $V$ determine the \emph{pure moves},
+\emph{facts} and \emph{forbidden roots} listed in
+\cref{tab:lf-clauses}; facts and forbidden roots are the unit clauses. A push or a pop of direction $i$ changes the sign by
+$c(i)$, and a copy keeps it. The \emph{rules} of $\chi$ are its pure moves and
+the \emph{extensions} $(p,w)\to(p,wi)$. We write $\Fact_\chi$ and $\Neg_\chi$
+for the sets of facts and forbidden roots. Pure moves read and write
+only the top of the stack: $\mathrm{push}_i$ puts the letter $i$ on top,
+$\mathrm{pop}_i$ removes it, and a copy leaves the stack unchanged. They form a
+pushdown system with control states $V^\pm$ and stack alphabet $\Sigma$,
+which \cref{sec:sm} summarizes by finite automata. Extensions, in contrast,
+add a letter at the bottom of the stack.
+
+The table is the signed system $\chi^\pm$ of \cref{tab:bg-signed} read in
+top-leaf cones. Every copy literal $p\le q$ of $\chi^\pm$ gives the pure moves
+$(p,w)\to(q,w)$, every lower constructor literal $f(p_i)_i\le q$ gives
+$(p_i,w)\to(q,iw)$, and every upper constructor literal $q\le f(p_i)_i$ gives
+$(q,iw)\to(p_i,w)$. The forbidden roots are the atoms $(q,\eps)$ for the roots
+$q$ of the upper constructor literals of $\chi^\pm$, and the facts
+are the atoms $(q,\eps)$ for its literals $\Top\le q$.
+
+\begin{definition}[Models]\label{def:lf-model}
+A set $S\subseteq\Conf_V$ is \emph{consistent} for $\chi$ if it contains no
+forbidden root of $\chi$ and no exclusion pair. A \emph{model} of $\chi$ is a
+consistent set of atoms that contains $\Fact_\chi$ and is closed under all
+rules of $\chi$. We write $\Mod(\chi)$ for the set of models of $\chi$.
+\end{definition}
+
+\begin{lemma}[Clause form]\label{lem:lf-clauses}
+An assignment $\rho$ satisfies a literal iff $S_\rho$ is closed under the
+pure moves of the literal, contains its facts, and contains none of
+its forbidden roots. Consequently, $\rho\mapsto S_\rho$ is a bijection from
+the solutions of $\chi$ onto $\Mod(\chi)$.
+\end{lemma}
+
+The proof (\cref{app:lf}) substitutes the identities of
+\cref{thm:lf-representation}(3) into the inclusions of
+\cref{thm:lf-representation}(2). Every literal thus contributes implications
+with one premise and units only; the only all-negative binary clauses are the
+exclusions $\neg(a\wedge\bar a)$, which are the same for all systems, and no
+clause is a positive disjunction. A constructor literal contributes $2n$
+schemes of pure moves and one forbidden root, and a copy literal two schemes.
+For $n=0$, the literal $f()\le u$ says $u\ne\Bot$ and $u\le f()$ says
+$u\ne\Top$.
+
+We write $a\to_\chi b$ if a pure move of $\chi$ leads from $a$ to $b$.
+
+\begin{lemma}[Pure moves]\label{lem:lf-moves}
+Let $(p,u)\to_\chi(q,t)$.
+\begin{enumerate}[leftmargin=*]
+\item For every word $\sigma$, $(p,u\sigma)\to_\chi(q,t\sigma)$, by the same
+  scheme of \cref{tab:lf-clauses}.
+\item $\sgn(q)\oplus\parity(t)=\sgn(p)\oplus\parity(u)$.
+\end{enumerate}
+\end{lemma}
+
+Item (1) holds because each scheme is stated for all words $w$, and (2) is a
+direct check of the six schemes (\cref{app:lf}). Both extend to sequences
+of pure moves. By (2), along such a sequence the sign of the current signed
+variable is determined by the first atom and the parity of the current word;
+we call (2) the \emph{sign invariant}.
+
+\begin{example}[The system $x\le x\to x$]\label{ex:lf-clauses}
+Let $\varphi=\{x\le x\to x\}$ for the arrow of \cref{ex:lf-arrow}, that is,
+the literal $x\le f(x,x)$. By \cref{tab:lf-clauses}, its pure moves are
+\[
+\begin{array}{ll}
+ \mathrm{pop}_0:\ (x^0,0w)\to(x^1,w), & \mathrm{push}_0:\ (x^0,w)\to(x^1,0w),\\
+ \mathrm{pop}_1:\ (x^0,1w)\to(x^0,w), & \mathrm{push}_1:\ (x^1,w)\to(x^1,1w),
+\end{array}
+\]
+it has the forbidden root $(x^0,\eps)$, and it has no facts. A move
+in the contravariant direction $0$ changes the sign, and a move in the
+covariant direction $1$ keeps it. In each row, the push is the pop read
+backwards with both signs reversed; \cref{lem:lf-duality} shows that this
+holds for every system. The tree $\Top\to\Bot$, with leaf pair
+$(\varnothing,\Sigma^+)$, is a solution: its atoms are the $(x^1,w)$ with
+$w\ne\eps$, and this set is closed under $\mathrm{push}_1$ and under
+extensions.
+\end{example}
+
+\subsection{Least Closures}\label{sec:lf-least}
+
+A \emph{derivation} of $\chi$ is a finite sequence of atoms $a_0,\dots,a_k$,
+with $k\ge0$, in which each $a_{j+1}$ follows from $a_j$ by a rule of $\chi$;
+it is \emph{pure} if all its rules are pure moves. We write
+$a\Rightarrow^*_\chi b$ if a derivation leads from $a$ to $b$, and
+$a\to^*_\chi b$ if a pure derivation does; we drop the subscript when $\chi$
+is clear. For an atom $a$ and a set $A$ of atoms put
+\[
+ \Reach_\chi(a)=\{b:a\Rightarrow^*_\chi b\},\qquad
+ \mu_\chi=\bigcup_{e\in\Fact_\chi}\Reach_\chi(e),\qquad
+ H_\chi(A)=\mu_\chi\cup\bigcup_{a\in A}\Reach_\chi(a),
+\]
+and $\Cl_\chi(a)=H_\chi(\{a\})$. An atom is \emph{live} in $\chi$ if some
+model of $\chi$ contains it, and \emph{dead} otherwise; $\Live_\chi$ is the
+set of live atoms. Every rule has a single premise, so every atom $b$ of
+$H_\chi(A)$ has a \emph{seed}: an atom $x\in\Fact_\chi\cup A$ with
+$b\in \Reach_\chi(x)$.
+
+\begin{lemma}[Least closures]\label{lem:lf-closure}\label{lem:lf-least}
+Let $\chi$ be a system over $V$ and $A\subseteq\Conf_V$.
+\begin{enumerate}[leftmargin=*]
+\item $H_\chi(A)$ is the least set of atoms that contains $\Fact_\chi\cup A$
+  and is closed under the rules of $\chi$.
+\item Some model of $\chi$ contains $A$ iff $H_\chi(A)$ is consistent, and
+  then $H_\chi(A)$ is the least model that contains $A$. In particular,
+  $\chi$ is satisfiable iff $\mu_\chi$ is consistent, and then $\mu_\chi$ is
+  the least model of $\chi$; and an atom $a$ is live iff $\Cl_\chi(a)$ is
+  consistent, and then $\Cl_\chi(a)$ is the least model that contains $a$.
+\item If $H_\chi(A)$ is not consistent, then there are seeds
+  $x,y\in\Fact_\chi\cup A$, possibly equal, such that $\Reach_\chi(x)$ contains a
+  forbidden root, or $b\in \Reach_\chi(x)$ and $\bar b\in \Reach_\chi(y)$ for some atom
+  $b$.
+\item For every atom $(p,u)$ and every word $\alpha$,
+  $(p,u\alpha)\in \Reach_\chi(p,u)$; hence
+  $\Cl_\chi(p,u\alpha)\subseteq\Cl_\chi(p,u)$, and if $(p,u)$ is live, then
+  so is $(p,u\alpha)$.
+\item Let $V=X\cup Z$ with $X\cap Z=\varnothing$, and let $S\subseteq\Conf_X$
+  be extension closed and without exclusion pairs. Then $S=T|_X$ for some
+  model $T$ of $\chi$ iff $H_\chi(S)$ is consistent and $H_\chi(S)|_X=S$; in
+  this case $H_\chi(S)$ is the least such model.
+\end{enumerate}
+\end{lemma}
+
+Item (3) says that every inconsistency has at most two seeds; it bounds
+neither the words of the seeds nor the lengths of the derivations. Item (5)
+reduces the extension of a given visible assignment to a single closure;
+\cref{thm:ch-characterization} and the transfers of \cref{sec:tc} use the
+lemma in this form.
+
+\begin{example}[Liveness in $x\le x\to x$]\label{ex:lf-least}
+We continue \cref{ex:lf-clauses}. The system $\varphi$ has no facts,
+so $\mu_\varphi=\varnothing$ is consistent: $\varphi$ is satisfiable, and its
+least solution is $x=\Omega$. Every atom $(x^1,u)$ is live, since the
+solution $x=\Bot$ contains it. The atoms $(x^0,1^k)$ are dead: $k$ pops in
+direction $1$ lead to the forbidden root $(x^0,\eps)$. The atom $(x^0,0)$ is
+dead for a different reason. The pop $(x^0,0)\to(x^1,\eps)$ followed by an
+extension derives $(x^1,0)$, the opposite of the seed, so
+$\Cl_\varphi((x^0,0))$ contains an exclusion pair. No forbidden root is
+derivable from $(x^0,0)$: the only atoms $(x^0,w)$ that it derives are its
+extensions $(x^0,0w)$, and no move leads from a negative atom of $x$ to a
+positive one. So this inconsistency has a single seed and uses no unit.
+Finally, $(x^0,01)$ is live: its least model is the solution
+$((\Omega\to\Bot)\to\Bot)\to\Bot$, whose atoms are the $(x^0,w)$ with
+$w\in01\Sigma^*$ and the $(x^1,w)$ with $w\in1^+\Sigma^*\cup1^*001\Sigma^*$.
+\end{example}
+
+\Cref{fig:lf-moves}(a) draws these derivations with each atom at the height of
+its word, so that the moves act as on a stack: pops go down, pushes go up, and
+an extension adds a letter at the bottom without changing the top.
+
+\input{figures/lf-moves}
+
+\subsection{Duality, Extensions First, and Collision Return}\label{sec:lf-duality}
+
+\begin{lemma}[Duality]\label{lem:lf-duality}
+If $a\to_\chi b$, then $\bar b\to_\chi\bar a$. Consequently, $a\to^*_\chi b$
+implies $\bar b\to^*_\chi\bar a$.
+\end{lemma}
+
+\begin{proof}
+By \cref{tab:lf-clauses}: the two copies of a literal $u\le v$ are each
+other's duals, and so are $\mathrm{push}_i$ and $\mathrm{pop}_i$ of the same
+constructor literal, for each direction $i$ separately; for instance, the
+dual of $(a_i^{c(i)},w)\to(u^0,iw)$ is $(u^1,iw)\to(a_i^{\bar c(i)},w)$.
+This holds also when variables are repeated among $u,a_0,\dots,a_{n-1}$,
+since the pairing is by scheme. For derivations, reverse the sequence and
+dualize each move.
+\end{proof}
+
+Extensions have no duals: the reverse of an extension would delete the
+bottom letter of a stack, and no rule does that. The next lemma moves all
+extensions of a derivation to its beginning, so that duality applies to the
+rest.
+
+\begin{lemma}[Extensions first]\label{lem:lf-ext-first}\label{lem:lf-extensions}
+For all atoms $(p,u)$ and $b$, $b\in \Reach_\chi(p,u)$ iff
+$(p,u\alpha)\to^*_\chi b$ for some word $\alpha$.
+\end{lemma}
+
+The proof (\cref{app:lf}) inducts on the derivation: an extension at the
+end appends a letter to the bottom of every stack of the pure derivation
+obtained so far, which \cref{lem:lf-moves}(1) allows.
+
+\begin{lemma}[Collision return]\label{lem:lf-collision}
+Let $a$ and $(q,v)$ be atoms. If $b\in \Reach_\chi(a)$ and $\bar b\in \Reach_\chi(q,v)$
+for some atom $b$, then $(\bar q,v\delta)\in \Reach_\chi(a)$ for some word
+$\delta$. If moreover $a=(p,u)$, then
+$(p,u\alpha)\to^*_\chi(\bar q,v\delta)$ for some words $\alpha$ and $\delta$.
+\end{lemma}
+
+\begin{proof}
+By \cref{lem:lf-ext-first}, $(q,v\delta)\to^*\bar b$ for some $\delta$, and by
+\cref{lem:lf-duality}, $b\to^*(\bar q,v\delta)$. Appending this pure
+derivation to a derivation from $a$ to $b$ gives
+$(\bar q,v\delta)\in \Reach_\chi(a)$. For the second claim apply
+\cref{lem:lf-ext-first} to this membership.
+\end{proof}
+
+Thus two derivations that end in an exclusion pair, possibly at a hidden
+variable, merge into one derivation from the first seed to the opposite of
+an extension of the second seed (\cref{fig:lf-moves}(b)): the first
+derivation continues along the second one, read backwards with flipped signs.
+The extension is necessary: in general the
+merged derivation does not reach the opposite of the second seed itself
+(\cref{ex:ch-arrow}). The first consequence concerns a single seed.
+
+\begin{corollary}[Deadness]\label{cor:lf-dead}
+Let $\chi$ be satisfiable and let $(p,u)$ be an atom. Then $(p,u)$ is dead
+in $\chi$ iff at least one of the following holds:
+\begin{enumerate}[label=(\alph*),leftmargin=*]
+\item $\Reach_\chi(p,u)$ contains a forbidden root;
+\item $(\bar p,u\delta)\in\mu_\chi$ for some word $\delta$;
+\item $(\bar p,u\delta)\in \Reach_\chi(p,u)$ for some word $\delta$.
+\end{enumerate}
+Moreover, (a) holds iff $(p,u\alpha)\to^*_\chi e$ for some word $\alpha$ and
+some $e\in\Neg_\chi$, and (c) holds iff
+$(p,u\alpha)\to^*_\chi(\bar p,u\delta)$ for some words $\alpha$ and $\delta$.
+\end{corollary}
+
+Causes (a) and (b) make the atom dead by support (\cref{def:sm-dead}).
+Cause (c), a \emph{self-collision}, may occur without such support: in
+\cref{ex:lf-least}, $(x^0,0)$ is dead by $(x^0,00)\to(x^1,0)$, which is (c)
+with $\alpha=0$ and $\delta=\eps$. By the sign invariant, (c) requires
+$\parity(\alpha)\ne\parity(\delta)$, so self-collisions occur only through
+contravariant directions; in the covariant case every rule keeps the
+sign, and only (a) and (b) remain (\cref{rem:ch-parity}). The causes may
+overlap: for unary contravariant $f$ and $\chi=\{x\le f(x)\}$, the atom
+$(x^0,\eps)$ is a forbidden root, and also $(x^0,0)\to(x^1,\eps)$. \Cref{sec:sm}
+expresses (a)--(c) by finite automata and reduces a self-collision of an
+atom that is not already dead by support to a \emph{self event}
+(\cref{def:sm-dead}): two cuts $i<j$ of the seed word, the suffix after $j$ a
+prefix of the suffix after $i$, such that some signed variable that the seed
+reaches by popping the letters before $i$ has its flip reached by popping
+the letters before $j$.

@@ -1,0 +1,211 @@
+%% related -- constrained types and simplification, restricted entailment,
+%% feature trees and set constraints, the first-order theory, the automata route
+%% to plain entailment, pushdown saturation, algebraic and semantic subtyping,
+%% representations of solution spaces, and the proof for plain entailment.
+
+\section{Related Work}\label{sec:rel}
+
+\Cref{tab:rel} summarizes selected results on entailment questions that
+involve existential quantifiers or projections.
+
+\begin{table}[tbp]
+\caption{Selected results related to existential subtype entailment. ``Open
+alphabet'' means that a feature not occurring in the formula is always
+available.}
+\label{tab:rel}
+\small\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.35\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.20\linewidth}>{\raggedright\arraybackslash}p{0.22\linewidth}@{}}
+\toprule
+Problem & Trees & Result & Reference \\
+\midrule
+Structural subtyping, first-order theory (hence existential entailment) & finite & decidable & \citet{KuncakRinard03} \\
+Non-structural subtyping over $\BF$, $f$ binary and covariant, first-order theory & finite, regular, arbitrary & undecidable, with six quantifier blocks & \citet{SuAikenNiehrenPriesnitzTreinen02} \\
+Feature-tree ordering constraints, existential entailment, open alphabet & finite, arbitrary & PSPACE-complete & \citet{MullerNiehrenTreinen98,MullerNiehrenTreinen01} \\
+Restricted entailment (projection inclusion) in a set-based selector domain & complete infinite & exponential time; PSPACE-hard & \citet{FlanaganFelleisen99} \\
+Subtyping of constrained types with $\to$, $\Bot$, $\Top$ & regular & posed as open; sound decidable approximation & \citet{TrifonovSmith96} \\
+Subsumption of polar type schemes & extensible algebra & decidable & \citet{Dolan16} \\
+Plain \NSSE, one constructor of any arity and variance & finite, regular, arbitrary & decidable & \citet{Zhao26} \\
+Existential entailment, one constructor of any arity and variance over $\BFT$, and over $\BF$ with $f$ covariant & finite, regular, arbitrary & decidable; in 2-EXPSPACE; PSPACE-hard for each fixed arity $\ge2$, already with $f$ covariant & this paper \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Constrained Types and Their Simplification}
+Constrained types with recursive constraints were used for type inference for
+objects by \citet{EifrigSmithTrifonov95}. \citet{TrifonovSmith96} defined
+subtyping between constrained types semantically, over regular trees with
+arrows, $\Bot$, and $\Top$; \cref{eq:intro-subsumption} is their
+definition, for types without assumptions on program variables, written as an
+existential entailment. Their decision procedure is a sound approximation
+based on canonical constraint maps and primitive derivations, and
+\cref{cor:ap-decidable} decides their relation exactly. \citet{Pottier96}
+described an incomplete entailment algorithm, together with the removal of
+unreachable constraints and simplifying substitutions. \citet{Pottier01}
+developed polarity-based garbage collection, canonization, and minimization,
+and proved completeness in the equality setting; completeness is lost for
+subtyping. \citet[Section~8.5]{Pottier98thesis} gives a correct simplification
+that canonical bounds miss; \cref{ex:ap-pottier} recalls it.
+\citet{AikenWimmersPalsberg99} eliminate quantified variables and obtain
+optimal representations for unconstrained polymorphic types with subtyping;
+their extension to constrained types is sound but not complete.
+\citet{FahndrichAiken96} use polarity-based minimization, removal of
+intermediate variables, and cycle collapse in an implemented analysis, and they
+define the comparison of constrained types by a universal-existential
+condition. For constrained types, all these works use sound transformations or
+approximations; the classes of \cref{sec:ap-plain} are cheap complete cases, and
+\cref{thm:as-main} covers the rest.
+
+\citet{FlanaganFelleisen99} decide a closely related problem. Their restricted
+entailment $S_1\entails_E S_2$ is the inclusion $\Sol(S_1)|_E\subseteq\Sol(S_2)|_E$
+of projections onto a set $E$ of external variables, which after renaming is
+the existential entailment $S_1\entails\exists\bar z\,S_2$ with $\bar z$ the
+variables of $S_2$ outside $E$. They decide it completely, in exponential time,
+and show PSPACE-hardness. Their domain, however, is the set-based domain
+$D=\mathcal P(\mathrm{Const})\times D\times D$ of complete infinite trees with
+total selectors and a contravariant domain component, not the ground trees of
+non-structural subtyping, so their decision procedure does not apply to our
+setting.
+
+\paragraph{Feature Trees and Set Constraints}
+For ordering constraints over feature trees, the full first-order theory is
+undecidable, while existential entailment is PSPACE-complete over finite and
+over possibly infinite trees \citep{MullerNiehrenTreinen98,MullerNiehrenTreinen01}.
+Their procedure saturates the constraints, builds polynomial-size automata that
+recognize consequences expressed by paths, hides the existential variables
+while keeping their states, and decides $\varphi\entails\Exists\psi$ by an
+inclusion of the resulting languages. Our three conditions and the pure
+derivations through hidden variables play the role of their consequence
+languages and hidden states. Their setting differs from ours in one essential
+respect: the feature alphabet is open, so a feature that does not occur in the
+formula is always available. Their PSPACE-hardness proof, for instance, builds
+countermodels with such a fresh feature
+\citep[Lemma~5.5]{MullerNiehrenTreinen01}, and \citet{MullerNiehrenPodelski00}
+use fresh features to construct countermodels for ordering constraints. A
+ranked signature has no fresh direction: a constructor node has exactly its
+prescribed children, and $\Bot$ and $\Top$ have none.
+
+The alphabet matters already for feature trees, as the following example over
+arbitrary trees shows. Over the features $\{0,1\}$, the constraints
+$a(x)\wedge x[0]x\wedge x[1]x\wedge x\le y$ make $x$ the complete infinite tree
+labeled $a$ everywhere, so every $y$ above $x$ equals $x$, and the constraints
+entail $y\le x$. Once a third feature is available, $y$ may extend $x$ along
+it, and the entailment fails. The open-alphabet and the fixed-alphabet
+problems thus have different answers on this instance, and a decision
+procedure for the first does not decide the second. The same phenomenon
+appears in our setting when the arity grows: an entailment for a binary
+constructor need not survive bare padding to a larger arity
+(\cref{ex:cx-padding}). In set-constraint languages, entailment of atomic set
+constraints is PSPACE-complete over infinite signatures
+\citep{NiehrenMullerTalbot99}; these constraints have no existential
+conclusions, and sets of trees are a different domain from trees under the
+subtype order.
+
+\paragraph{The First-Order Theory}
+The undecidability proof of \citet{SuAikenNiehrenPriesnitzTreinen02}, recalled
+in \cref{sec:intro}, reduces the Post correspondence problem to a sentence whose
+matrix uses implications, disjunctions, and negations; for example, it
+expresses that the subtypes of a tree form a chain. Our problem is the validity
+of $\forall\bar x\,(\varphi\Rightarrow\Exists\psi)$ with conjunctive $\varphi$
+and $\psi$, a proper restriction of the $\forall^*\exists^*$ fragment. The same
+paper decides the first-order theory over signatures with only unary and
+nullary constructors. \citet{Su02} and the extended version of the paper
+\citep{SuEtAl06} reduce entailment to emptiness of constrained automata on
+tuples of trees, which is undecidable in general. The remark of
+\citet[Section~7.2.2]{Su02} quoted in \cref{sec:intro} concerns an adaptation
+of that undecidability proof; no formula with a single alternation is
+displayed, and undecidability of a fragment with one alternation but an
+unrestricted matrix would still not settle the case of conjunctions.
+\citet{KuncakRinard03} showed that the first-order theory of structural
+subtyping of non-recursive types is decidable, by a term-power construction.
+This covers existential entailment for structural subtyping, which compares
+only trees of the same shape, over finite trees.
+
+\paragraph{The Automata Route to Plain Entailment}
+\citet{NiehrenPriesnitz99} proved PSPACE-completeness of plain non-structural
+entailment for the fragment without literals $x=\Bot$ and $x=\Top$, by a
+reduction to universality of finite automata.
+\citet{NiehrenPriesnitz01,NiehrenPriesnitz03} introduced cap automata,
+decided the unary case, and identified the role of word equations in the
+general problem. \citet{HengleinRehof98} proved PSPACE-hardness of
+non-structural entailment for a binary covariant constructor, which
+\cref{thm:cx-hard} extends to every fixed arity at least two, and the theses of
+Priesnitz \citep{Priesnitz00,Priesnitz04} develop the automata approach
+further. \citet{NiehrenPriesnitzSu05} classify the complexity of
+satisfiability over posets and note that their technique does not extend
+beyond satisfiability. Our reduction keeps the spirit of this line: the
+obstructions are periodicity conditions between suffixes of paths. The new
+features are that two words with a common suffix are compared, that a word may
+be compared with itself through a self event, and that the separator encoding
+returns the two words to the one-word readers of \citet{Zhao26}.
+
+\paragraph{Pushdown Saturation Through Internal Variables}
+The type inference of \citet{NoonanLoginovCok16} for machine code uses derived
+type variables, which extend a variable by a word of field labels, and observes
+that ``the full set of constraints entailed by $C$ has a finite encoding by an
+automaton''. It builds a transducer for derivations through uninteresting
+variables by a modification of the saturation procedure for prefix rewriting
+\citep{Buchi64,Caucal92}, and normalizes derivations to pops followed by
+pushes. This is a close precedent for our pure derivations through hidden
+variables and their lowest-point decomposition (\cref{lem:sm-lowest-point}).
+Their entailment is derivability in a proof system, while ours is semantic
+entailment over ground trees. Completeness for the semantic notion is what
+needs the leaf-cone characterization and the analysis of two-word holes, which
+have no counterpart there. The saturation in our setting is the computation of
+the closure $D_\chi$ of the signed system; no further saturation is needed,
+because the pushdown summaries are read off from it
+(\cref{def:sm-automata,lem:sm-summaries}).
+
+\paragraph{Algebraic and Semantic Subtyping}
+Algebraic subtyping \citep{Dolan16,DolanMycroft17} interprets types in an
+extensible algebra rather than as ground trees and infers principal types by
+biunification. Subsumption between its polar type schemes is decided in the
+thesis \citep{Dolan16}; the conference paper does not discuss deciding
+subsumption \citep{DolanMycroft17}. Simple-sub \citep{Parreaux20} gives a compact
+account of this inference; MLstruct extends it to a Boolean algebra of
+structural types and does not formally describe its subsumption check
+\citep{ParreauxChau22}; and \citet{ParreauxEtAl24} keep subtyping constraints
+in first-class polymorphic types. Because the semantics differ, decidability
+there does not decide the ground-tree problem; \cref{app:ap-closed} gives a
+correct closed-tree simplification that is not valid in an extensible
+algebra. Semantic subtyping interprets types as sets of values.
+\citet{CastagnaXu11} decide subtyping between polymorphic regular types in
+EXPTIME, and \citet{GesbertGenevesLayaida15} decide semantic subtyping through
+a logic. For polymorphic application, \citet{CastagnaNguyenXuAbate15} decide
+tallying, but inferring the type substitutions in general uses sound and
+complete semi-decision procedures whose termination is left open. These are
+questions about types, not about the solutions of constraint systems over
+ground trees.
+
+\paragraph{Representations of Solution Spaces}
+\citet{Kozen95} represents the solution spaces of set constraints as rational
+spaces and relates logical entailment to rational embeddings between these
+spaces. Our leaf representation (\cref{thm:lf-representation}) is a
+representation theorem of a different kind, in the tradition of rings of sets
+\citep{Birkhoff37} and Alexandrov topologies \citep{Alexandroff37}: a tree of
+any variance is a pair of disjoint sets of words that are closed under
+extension, and the order of trees is inclusion of the first set and reverse
+inclusion of the second. This elementary fact becomes useful because every
+literal then becomes clauses with a single premise. For a covariant
+constructor over $\BF$, solution sets are closed under unions and intersections
+(\cref{rem:ch-one-sign}); in general they are closed under intersections of
+leaf cones, which in the order of trees is the median with $\Omega$
+(\cref{prop:ch-meet}).
+
+\paragraph{Decidability of Plain Entailment}
+\Citet{Zhao26} decides plain entailment
+$\varphi\entails x\le y$ for one constructor of any arity and variance, by
+reducing non-entailment to holes of finite readers and bounding a shortest hole
+through its rejected tail, its depth, and a compression argument. It lists
+existential entailment among the natural extensions that are not decided by
+testing component inequalities independently. We use the results recalled in
+\cref{sec:bg} and \cref{app:bg}. Condition \textup{(U)} is a hole problem of
+exactly the kind solved there, decided by its three bounds, applied to a
+reduced reader whose depth is bounded through a clock on the antecedent
+(\cref{sec:un}); the readers of that paper already compare a root with its own
+signed copy, the plain counterpart of our self events. For the two-word
+holes of condition \textup{(II)}, the rejected tail of a mortal hole is short
+by definition, so its depth theorem already bounds the depth of
+the separator word (\cref{lem:mo-depth}). Our main technical additions to that
+machinery are the pump for holes that are not mortal
+(\cref{thm:nm-pump}) and the extension of the bounded-depth search to holes
+that must contain an anchored comparison (\cref{thm:mo-anchored}).

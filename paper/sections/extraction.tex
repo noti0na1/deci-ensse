@@ -1,0 +1,366 @@
+%% extraction.tex -- the two-word hole problem with target self events, forced
+%% target heads (FH), the extracted instances I_pq with enriched rejection
+%% (neither dead by support nor root-dead), FH by construction, and the theorem
+%% that under satisfiability and (U), condition (II) holds iff no extracted
+%% instance has a hole. Proofs: appendix-summaries.tex (app:sm).
+
+\section{Two-Word Holes with Self Events}\label{sec:ex}
+
+Condition \CondII\ fails when a visible atom that is live in $\varphi$ has a
+visible $\psi$-consequence outside its closure in $\varphi$; by
+\cref{lem:ch-pure}(2), the consequence can be taken to be derived by a pure
+derivation. By the lowest point (\cref{lem:sm-lowest-point}), the seed and the
+consequence then share a suffix, which follows a pop head in the seed and a
+push head in the consequence. Liveness of the seed is read by the source
+automaton of \cref{sec:un} together with the comparisons of the seed word
+that are self events (\cref{thm:sm-dead}); membership in the closure is read
+by the lower automata of $\varphi$ together with comparisons between the two
+words (\cref{lem:sm-membership}); and the derivation is read by the bound
+automata of $\psi$. This section abstracts these tests into a hole problem
+for pairs of words read by four automata (\cref{sec:ex-problem}), extracts its
+instances from $\varphi$ and $\psi$ (\cref{sec:ex-instances}), and proves
+that, once satisfiability and \CondU\ are known, \CondII\ holds iff no
+extracted instance has a hole (\cref{sec:ex-reduction}). The extracted
+instances read the seed with a rejection test that already excludes the
+root-dead words of $\psi$. With this \emph{enrichment} they have forced target
+heads by construction, the property on which \cref{sec:nm} relies. Proofs
+omitted here are in \cref{app:sm}.
+
+\subsection{The Hole Problem}\label{sec:ex-problem}
+
+\begin{definition}[Two-word hole problem with self events]\label{def:ex-ss2self}\label{def:ex-ss2}
+An \emph{instance} of the \emph{two-word hole problem with self events} is a
+tuple
+\[
+ I=(A,\Bad,B,\Rej,\Guard,\GuardS,A',B',\Head)
+\]
+that consists of complete deterministic automata $A$, $B$, $A'$, $B'$ over $\Sigma$, with state sets
+$S_A$, $S_B$, $S_{A'}$, $S_{B'}$ and a start state $0$ each, together with
+sets $\Bad\subseteq S_A$, $\Rej\subseteq S_B$, $\Guard\subseteq S_A\times S_B$,
+$\GuardS\subseteq S_B\times S_B$, and $\Head\subseteq S_{A'}\times S_{B'}$.
+We call $A$ the \emph{spine automaton}, $B$ the \emph{target automaton}, $A'$
+and $B'$ the \emph{head automata}, $\Guard$ the \emph{guard}, $\GuardS$ the
+\emph{self guard}, and $\Head$ the \emph{head relation}, and we put
+$N_A=\len{S_A}$, and similarly $N_B$, $N_{A'}$, $N_{B'}$. For words $u$ and
+$t$, let $A_s(u)$ be the state of $A$ after $\wpre us$ and $B_e(t)$ the state
+of $B$ after $\wpre te$, define $A'_s(u)$ and $B'_e(t)$ in the same way, and
+write $M(w)$ for the state of an automaton $M$ after the whole word $w$. If
+some cut $e$ of $t$ has $B_e(t)\in\Rej$, the least one is the \emph{first
+rejected cut} $J(t)$. A pair of words $(u,t)$ is a \emph{hole} of $I$ iff
+\begin{enumerate}[label=(\alph*),leftmargin=*]
+\item $A_s(u)\notin\Bad$ for every cut $s\le\len u$;
+\item $J(t)$ is defined;
+\item there are no cuts $s\le\len u$ and $e\le J(t)$ with
+  $\wsuf te\pre\wsuf us$ and $(A_s(u),B_e(t))\in\Guard$;
+\item there are cuts $s\le\len u$ and $e\le\len t$ with $\wsuf us=\wsuf te$
+  and $(A'_s(u),B'_e(t))\in\Head$;
+\item there are no cuts $i<j\le J(t)$ with $\wsuf tj\pre\wsuf ti$ and
+  $(B_i(t),B_j(t))\in\GuardS$.
+\end{enumerate}
+The \emph{hole problem} asks whether a given instance has a hole.
+\end{definition}
+
+We call $u$ the \emph{spine} and $t$ the \emph{target}. Unlike rejection in
+\cref{def:bg-hole}, condition (b) requires a rejected prefix of $t$, not
+necessarily a rejected final state; for extracted instances these conditions
+coincide, as shown in \cref{sec:ex-instances}. A state of $A$ outside
+$\Bad$ is \emph{safe}; a word is \emph{safe from} a state $r$ if $A$ visits
+only safe states while reading it from $r$, including $r$ and the last state;
+and the spine $u$ is \emph{safe} if it is safe from $0$, which is condition
+(a). The other conditions are stated in terms of the following pairs of cuts.
+
+\begin{definition}[Comparisons and events]\label{def:ex-events}
+Let $u$ and $t$ be words. A \emph{cross comparison} of $(u,t)$ is a pair of
+cuts $(s,e)$ with $0\le s\le\len u$, $0\le e\le\len t$, and
+$\wsuf te\pre\wsuf us$. Its \emph{offset} is
+$\Delta(s,e)=(\len u-s)-(\len t-e)\ge0$, its \emph{overhang} $o(s,e)$ is the
+suffix of $u$ of length $\Delta(s,e)$, so that $\wsuf us=\wsuf te\,o(s,e)$,
+and it is \emph{aligned} if $\Delta(s,e)=0$. A \emph{self comparison} of $t$
+is a comparison $(i,j)$ of $t$ (\cref{def:bg-comparison}): $i<j\le\len t$ and
+$\wsuf tj\pre\wsuf ti$; its overhang is the word $o$ of length $j-i$ with
+$\wsuf ti=\wsuf tj\,o$. For an instance $I$ and a target $t$ with $J(t)$
+defined:
+\begin{itemize}[leftmargin=*]
+\item an \emph{event} of $(u,t)$ is a cross comparison $(s,e)$ with
+  $e\le J(t)$ and $(A_s(u),B_e(t))\in\Guard$;
+\item a \emph{self event} of $t$ is a self comparison $(i,j)$ of $t$ with
+  $j\le J(t)$ and $(B_i(t),B_j(t))\in\GuardS$;
+\item a \emph{head event} of $(u,t)$ is an aligned cross comparison $(s,e)$
+  with $(A'_s(u),B'_e(t))\in\Head$.
+\end{itemize}
+\end{definition}
+
+Thus a hole is a pair with a safe spine, a target with $J(t)$ defined, no
+event, no self event, and a head event. A self comparison $(i,j)$ of $t$ is
+the cross comparison $(i,j)$ of the pair $(t,t)$, with offset $j-i>0$; in particular, it
+is never aligned. Events relate two words; self events relate two cuts of the
+target. An instance with $\GuardS=\varnothing$ has no self events, and its holes
+are those of the suffix-sharing two-word problem of a covariant constructor;
+\cref{rem:ex-covariant} explains when the extracted instances have this form.
+
+\paragraph{Head form}
+A head event $(s,e)$ splits the two words as
+\[
+ u=\beta\sigma,\qquad t=\gamma\sigma,\qquad
+ \beta=\wpre us,\quad\gamma=\wpre te,\quad\sigma=\wsuf us=\wsuf te,
+\]
+with $(A'(\beta),B'(\gamma))\in\Head$. We call $\beta$ the \emph{spine head},
+$\gamma$ the \emph{target head}, and $\sigma$ the \emph{common suffix}. In the
+extracted instances of \cref{sec:ex-instances}, the target head is the pop
+head of \cref{lem:sm-lowest-point} and the spine head its push head.
+\Cref{fig:ex-hole} draws the head form together with the two kinds of pairs
+that a hole must avoid. A cross comparison and a self comparison look alike:
+in both, a suffix of the target is laid at a cut of a word, the spine or the
+target itself, and agrees with that word letter by letter until the suffix
+ends.
+
+\input{figures/ex-hole}
+
+\begin{definition}[Forced target heads]\label{def:ex-fh}
+An instance $I$ has \emph{forced target heads}, condition \emph{(FH)}, if for
+every $(r,r')\in\Head$ with $r$ reachable in $A'$ and every word $\gamma$ with
+$B'(\gamma)=r'$, no proper prefix of $\gamma$ is rejected:
+$B_i(\gamma)\notin\Rej$ for all $i<\len\gamma$.
+\end{definition}
+
+\begin{lemma}[Heads end before the first rejected cut]\label{lem:ex-head-before-J}
+Let $I$ satisfy (FH), and let $(s,e)$ be a head event of $(u,t)$, where $J(t)$
+is defined. Then $e\le J(t)$: the target head ends at or before the first
+rejected cut, and $\wsuf t{J(t)}$ is a suffix of the common suffix.
+\end{lemma}
+
+\begin{proof}
+The state $A'_s(u)$ is reachable, and $B'(\wpre te)=B'_e(t)$ is paired with
+it by $\Head$. By (FH), $B_i(t)=B_i(\wpre te)\notin\Rej$ for every $i<e$, so the
+first rejected cut is at least $e$.
+\end{proof}
+
+\Cref{sec:nm} uses \cref{lem:ex-head-before-J} to split a hole at its first
+rejected cut. In the extracted instances, (FH) holds by construction
+(\cref{lem:ex-fh}).
+
+\subsection{The Extracted Instances}\label{sec:ex-instances}
+
+The instance for a pair of visible signed variables $p,q\in X^\pm$ tests a
+pure derivation of $\psi$ from a seed $(p,t)$ to an atom $(q,u)$. The names
+follow the readers of \citet{Zhao26}: the \emph{target} is the word whose rejection
+is tested, here the seed word $t$, read by the source automaton $\Bsrc_p$ of
+\cref{sec:un}; the \emph{spine} is the word $u$ of the derived atom. The
+derivation therefore runs from the target to the spine.
+
+\begin{definition}[Extracted instance]\label{def:ex-instance}
+For $p,q\in X^\pm$, the \emph{extracted instance}
+$I_{pq}=I_{pq}(\varphi,\psi)$ consists of:
+\begin{itemize}[leftmargin=*]
+\item $A$, the lower automaton of $q$ in $\varphi$, with
+  $\Bad=\{Q:Q\cap\Fup\varphi\ne\varnothing\}$;
+\item $B=\Bsrc_p$, the source automaton of $p$ (\cref{def:un-source}), with
+  \[
+   \Rej=\{\zeta:\ \mathrm{dt}(\zeta)\text{ and }\mathrm{du}(\zeta)\text{ both
+   fail}\};
+  \]
+\item $\Guard=\{(Q,(P,b,P')):Q\cap P\ne\varnothing\}$, and $\GuardS$ the self
+  guard of \cref{def:un-source};
+\item $A'$, the lower automaton of $q$ in $\psi$, and $B'$, the upper
+  automaton of $p$ in $\psi$, with $\Head=\{(Q',P'):Q'\cap P'\ne\varnothing\}$.
+\end{itemize}
+The start states $\downc\varphi q$, the start state of $\Bsrc_p$,
+$\downc\psi q$, and $\upc\psi p$ are renamed $0$.
+\end{definition}
+
+\begin{table}[tbp]
+\caption{The extracted instance $I_{pq}$ for a seed $(p,t)$ and a derived atom
+$(q,u)$. The state of $B$ at a cut $e$ of $t$ is
+$(P^\varphi_{p,e}(t),[(\bar p,\wpre te)\in\mu_\varphi],P^\psi_{p,e}(t))$, by
+\cref{lem:un-source}.}
+\label{tab:ex-instance}
+\centering
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Part & Reads & Meaning\\
+\midrule
+$A$, $\Bad$ & $Q^\varphi_{q,s}(u)$ on the spine $u$ &
+  safe spine: $(q,u)\notin\mu_\varphi$ (\cref{lem:sm-mu})\\
+$B$, $\Rej$ & the source automaton on the target $t$ &
+  rejected: $\neg\DeadT_\varphi(p,\wpre te)$ and $\neg\DeadU_\psi(p,\wpre te)$\\
+$\Guard$ & $Q^\varphi_{q,s}(u)\cap P^\varphi_{p,e}(t)$ &
+  event: $(q,u)\in \Reach_\varphi(p,t)$ (\cref{lem:sm-membership})\\
+$\GuardS$ & $P^\varphi_{p,i}(t)\cap\overline{P^\varphi_{p,j}(t)}$ &
+  self event: $(p,t)$ is dead (\cref{thm:sm-dead})\\
+$A'$, $B'$, $\Head$ & $Q^\psi_{q,s}(u)\cap P^\psi_{p,e}(t)$ &
+  head event: $(p,t)\to^*_\psi(q,u)$ (\cref{lem:sm-lowest-point})\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\Cref{tab:ex-instance} summarizes the instance. The run of $B'$ on $t$ is the
+third component of the run of $B$, so the reachable pairs of states of $B$ and
+$B'$ are at most $N_B$ in number. The automata have $N_A=2^{2\len X}$,
+$N_B=2^{4\len X+2\len Z+1}$, and $N_{A'}=N_{B'}=2^{2(\len X+\len Z)}$ states,
+and the $4\len X^2$ instances are computable from $\varphi$ and $\psi$ in time
+polynomial in $2^{\len X+\len Z}$ and the size of $\varphi$ and $\psi$.
+
+Rejection is enriched: a cut of the seed is rejected only if it is neither
+dead by support in $\varphi$ nor root-dead in $\psi$. Both properties are
+inherited by prefixes (\cref{lem:sm-roots}(4), \cref{lem:sm-dead-states}(4)),
+so a rejected cut stays rejected on every extension: $J(t)$ is defined iff $t$
+itself is rejected, that is, iff neither $\DeadT_\varphi(p,t)$ nor
+$\DeadU_\psi(p,t)$ holds.
+
+\begin{lemma}[Forced target heads]\label{lem:ex-fh}
+Every extracted instance $I_{pq}$ satisfies (FH). No hypothesis on $\varphi$
+or $\psi$ is needed.
+\end{lemma}
+
+\begin{proof}
+Let $(Q',P')\in\Head$ and $B'(\gamma)=P'$. Then
+$P^\psi_p(\gamma)=P'\ne\varnothing$, and by \cref{lem:sm-head-prefix},
+$\DeadU_\psi(p,\wpre\gamma i)$ for every $i<\len\gamma$. By
+\cref{lem:un-source}(2), $\mathrm{du}$ holds at every such cut, so
+$B_i(\gamma)\notin\Rej$.
+\end{proof}
+
+Without the enrichment, that is, with $\Rej$ defined by the failure of
+$\mathrm{dt}$ alone, the target head can extend beyond the first rejected cut
+(\cref{ex:ex-arrow}).
+
+\subsection{Holes and Condition (II)}\label{sec:ex-reduction}
+
+\begin{theorem}[Holes and condition (II)]\label{thm:ex-reduction}
+Let $\varphi$ be satisfiable, let \CondU\ hold, let $p,q\in X^\pm$, and let
+$u,t$ be words. Then $(u,t)$ is a hole of $I_{pq}$ iff $(p,t)$ is live in
+$\varphi$, $(p,t)\to^*_\psi(q,u)$, and $(q,u)\notin\Cl_\varphi(p,t)$.
+Consequently:
+\begin{enumerate}[leftmargin=*]
+\item condition \CondII\ holds iff no extracted instance $I_{pq}$ has a hole;
+\item for every hole $(u,t)$ of $I_{pq}$, the least model $\Cl_\varphi(p,t)$
+  of $\varphi$ that contains $(p,t)$ is not the restriction to $X$ of any
+  model of $\psi$, so its solution has no extension to a solution of $\psi$.
+\end{enumerate}
+\end{theorem}
+
+The conditions of \cref{def:ex-ss2self} match the three requirements one by
+one. A head event is the lowest point of the pure derivation of $\psi$. A safe
+spine and the absence of events say that $(q,u)$ lies neither in $\mu_\varphi$
+nor in $\Reach_\varphi(p,t)$ (\cref{lem:sm-membership}). A rejected target and the
+absence of self events say that $(p,t)$ is neither dead by support nor has a
+self event, that is, that it is live (\cref{thm:sm-dead}). Here \CondU\ is used:
+a live seed must also be rejected, which requires that it not be root-dead in
+$\psi$. The bounds $e\le J(t)$ and $j\le J(t)$ in \cref{def:ex-ss2self} lose
+nothing: the guards require a nonempty set $P^\varphi_{p,e}(t)$, and the pop bound
+(\cref{lem:sm-roots}(2)) empties these sets after $J(t)$. The proof is in
+\cref{app:sm}.
+
+\begin{corollary}[Entailment and holes]\label{cor:ex-entailment}
+Let $\varphi$ and $\psi$ be satisfiable. Then $\varphi\models\Exists\psi$ iff
+condition \CondI\ holds, condition \CondU\ holds, and no extracted instance
+$I_{pq}$ with $p,q\in X^\pm$ has a hole.
+\end{corollary}
+
+\begin{proof}
+If \CondU\ fails, the entailment fails by \cref{thm:ch-characterization}.
+Otherwise, by \cref{thm:ch-characterization}, the entailment holds iff \CondI\
+and \CondII\ hold, and by \cref{thm:ex-reduction}(1), \CondII\ holds iff no
+$I_{pq}$ has a hole.
+\end{proof}
+
+Conditions \CondI\ and \CondU\ are decidable
+(\cref{prop:sm-decide,thm:un-decidable}), and every extracted instance
+satisfies (FH) (\cref{lem:ex-fh}). It remains to decide the hole problem for
+instances with forced target heads, which \cref{sec:nm,sec:mo} do.
+
+\begin{remark}[Condition (U) cannot be dropped]\label{rem:ex-u-needed}
+Without \CondU, a failure of \CondII\ need not be a hole. Let $\varphi$ be
+empty over $X=\{x,y\}$, and let $\psi=\{x\le y,\ x\le f(a,b)\}$ with $a,b$
+hidden and $f$ binary and covariant. The seed $(x^0,\eps)$ is live in
+$\varphi$, the copy $(x^0,\eps)\to(y^0,\eps)$ is a pure move of $\psi$, and
+$(y^0,\eps)\notin\Cl_\varphi(x^0,\eps)$, so \CondII\ fails at this seed. But
+$x^0$ is the root of the upper constructor literal $x^0\le f(a^0,b^0)$ of
+$\psi^\pm$, so $\DeadU_\psi(x^0,\eps)$ holds and the target $\eps$ of
+$I_{x^0y^0}$ is not rejected: $(\eps,\eps)$ is not a hole. Here \CondU\ fails,
+with the countermodel $x=\Top$. The enrichment trades \CondU\ for (FH): with
+the rejection test given by the failure of $\mathrm{dt}$ alone, the holes still
+characterize the failures of \CondII\ when $\varphi$ is satisfiable, without
+assuming \CondU, but (FH) can fail (\cref{ex:ex-arrow}).
+\end{remark}
+
+\begin{remark}[Covariant and joint-parity instances]\label{rem:ex-covariant}
+If $\varphi$ has a parity assignment (\cref{rem:ch-parity}), in particular if
+$f$ is covariant, then no pair of reachable states of the target automaton
+lies in $\GuardS$ (\cref{rem:sm-parity}), and every extracted instance is an
+instance of the suffix-sharing two-word problem without self events.
+\end{remark}
+
+\begin{example}[Shift closure: a hole]\label{ex:ex-running}
+Continue \cref{ex:un-running} with $\psi=\{x\le z,\ z\le y,\ z\le f(z,z)\}$ and
+$\varphi'_1=\{x\le y,\ y\le g,\ g\le f(g,g)\}$, both satisfiable. Condition
+\CondU\ holds, and \CondI\ holds because $\psi$ has no facts.
+Consider the seed variable $y^1$ and the derived variable $x^1$. The copy and
+constructor literals of $(\varphi'_1)^\pm$ are $x^0\le y^0$, $y^0\le g^0$,
+$g^0\le f(g^0,g^0)$, $y^1\le x^1$, $g^1\le y^1$, and $f(g^1,g^1)\le g^1$. In
+$I_{y^1x^1}$:
+\begin{itemize}[leftmargin=*]
+\item $A$ starts at $\downc{\varphi'_1}x^1=\{x^1,y^1,g^1\}$ and moves to
+  $\{g^1\}$ on every letter; $\varphi'_1$ has no facts, so every spine
+  is safe; the state $\{g^1\}$ lies on a loop at which both letters are safe,
+  so it is \emph{branching} (\cref{def:nm-kinds}), the case in which
+  \cref{sec:nm} completes every pre-hole directly (\cref{lem:nm-breaker});
+\item $P^{\varphi'_1}_{y^1}$ is $\{y^1,x^1\}$ at the empty word and empty
+  afterwards, $\mu_{\varphi'_1}=\varnothing$, and $\DeadT^\eps_{\varphi'_1}=
+  \{x^0,y^0,g^0\}$; with \cref{ex:un-running}, no cut of any target is dead by
+  support or root-dead, so $J(t)=0$ for every target $t$;
+\item hence the only possible event is $(0,0)$, a cross comparison iff
+  $t\pre u$, and there are no self events, since
+  $P^{\varphi'_1}_{y^1,j}(t)=\varnothing$ for $j\ge1$;
+\item $Q^\psi_{x^1}(\beta)$ always meets $\upc\psi y^1=\{y^1,z^1,x^1\}$, and
+  $P^\psi_{y^1}(\gamma)=\varnothing$ for $\gamma\ne\eps$, so the head events
+  are the pairs $(s,0)$ with $\wsuf us=t$.
+\end{itemize}
+So the holes of $I_{y^1x^1}$ are the pairs $(u,t)$ in which $t$ is a suffix but
+not a prefix of $u$, for example $(01,1)$, with head event $(1,0)$. By
+\cref{thm:ex-reduction}, $\psi$ derives $(x^1,01)$ from the live seed
+$(y^1,1)$, and $(x^1,01)\notin\Cl_{\varphi'_1}(y^1,1)$. In words: if $y$ has a
+leaf $\Bot$ at a prefix of $1$, then every $z$ between $x$ and $y$ with
+$z\le f(z,z)$ has a leaf $\Bot$ at a prefix of $1$ and hence at a prefix of
+$01$, and so does $x$. A finite countermodel is
+$x=y=f(f(\Bot,f(\Bot,\Bot)),\Bot)$, whose constructor positions are $\eps$,
+$0$, and $01$, with $g$ the complete binary tree whose constructor positions
+are the words of length at most $2$. The least model $\Cl_{\varphi'_1}(y^1,1)$
+of \cref{thm:ex-reduction}(2) is the solution $x=y=f(\Omega,\Bot)$ and
+$g=\Omega$. Since $J(t)=0$, the target head is empty, and (FH) holds trivially
+for this instance.
+\end{example}
+
+\begin{example}[A target head beyond the cuts dead by support]\label{ex:ex-arrow}
+Continue \cref{ex:un-arrow} with $\varphi=\{x\le x\to x\}$ and
+$\psi=\{x\le a\to x,\ c\to y\le a\}$, both satisfiable: $x=\Bot$ solves
+$\varphi$, and $x=y=\Bot$, $a=c=\Top$ solve $\psi$. Conditions \CondI\ and
+\CondU\ hold. Consider the seed variable $x^0$, the derived variable $y^1$,
+and the pair $(u,t)=(\eps,01)$ in $I_{x^0y^1}$. Along the target $t=01$, the
+upper automata give
+\[
+ P^\varphi_{x^0}:\ \{x^0\},\ \{x^1\},\ \varnothing,\qquad
+ P^\psi_{x^0}:\ \{x^0\},\ \{a^1\},\ \{y^1\}
+\]
+at the cuts $0,1,2$. With $\DeadT^\eps_\varphi=\{x^0\}$ and
+$\DeadU^\eps_\psi=\{x^0,a^1\}$, cut $0$ is dead by support, cut $1$ is not dead
+by support but root-dead in $\psi$, and cut $2$ is rejected: $J(01)=2$. The
+head event is $(0,2)$, since $Q^\psi_{y^1}(\eps)=\{y^1\}=P^\psi_{x^0}(01)$: the
+derivation pops $0$ from $x^0$ to $a^1$ and then $1$ from $a^1$ to $y^1$. The
+only cross comparison $(s,e)$ with $e\le2$ is $(0,2)$, whose guard
+$\{y^1\}\cap P^\varphi_{x^0}(01)$ is empty; the self comparisons of $01$ ending
+at $2$ have an empty self guard, and $(0,1)$ is not a self comparison. The
+spine is safe because $\varphi$ has no facts. So $(\eps,01)$ is a
+hole: $\psi$ derives $(y^1,\eps)$, that is $y=\Bot$, from the live seed
+$(x^0,01)$. A countermodel is $x=(\Bot\to\Bot)\to\Bot$ and $y=\Top$: from
+$x\le a\to x$ and $c\to y\le a$, any extension would have
+$c\to\Top\le_c a\le_c\Bot\to\Bot$, hence $\Top\le_c\Bot$.
+
+The target head is $\gamma=01$. The rejection test given by the failure of
+$\mathrm{dt}$ alone would reject already at cut $1$, inside the head: $(x^0,0)$
+is not dead by support, although it is dead by the self event $(0,1)$ of the
+word $0$ (\cref{ex:sm-arrow}). So the unenriched instance does not satisfy
+(FH). The enrichment rejects only at cut $2$, because $(x^0,0)$ is root-dead
+in $\psi$.
+\end{example}

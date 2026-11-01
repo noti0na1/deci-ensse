@@ -1,0 +1,550 @@
+%% classes -- tree classes: two seeds, observation pins, finite-bound pinning
+%% for every variance, regular and finite transfer, the top-freeness gadget
+%% for {bot,f}, and arities zero and one.
+
+\section{Tree Classes}\label{sec:tc}\label{sec:classes}
+
+The preceding sections decide existential entailment over arbitrary trees.
+This section transfers the decision to regular and to finite trees, for every
+arity $n\ge0$ and every variance $c$, and it reduces the signature $\BF$ with
+$f$ covariant to $\BFT$. Regular trees are handled by the least closures of
+\cref{sec:lf}, whose slices are regular for regular seeds by
+\cref{lem:sm-regular-closure}; a failed extension is caused by at most two
+seeds (\cref{lem:tc-two-seeds}), so $\Ereg=\Eall$ (\cref{thm:tc-regular}).
+Finite trees need a different argument. Least closures describe trees with as
+few leaves as possible, and these are infinite in general: the empty system has the empty least model, which
+assigns $\Omega$ to every variable. Instead we express observations by finite
+ground bounds (\cref{lem:tc-pins}) and show that adding finite ground bounds
+preserves finite satisfiability, for every variance (\cref{thm:tc-pinning}).
+This gives the dispatch \cref{eq:tc-finite} of \cref{thm:tc-finite}. Proofs
+not given here are in \cref{app:tc}.
+
+Throughout, trees are over $\BFT$ and ordered by $\le_c$ unless stated
+otherwise, $\varphi$ and $\psi$ are as in \cref{def:bg-existential}, we use
+the notation of \cref{sec:bg,sec:lf} together with $f(t^n)=f(t,\dots,t)$ and
+$\nu_\pm$ for $\nu_0$ and $\nu_1$, and a model $T$ \emph{decodes} to the
+solution $\rho$ with $S_\rho=T$ (\cref{lem:lf-clauses}).
+
+\subsection{Extensions and Two Seeds}\label{sec:tc-seeds}
+
+An assignment $\rho$ of $X$ is \emph{extensible} if it extends to a solution
+of $\psi$ over arbitrary trees.
+
+\begin{lemma}[Extension criterion]\label{lem:tc-extension}
+An assignment $\rho$ of $X$ is extensible iff $H_\psi(S_\rho)$ is consistent
+and $H_\psi(S_\rho)|_X=S_\rho$. In that case $H_\psi(S_\rho)$ decodes to an
+extension of $\rho$.
+\end{lemma}
+
+This restates \cref{lem:lf-closure}(5) for assignments.
+
+\begin{proof}
+By \cref{lem:lf-closure}(5) and \cref{lem:lf-clauses}, applied to the set
+$S_\rho$, which is extension closed and has no exclusion pair, $\rho$ is
+extensible exactly when $H_\psi(S_\rho)$ is consistent and has visible part
+$S_\rho$; then that closure decodes to an extension.
+\end{proof}
+
+\begin{definition}[Observations]\label{def:tc-observation}
+A \emph{visible observation} is a visible atom $a=(x^\pm,w)$ together with one
+of the words \emph{asserted} or \emph{denied}. An asserted observation
+\emph{holds} in an assignment $\rho$ of $X$ if $a\in S_\rho$, a denied one if
+$a\notin S_\rho$. The variable $x$ and the word $w$ are the variable and the
+word of the observation.
+\end{definition}
+
+\begin{lemma}[Two seeds]\label{lem:tc-two-seeds}
+Let $\rho$ be an assignment of $X$ that is not extensible. There are a set
+$A\subseteq S_\rho$ of visible atoms and a set $C$ of visible atoms outside
+$S_\rho$, with $\len A+\len C\le2$, such that no assignment $\rho'$ of $X$
+with $A\subseteq S_{\rho'}$ and $C\cap S_{\rho'}=\varnothing$ is extensible.
+In particular, at most two visible observations hold in $\rho$ and hold
+together in no extensible assignment.
+\end{lemma}
+
+\begin{proof}
+Every atom $b$ of $H_\psi(S_\rho)$ has a seed in $\Fact_\psi\cup S_\rho$, so
+$b\in H_\psi(A_b)$ for a set $A_b\subseteq S_\rho$ with at most one element. By
+\cref{lem:tc-extension}, $H_\psi(S_\rho)$ is not consistent or has a visible
+atom outside $S_\rho$. In the first case, \cref{lem:lf-closure}(3) gives
+seeds $x,y\in\Fact_\psi\cup S_\rho$ such that $\Reach_\psi(x)$ contains a
+forbidden root, or $\Reach_\psi(x)$ and $\Reach_\psi(y)$ contain an exclusion pair;
+let $A$ consist of those of $x,y$ that lie in $S_\rho$, and $C=\varnothing$.
+In the second case, let $b\in H_\psi(S_\rho)|_X$ with $b\notin S_\rho$, and put
+$A=A_b$ and $C=\{b\}$. In both cases $\len A+\len C\le2$. Let $\rho'$ be an
+assignment of $X$ with $A\subseteq S_{\rho'}$ and $C\cap
+S_{\rho'}=\varnothing$. Since $H_\psi$ is monotone,
+$H_\psi(S_{\rho'})\supseteq H_\psi(A)$, so $H_\psi(S_{\rho'})$ contains the
+same forbidden root or the same two opposite atoms, or the visible atom
+$b\notin S_{\rho'}$. By \cref{lem:tc-extension}, $\rho'$ is not extensible.
+The observations asserting the atoms of $A$ and denying those of $C$ prove the
+last claim.
+\end{proof}
+
+The lemma uses no satisfiability hypothesis. If $\psi$ is unsatisfiable, then
+$\mu_\psi$ is inconsistent by \cref{lem:lf-closure}(2), and
+$A=C=\varnothing$ will do. The two seeds of $A$ may belong to the same
+variable.
+
+\subsection{Observation Pins}\label{sec:tc-pins}
+
+For a word $w$ and trees $b,g$, let $\emb_b(w,g)$ be the tree with a pin path
+along $w$ that carries $g$ at its end and $b$ at every child off the pin path:
+$\emb_b(\eps,g)=g$, and $\emb_b(iw,g)=f(t_j)_j$ with $t_i=\emb_b(w,g)$ and
+$t_j=b$ for $j\ne i$.
+
+\begin{lemma}[Observation pins]\label{lem:tc-pins}
+For every covariant tree $t$ and every word $w$,
+\begin{equation}\label{eq:tc-pins}
+\begin{aligned}
+ w\in L^0_t&\iff\emb_\Bot(w,\Top)\le t,&
+ w\notin L^0_t&\iff t\le\emb_\Top(w,f(\Top^n)),\\
+ w\in L^1_t&\iff t\le\emb_\Top(w,\Bot),&
+ w\notin L^1_t&\iff\emb_\Bot(w,f(\Bot^n))\le t,
+\end{aligned}
+\end{equation}
+and each of these four trees has at most $1+n(\len w+1)$ positions.
+Consequently, for every variance $c$, every visible observation with variable
+$x$ and word $w$ is equivalent, for all assignments $\rho$ of $X$, to a single
+inequality $g\le_c\rho(x)$ or $\rho(x)\le_cg$, where $g$ is a finite ground
+tree with at most $1+n(\len w+1)$ positions.
+\end{lemma}
+
+For $n\ge1$ the bound is attained by the two trees with a constructor at the
+end of the pin path; for $n=0$ the only word is $\eps$, and the four trees are
+$\Top$, $f()$, $\Bot$ and $f()$.
+
+\subsection{Finite-Bound Pinning}\label{sec:tc-pinning}
+
+\paragraph{Intersection of leaf cones}
+Over arbitrary and regular trees, extensions can be intersected; over finite
+trees they cannot (item (3) below), which is why the transfer to finite trees
+pins observations by finite ground bounds instead. For trees $t$ and $u$, let
+$t\leafmeet u$ be the tree with the leaf pair
+$(L^0_t\cap L^0_u,\ L^1_t\cap L^1_u)$, which exists by
+\cref{thm:lf-representation}(1); its signed leaf cones contain exactly the
+observations common to $t$ and $u$. For assignments, $\leafmeet$ acts variablewise.
+
+\begin{proposition}[Closure under intersection]\label{prop:ch-meet}
+\leavevmode
+\begin{enumerate}[leftmargin=*]
+\item The intersection of a nonempty family of models of a system $\chi$ is a
+  model of $\chi$, and the intersection of a nonempty subfamily of the
+  projected family $\mathcal F_\psi$ (\cref{eq:ch-models}) belongs to
+  $\mathcal F_\psi$. In particular, the solutions of $\chi$ and the assignments of $X$ that extend
+  to solutions of $\psi$ are closed under $\leafmeet$.
+\item The operation $\leafmeet$ is commutative, associative, idempotent and
+  monotone for $\le_c$, and
+  $f(t_i)_i\leafmeet f(u_i)_i=f(t_i\leafmeet u_i)_i$. Moreover,
+  $t\leafmeet u$ is the median of $t$, $u$ and $\Omega$ in the lattice of
+  trees ordered by $\le_c$.
+\item If $t$ and $u$ are regular, then so is $t\leafmeet u$. For $n\ge1$,
+  $\Bot\leafmeet\Top=\Omega$ is infinite, so the finite trees are not
+  closed under $\leafmeet$.
+\end{enumerate}
+\end{proposition}
+
+The proof is in \cref{app:tc}. By (1), the model $H_\psi(S)$ of
+\cref{lem:lf-closure}(5) is the intersection of all models $T$ of $\psi$ with
+$T|_X=S$, the least extension of $S$. By (1) and commutativity, a relation
+that is the projection of the solutions of a system over arbitrary trees, or
+over regular trees, and contains two pairs $(a,b)$ and $(b,a)$ also contains
+the diagonal pair $(a\leafmeet b,a\leafmeet b)$. So no such relation is
+nonempty, symmetric and irreflexive; in particular, over arbitrary or regular
+trees no system with hidden variables defines the disequality of two trees.
+The decision procedure does not use \cref{prop:ch-meet}.
+
+\paragraph{Ground bounds}
+A \emph{ground bound} on a variable $x$ is an inequality $g\le_cx$, a
+\emph{lower} bound, or $x\le_cg$, an \emph{upper} bound, where $g$ is a finite
+ground tree. The following theorem extends
+\nssecite{Theorem ``Finite countermodel transfer''} from the pin paths of a
+single word to arbitrary finite bounds.
+
+\begin{theorem}[Finite-bound pinning]\label{thm:tc-pinning}
+Let $\chi$ be a system over a set $V$ of variables, with any variance, that
+has a finite solution, and let $B$ be a finite set of ground bounds on
+variables of $V$. If $\chi\cup B$ has a solution, then it has a finite
+solution.
+\end{theorem}
+
+The proof reduces the theorem to covariant systems by the signed system
+$\chi^\pm$ of \cref{tab:bg-signed}, and then symmetrizes a covariant solution
+by a median. A ground bound $b$ is translated into a pair $b^\pm$ of
+covariant ground bounds on signed variables,
+\begin{equation}\label{eq:tc-signed-bounds}
+ (g\le_cx)^\pm=\{\nu_+g\le x^+,\ x^-\le\nu_-g\},\qquad
+ (x\le_cg)^\pm=\{x^+\le\nu_+g,\ \nu_-g\le x^-\},
+\end{equation}
+and $B^\pm$ is the union of these pairs. For an assignment $\rho$ of $V$,
+$\rho^\pm$ is the assignment $v^\pm\mapsto\nu_\pm\rho(v)$ of
+\cref{lem:bg-signed}. The \emph{sign involution} $\iota$ maps an assignment
+$\sigma$ of $V^\pm$ to the assignment
+\[
+ (\iota\sigma)(v^+)=\sigma(v^-)^\partial,\qquad
+ (\iota\sigma)(v^-)=\sigma(v^+)^\partial .
+\]
+The literals of \cref{tab:bg-signed} that contain $\Bot$ or $\Top$ belong to
+$\chi^\pm$; the proof needs them (\cref{rem:tc-extreme}).
+
+\begin{lemma}[Signed bounds]\label{lem:tc-signed}
+Let $\chi$ be a system over $V$ and $B$ a finite set of ground bounds on $V$.
+\begin{enumerate}[leftmargin=*]
+\item An assignment $\rho$ of $V$ solves $\chi\cup B$ iff $\rho^\pm$ solves
+  $\chi^\pm\cup B^\pm$.
+\item $\iota$ is an involution that maps the solutions of $\chi^\pm\cup B^\pm$
+  to solutions, and $\iota\rho^\pm=\rho^\pm$ for every assignment $\rho$ of
+  $V$.
+\item If $\iota\sigma=\sigma$, then $\sigma=\rho^\pm$ for the assignment
+  $\rho(v)=\nu_+\sigma(v^+)$; and $\rho\mapsto\rho^\pm$ and its inverse
+  preserve finiteness.
+\end{enumerate}
+\end{lemma}
+
+For covariant trees $t_1,t_2,t_3$, the \emph{median} $\tcmed(t_1,t_2,t_3)$ is
+the covariant tree whose cones consist of the words that lie in the
+corresponding cones of at least two of the three trees: for both signs,
+\[
+ L^\pm_{\tcmed(t_1,t_2,t_3)}=\{w:w\in L^\pm_{t_j}\text{ for at least two }j\}.
+\]
+It exists by \cref{thm:lf-representation}(1): the sets on the right are
+extension closed, and they are disjoint, since a word in two of the cones
+$L^0_{t_j}$ and in two of the cones $L^1_{t_j}$ lies in both cones of one
+$t_j$. The median of assignments is taken variablewise. It is the lattice
+median $(t_1\wedge t_2)\vee(t_1\wedge t_3)\vee(t_2\wedge t_3)$ of the
+covariant order, but we use only the following properties.
+
+\begin{lemma}[Median]\label{lem:tc-median}
+\leavevmode
+\begin{enumerate}[leftmargin=*]
+\item The median is symmetric and monotone in each argument, and
+  $\tcmed(t,t,u)=t$.
+\item $\tcmed(f(a^1_i)_i,f(a^2_i)_i,f(a^3_i)_i)=f(\tcmed(a^1_i,a^2_i,a^3_i))_i$
+  and $\tcmed(t_1,t_2,t_3)^\partial=\tcmed(t_1^\partial,t_2^\partial,t_3^\partial)$.
+  In particular $\iota$ commutes with medians of assignments of signed
+  variables.
+\item The median of three finite trees is finite.
+\item If three assignments solve a covariant system together with covariant
+  ground bounds, so does their median.
+\end{enumerate}
+\end{lemma}
+
+The covariant case of \cref{thm:tc-pinning} is proved directly from the
+finite-satisfiability criterion of \citet{Zhao26}
+(\cref{thm:bg-nsse-sat}), in \cref{app:tc-covariant}. By that
+criterion, a system has a finite solution iff it has neither a label clash nor
+a cycle clash. The proof encodes each ground bound by fresh variables, one for
+each position of the bound; since a path through fresh variables strictly
+increases the length of the position they stand for, every cycle clash of the
+encoded system lies among the original variables, where the finite solution
+of $\chi$ excludes it, and the solution of $\chi\cup B$ excludes label
+clashes.
+
+\begin{lemma}[Covariant finite-bound pinning]\label{lem:tc-pinning-covariant}
+\Cref{thm:tc-pinning} holds when $f$ is covariant.
+\end{lemma}
+
+\begin{proof}[Proof of \cref{thm:tc-pinning}]
+If $n=0$, every tree is finite. Let $n\ge1$, let $\delta$ be a finite solution
+of $\chi$, and let $\rho$ be a solution of $\chi\cup B$. By
+\cref{lem:tc-signed}(1,3), $\delta^\pm$ is a finite solution of $\chi^\pm$,
+and $\rho^\pm$ is a solution of $\chi^\pm\cup B^\pm$. By
+\cref{lem:tc-pinning-covariant}, applied to the covariant system $\chi^\pm$
+and the bounds $B^\pm$, the system $\chi^\pm\cup B^\pm$ has a finite solution
+$\alpha$. By \cref{lem:tc-signed}(2), $\iota\alpha$ is a solution of
+$\chi^\pm\cup B^\pm$, and it is finite because duality keeps the domain. Consider the
+median
+\[
+ \tcmed(\alpha,\iota\alpha,\delta^\pm).
+\]
+All three arguments solve $\chi^\pm$, so $\tcmed(\alpha,\iota\alpha,\delta^\pm)$
+solves $\chi^\pm$ by \cref{lem:tc-median}(4), and it is finite by
+\cref{lem:tc-median}(3). The assignment $\delta^\pm$ need not satisfy the
+bounds; still $\tcmed(\alpha,\iota\alpha,\delta^\pm)$ satisfies $B^\pm$: for a
+lower bound $G\le p$ in $B^\pm$, both $\alpha(p)$ and $(\iota\alpha)(p)$ lie
+above $G$, so
+$G=\tcmed(G,G,\delta^\pm(p))\le\tcmed(\alpha,\iota\alpha,\delta^\pm)(p)$ by
+\cref{lem:tc-median}(1), and upper bounds are symmetric. By
+\cref{lem:tc-median}(2) and \cref{lem:tc-signed}(2),
+\[
+ \iota\,\tcmed(\alpha,\iota\alpha,\delta^\pm)
+ =\tcmed(\iota\alpha,\iota\iota\alpha,\iota\delta^\pm)
+ =\tcmed(\iota\alpha,\alpha,\delta^\pm)=\tcmed(\alpha,\iota\alpha,\delta^\pm) .
+\]
+By \cref{lem:tc-signed}(3), $\tcmed(\alpha,\iota\alpha,\delta^\pm)=\tau^\pm$ for
+a finite assignment $\tau$ of $V$, which solves $\chi\cup B$ by \cref{lem:tc-signed}(1).
+\end{proof}
+
+\begin{remark}[The extreme literals are needed]\label{rem:tc-extreme}
+The signed literals of $u=\Bot$ and $\Top\le u$ in \cref{tab:bg-signed} cannot
+be dropped from $\chi^\pm$, although they contribute no rules on leaf cones,
+only facts (\cref{tab:lf-clauses}). Let $n\ge1$, $\chi=\{\Top\le x\}$,
+$B=\varnothing$, and $\delta(x)=\Top$. Without its extreme literals the signed
+system is empty, and $\alpha(x^+)=\Bot$, $\alpha(x^-)=\Top$ is a finite
+solution with $\iota\alpha=\alpha$. Then
+$\tcmed(\alpha,\iota\alpha,\delta^\pm)=\alpha$, which decodes to $x=\Bot$ and
+violates $\chi$. The third argument of the median must also be a finite
+solution of the unpinned system: $\Omega$ in every coordinate is fixed by
+$\iota$ and solves every signed system without extreme literals, but the
+median with it is infinite in general.
+\end{remark}
+
+\subsection{Regular and Finite Trees}\label{sec:tc-transfer}
+
+\begin{theorem}[Regular trees]\label{thm:tc-regular}
+For every arity $n\ge0$, every variance $c$, and all systems $\varphi$ over
+$X$ and $\psi$ over $X\cup Z$:
+\begin{enumerate}[leftmargin=*]
+\item a system is satisfiable iff it has a regular solution;
+\item every regular extensible assignment of $X$ has a regular extension;
+\item if some solution of $\varphi$ is not extensible, then some regular
+  solution of $\varphi$ is not extensible.
+\end{enumerate}
+Consequently $\Ereg(\varphi,\psi)\iff\Eall(\varphi,\psi)$.
+\end{theorem}
+
+\begin{proof}
+(1) This restates \cref{thm:bg-nsse}(1) and \cref{lem:bg-signed-sat}.
+
+(2) Let $\rho$ be regular and extensible. By \cref{lem:tc-extension},
+$H_\psi(S_\rho)$ decodes to an extension of $\rho$. The cones of $\rho$ are
+regular by \cref{thm:lf-representation}(4), hence so are those of
+$H_\psi(S_\rho)$ by \cref{lem:sm-regular-closure}, and the extension is
+regular by \cref{thm:lf-representation}(4).
+
+(3) Let $\rho$ be a solution of $\varphi$ that is not extensible, and take $A$
+and $C$ from \cref{lem:tc-two-seeds}. The model $S_\rho$ of $\varphi$ contains
+$A$, so by \cref{lem:lf-closure}(2) the set $H_\varphi(A)$ is the least model
+of $\varphi$ that contains $A$, and $H_\varphi(A)\subseteq S_\rho$. It decodes
+to a solution $\rho_0$ of $\varphi$, which is regular by
+\cref{lem:sm-regular-closure} and \cref{thm:lf-representation}(4), since $A$
+is finite. Its atom set contains
+$A$ and, being contained in $S_\rho$, is disjoint from $C$. By
+\cref{lem:tc-two-seeds}, $\rho_0$ is not extensible.
+
+For the consequence, if $\Eall$ holds, every regular solution of $\varphi$ is
+extensible and has a regular extension by (2); if $\Eall$ fails, (3) gives a
+regular solution of $\varphi$ without any extension.
+\end{proof}
+
+\begin{theorem}[Finite trees]\label{thm:tc-finite}
+For every arity $n\ge0$, every variance $c$, and all systems $\varphi$ over
+$X$ and $\psi$ over $X\cup Z$,
+\begin{equation}\label{eq:tc-finite}
+ \Efin(\varphi,\psi)\iff
+ \neg\Sat_{\mathrm{fin}}(\varphi)\ \lor\
+ \bigl(\Sat_{\mathrm{fin}}(\psi)\land\Eall(\varphi,\psi)\bigr).
+\end{equation}
+More precisely:
+\begin{enumerate}[leftmargin=*]
+\item if $\varphi$ has a finite solution and some solution of $\varphi$ is
+  not extensible, then some finite solution of $\varphi$ is not extensible;
+\item if $\psi$ has a finite solution, then every finite extensible assignment
+  of $X$ has a finite extension.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+(1) Let $\rho$ be a solution of $\varphi$ that is not extensible. By
+\cref{lem:tc-two-seeds}, at most two visible observations hold in $\rho$ and
+hold together in no extensible assignment. By \cref{lem:tc-pins}, each of them
+is equivalent to a ground bound on a visible variable; let $B$ be the set of
+these bounds. Then $\rho$ solves $\varphi\cup B$, and $\varphi$ has a finite
+solution, so \cref{thm:tc-pinning} gives a finite solution $\rho_1$ of
+$\varphi\cup B$. The observations hold in $\rho_1$, so $\rho_1$ is not
+extensible.
+
+(2) Let $\rho$ be a finite assignment of $X$ with an extension $\rho'$ that
+solves $\psi$. Let $B$ consist of the bounds $\rho(x)\le_cx$ and
+$x\le_c\rho(x)$ for $x\in X$. Then $\rho'$ solves $\psi\cup B$, and $\psi$ has
+a finite solution, so \cref{thm:tc-pinning} gives a finite solution $\tau$ of
+$\psi\cup B$. By antisymmetry of $\le_c$, $\tau$ agrees with $\rho$ on $X$, so
+it is a finite extension of $\rho$.
+
+For \cref{eq:tc-finite}: if $\varphi$ has no finite solution, both sides
+hold. If $\varphi$ has a finite solution and $\psi$ has none, that solution
+has no finite extension, and both sides fail. If both have finite solutions,
+(1) and (2) give $\Efin(\varphi,\psi)\iff\Eall(\varphi,\psi)$.
+\end{proof}
+
+The bounds in the proof of (1) concern at most two visible variables, and each
+has at most $1+n(\len w+1)$ positions, where $w$ is the word of its
+observation. The proofs of \cref{thm:tc-regular,thm:tc-finite} use no
+satisfiability hypothesis and no condition on the variance.
+
+\begin{corollary}[Decisions for regular and finite trees]\label{cor:tc-decidable}
+For fixed $n$ and $c$, if existential entailment over $\BFT$ is decidable over
+arbitrary trees, then it is decidable over regular trees and over finite
+trees: $\Ereg=\Eall$, and $\Efin$ is decided by \cref{eq:tc-finite}, whose
+two finite-satisfiability tests are decidable by \cref{thm:bg-nsse}(1).
+\end{corollary}
+
+\begin{remark}[Both finite-satisfiability tests are needed]\label{rem:tc-examples}
+Let $n\ge1$ and let $c$ be any variance. For $X=\varnothing$, the empty
+antecedent and $\psi=\{z\le f(z^n),\ f(z^n)\le z\}$, the entailment holds over
+arbitrary and regular trees, with the unique witness $z=\Omega$, but fails
+over finite trees, since $\psi$ has no finite solution. For
+$\varphi=\{x\le f(x^n),\ f(x^n)\le x\}$ and $\psi=\{x=\Bot\}$, the entailment
+fails over arbitrary and regular trees, at $x=\Omega$, and holds vacuously
+over finite trees. Least models are not finite countermodels in general, and
+by \cref{prop:ch-meet}(3) the finite trees are not closed under intersection
+of leaf cones; this is why \cref{thm:tc-finite} pins observations instead.
+\end{remark}
+
+\subsection{Trees without Top}\label{sec:tc-gadget}
+
+In this subsection $f$ is covariant, so $\le_c$ is the covariant order $\le$.
+A tree is \emph{$\Top$-free} if no position is labeled $\Top$; the trees over
+$\BF$ are the $\Top$-free trees (\cref{sec:bg-trees}), and a $\Top$-free tree
+is finite or regular in the same sense over $\BF$ and over $\BFT$. We write
+$\models^{\BF}_{\mathcal D}$ and $\models^{\BFT}_{\mathcal D}$ for existential
+entailment over the two signatures, with $f$ covariant; over $\BF$ the systems
+have no literal $\Top\le u$ and all values are $\Top$-free
+(\cref{def:bg-existential}). We use the trees $T_0=\Bot$ and
+$T_{k+1}=f(T_k^n)$ of \cref{sec:bg-constraints}, now for every $n\ge0$: the
+positions of $T_k$ are the words of length at most $k$, labeled $f$ below
+length $k$ and $\Bot$ at length $k$, and for $n=0$ and $k\ge1$ the tree $T_k$
+is $f()$. For a finite tree $t$, $h(t)$ is the maximal length of a position of
+$t$. The \emph{gadget} on a variable $v$, with a fresh
+variable $y_v$, is the pair of literals
+\[
+ \mathsf{TF}(v,y_v)=\{v\le y_v,\ y_v\le f(y_v^n)\}.
+\]
+
+\begin{lemma}[Top-freeness gadget]\label{lem:tc-gadget}
+Let $f$ be covariant.
+\begin{enumerate}[leftmargin=*]
+\item If $y\le f(y^n)$, then $y$ is $\Top$-free, and so is every tree $t\le y$.
+\item For every $\Top$-free tree $t$, the regular tree $y=\Omega$ satisfies
+  $t\le y\le f(y^n)$. If $t$ is finite, then so does the finite tree
+  $y=T_{h(t)+1}$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(1) For covariant trees $L^0_t$ is the set of words with a prefix labeled
+$\Top$ in $t$, since $\nu_+t=t$; so $t$ is $\Top$-free iff $L^0_t=\varnothing$.
+By \cref{thm:lf-representation}(2,3), $y\le f(y^n)$ gives
+\[
+ L^0_y\subseteq L^0_{f(y^n)}=\bigcup_{i\in\Sigma}i\,L^0_y=\Sigma L^0_y .
+\]
+If $L^0_y$ were nonempty, a shortest word in it would have the form $iv$ with
+$v\in L^0_y$, contradicting minimality. So $L^0_y=\varnothing$; for $n=0$ this
+holds because $\Sigma L^0_y=\varnothing$. If $t\le y$, then
+$L^0_t\subseteq L^0_y=\varnothing$ by \cref{thm:lf-representation}(2). The
+argument concerns finite words only and applies to infinite trees $y$.
+
+(2) Every position of $\Omega$ is labeled $f$, so $t(w)\le\Omega(w)$ at every
+common position $w$ since $t$ is $\Top$-free; and $\Omega=f(\Omega^n)$ has a
+single subtree. If $t$ is finite, then $\Kpos(t)$ consists of words of length
+less than $h(t)+1$, so $\Kpos(t)\subseteq\Kpos(T_{h(t)+1})$ and $t\le
+T_{h(t)+1}$ by \cref{lem:bg-bf-order}. By the same lemma,
+$T_{h(t)+1}\le T_{h(t)+2}=f(T_{h(t)+1}^n)$.
+\end{proof}
+
+\begin{theorem}[Reduction of $\BF$ to $\BFT$]\label{thm:tc-gadget}
+Let $f$ be covariant, and let $\varphi$ over $X$ and $\psi$ over $X\cup Z$ be
+systems over $\BF$. Take fresh variables $y_v$ for all $v\in X\cup Z$, put
+$Y_X=\{y_x:x\in X\}$ and $Y_Z=\{y_z:z\in Z\}$, and let
+\[
+ \varphi^\natural=\varphi\cup\bigcup_{x\in X}\mathsf{TF}(x,y_x),\qquad
+ \psi^\natural=\psi\cup\bigcup_{z\in Z}\mathsf{TF}(z,y_z),
+\]
+with visible variables $X\cup Y_X$ and hidden variables $Z\cup Y_Z$. For every
+tree class $\mathcal D$,
+\[
+ \varphi\models^{\BF}_{\mathcal D}\Exists\psi
+ \iff
+ \varphi^\natural\models^{\BFT}_{\mathcal D}\exists\bar z\,\bar y\,\psi^\natural ,
+\]
+where $\bar z\,\bar y$ lists $Z\cup Y_Z$.
+\end{theorem}
+
+The gadget is placed on every visible variable $x\in X$, including those that
+do not occur in $\varphi$, and on every hidden variable $z\in Z$; the visible
+variables of $\psi$ are covered by the gadgets of $\varphi^\natural$.
+
+\begin{proof}
+For a $\Top$-free tree $t$ in $\mathcal D$ let $y(t)=T_{h(t)+1}$ if
+$\mathcal D=\Trees_{\mathrm{fin}}$ and $y(t)=\Omega$ otherwise. By
+\cref{lem:tc-gadget}(2), $y(t)$ is a $\Top$-free tree in $\mathcal D$ with
+$t\le y(t)\le f(y(t)^n)$. A $\Top$-free assignment satisfies a literal over
+$\BF$ in the sense of $\BF$ iff it satisfies it in the sense of $\BFT$, since
+both signatures use the same trees, constructor and order on $\Top$-free
+trees (\cref{sec:bg-trees}).
+
+Assume the left side, and let $\rho$ be a solution of $\varphi^\natural$ with
+values in $\mathcal D$. By \cref{lem:tc-gadget}(1), the values $\rho(y_x)$ and
+$\rho(x)$, $x\in X$, are $\Top$-free. So $\rho|_X$ is a solution of $\varphi$
+over $\BF$ with values in $\mathcal D$, and it has an extension $\sigma$ to
+$Z$, with $\Top$-free values in $\mathcal D$, that solves $\psi$. Put
+$\sigma(y_z)=y(\sigma(z))$ for $z\in Z$. Then $\rho$ together with $\sigma$
+solves $\psi^\natural$, which does not constrain the variables $y_x$.
+
+Assume the right side, and let $\rho$ be a solution of $\varphi$ over $\BF$
+with values in $\mathcal D$. Extend it by $\rho(y_x)=y(\rho(x))$ for $x\in X$;
+this gives a solution of $\varphi^\natural$ over $\BFT$ with values in
+$\mathcal D$. It has an extension $\sigma$ to $Z\cup Y_Z$, with values in
+$\mathcal D$, that solves $\psi^\natural$. By \cref{lem:tc-gadget}(1), every
+$\sigma(y_z)$ and every $\sigma(z)$ is $\Top$-free, so $\sigma|_Z$ extends
+$\rho$ to a solution of $\psi$ over $\BF$ with values in $\mathcal D$.
+\end{proof}
+
+\begin{corollary}[The signature $\BF$]\label{cor:tc-bf}
+Let $f$ be covariant, of any arity $n\ge0$. In each tree class, existential
+entailment over $\BF$ reduces to existential entailment over $\BFT$ in the same
+tree class, at the same arity and with $f$ covariant. The reduction doubles the
+numbers of visible and of hidden variables, so the size parameter $s$ becomes
+$2s$, and it adds two literals per variable. Consequently, existential
+entailment over $\BF$ with $f$ covariant is decidable over arbitrary, regular
+and finite trees whenever the covariant problem over $\BFT$ is, and
+$\Ereg=\Eall$ holds over $\BF$ as well.
+\end{corollary}
+
+The last claim follows from \cref{thm:tc-gadget,thm:tc-regular}. The finite
+witness $T_{h(t)+1}$ can be large, but it is used only in the proof; the
+reduction introduces variables and literals, not ground trees. Both
+requirements on the gadget are necessary.
+
+\begin{remark}[Every visible variable, and covariance]\label{rem:tc-gadget-needed}
+The gadget cannot be omitted on a visible variable that does not occur in
+$\varphi$: with $X=\{x\}$, the entailment
+$\mathrm{true}\models^{\BF}_{\mathcal D}\exists\bar z\ x\le f(z_i)_i$ holds in
+every tree class (take the $z_i$ to be the children of $x$, or $\Bot$ if
+$x=\Bot$), whereas without a gadget on $x$ its translation fails at
+$x=\Top$. The gadget also needs covariance. If $c(j)=1$ for some $j$, let
+$y=f(t_i)_i$ with $t_i=\Top$ if $c(i)=1$ and $t_i=\Bot$ if $c(i)=0$. Then
+$y\le_cf(y^n)$, since the covariant arguments require $\Bot\le_cy$ and the
+contravariant ones $y\le_c\Top$, but $y$ has a label $\Top$; for the arrow,
+$y=\Top\to\Bot$ satisfies $y\le_c y\to y$. We do not treat $\BF$ with a
+contravariant argument. That problem is not obtained from $\BFT$ by omitting
+the literals $\Top\le u$: for every variance, the entailment above holds over
+$\BF$ but fails over $\BFT$ at $x=\Top$.
+\end{remark}
+
+\subsection{Arities Zero and One}\label{sec:tc-small}
+
+\begin{remark}[Arity zero]\label{rem:tc-nullary}
+Let $n=0$. By \cref{rem:bg-nullary}, all three tree classes coincide at arity
+zero, so $\Efin=\Ereg=\Eall$, and existential entailment is decidable by
+finite enumeration; each of the $3^s$ assignments is checked in time linear in
+$\len\varphi+\len\psi$. The route of \cref{sec:lf,sec:ch} also applies, with
+no nonempty words, but the enumeration is simpler. Copy literals cannot be
+eliminated at arity zero (\cref{lem:bg-sandwich} needs $n\ge1$), which is why
+the proof of \cref{thm:tc-pinning} treats $n=0$ separately.
+\end{remark}
+
+\begin{remark}[Arity one]\label{rem:tc-unary}
+Let $n=1$. Every tree is $f^k(\Bot)$ or $f^k(\Top)$ for some $k\ge0$, or
+$\Omega$, so every tree is regular and \cref{thm:tc-regular} is immediate.
+Finite and arbitrary trees still differ: the system
+$\{x\le f(x),\ f(x)\le x\}$ has the unique solution $\Omega$. The variance
+$c(0)=1$ is allowed, and then mixed polarity already occurs: for
+$\{x\le f(x)\}$ there is no parity assignment $\pi$ as in
+\cref{rem:ch-parity}, since the condition $\pi(a)=\pi(u)\oplus c(i)$ for a
+constructor literal with root $u$ and child $a$ at argument $i$ would require
+$\pi(x)=\pi(x)\oplus1$. The spine automaton of \cref{sec:nm} runs over
+$\Sigma=\{0\}$, so no state has two distinct safe direction letters. Hence its
+branching case does not occur, and every infinite direction word is $0^\omega$.
+The general argument applies without change.
+\end{remark}

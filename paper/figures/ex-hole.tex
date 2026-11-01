@@ -1,0 +1,59 @@
+\begin{figure}[tbp]
+\centering
+\begin{tikzpicture}[>=Stealth,font=\small,x=0.72cm,y=1cm,
+    every node/.style={inner sep=1.5pt},
+    box/.style={draw,minimum height=0.5cm,inner sep=0pt},
+    lb/.style={font=\footnotesize,inner sep=1pt},
+    side/.style={font=\footnotesize,anchor=west,align=left}]
+  % spine u = beta sigma and target t = gamma sigma, aligned at their ends
+  \draw (0,2.75) rectangle node{$\beta$} (5,3.25);
+  \draw[fill=black!12] (5,2.75) rectangle node{$\sigma$} (9,3.25);
+  \node[lb,anchor=east] at (-0.15,3) {spine $u$};
+  \draw (3,1.75) rectangle node{$\gamma$} (5,2.25);
+  \draw[fill=black!12] (5,1.75) rectangle node{$\sigma$} (9,2.25);
+  \node[lb,anchor=east] at (2.85,2) {target $t$};
+  \node[lb,anchor=south] at (5,3.25) {$s_0$};
+  \node[lb,anchor=north east] at (5,1.75) {$e_0$};
+  \draw[densely dotted,thick] (5,2.25) -- (5,2.75);
+  \draw[densely dotted] (8,2.3) -- (8,1.25);
+  \node[lb,anchor=north] at (8,1.25) {$J(t)$};
+  \node[side] at (9.3,2.5) {head event $(s_0,e_0)$:\\
+    $\wsuf u{s_0}=\wsuf t{e_0}=\sigma$,\\ $(A'_{s_0}(u),B'_{e_0}(t))\in\Head$};
+  % a cross comparison (s,e): t[e:] placed at the cut s of u
+  \draw[box,dashed] (1,0.25) rectangle node{$\wsuf te$} (6,0.75);
+  \draw[densely dotted] (6,0.25) rectangle node{$o$} (9,0.75);
+  \draw[densely dotted] (1,2.75) -- (1,0.75);
+  \node[lb,anchor=south east] at (1,3.25) {$s$};
+  \node[lb,anchor=east] at (0.85,0.5) {$\wsuf te$ at $s$};
+  \node[side] at (9.3,0.5) {event if $e\le J(t)$\\ and $(A_s(u),B_e(t))\in\Guard$};
+  % a self comparison (i,j): t[j:] placed at the cut i of t
+  \draw[box,dashed] (6,-0.75) rectangle node{$\wsuf tj$} (8,-0.25);
+  \draw[densely dotted] (8,-0.75) rectangle node{$o$} (9,-0.25);
+  \draw[densely dotted] (6,1.75) -- (6,-0.25);
+  \node[lb,anchor=north west] at (6,1.75) {$i$};
+  \node[lb,anchor=east] at (5.85,-0.5) {$\wsuf tj$ at $i$};
+  \node[side] at (9.3,-0.5) {self event if $j\le J(t)$\\ and $(B_i(t),B_j(t))\in\GuardS$};
+\end{tikzpicture}
+\caption{The pairs of cuts that decide whether $(u,t)$ is a hole
+(\cref{def:ex-ss2self,def:ex-events}). Top: the spine and the target, aligned
+at their ends; a head event $(s_0,e_0)$ splits them into the heads $\beta$ and
+$\gamma$ and the common suffix $\sigma$ (shaded). Middle: a cross comparison
+$(s,e)$ places $\wsuf te$ at the cut $s$ of $u$, where it must be a prefix of
+$\wsuf us$, leaving the overhang $o$. Bottom: a self comparison $(i,j)$ places
+$\wsuf tj$ at the cut $i$ of $t$ in the same way. A hole needs a head event,
+a safe spine and a first rejected cut $J(t)$ of the target, and it must have
+no event and no self event: every cross comparison $(s,e)$ with $e\le J(t)$
+must carry a state pair outside the guard $\Guard$, and every self comparison
+$(i,j)$ with $j\le J(t)$ a pair outside the self guard $\GuardS$.}
+\Description{Two bars at the top, the spine u and below it the shorter target
+t, aligned at the right. The spine consists of beta and the shaded common
+suffix sigma, the target of gamma and sigma; a dotted line joins the cuts s
+zero and e zero, where sigma begins, and is labeled as the head event. A
+dotted line marks the first rejected cut J of t. Below, a dashed box holding
+the suffix of t from the cut e starts at the cut s of the spine and is
+followed by the overhang o; it is labeled event if e is at most J and the
+guard holds. At the bottom, a dashed box holding the suffix of t from the cut
+j starts at the cut i of the target and is followed by the overhang o; it is
+labeled self event if j is at most J and the self guard holds.}
+\label{fig:ex-hole}
+\end{figure}

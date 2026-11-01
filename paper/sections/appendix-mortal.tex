@@ -1,0 +1,841 @@
+%% appendix-mortal -- the constants and the proofs for the mortal case:
+%% the separator word and the Pi-reader, which admits self events; positive
+%% desubstitution; anchored exchange types, normal form and bounded
+%% dictionaries; the unary top level; agreement with channels; positive column
+%% summaries (S_ell has no F-term); supported compression; the proof of the
+%% anchored compression theorem; the closed-form estimates and the decision
+%% procedures.
+
+\section{Proofs for Mortal Holes}\label{app:mo}
+
+This appendix defines the constants of \cref{thm:mo-anchored} and proves the
+results of \cref{sec:mo} whose proofs were omitted or outlined there.
+\Cref{app:mo-separator} proves \cref{lem:mo-sep,lem:mo-pi-reader}, and
+\cref{app:mo-desub} proves
+\cref{lem:mo-desub}. \Cref{app:mo-exchange,app:mo-unary,app:mo-agreement,%
+app:mo-columns,app:mo-compression,app:mo-proof} prove \cref{thm:mo-anchored},
+following the structure of the proof of \cref{thm:bg-search} by \citet{Zhao26} as
+recalled in \cref{app:bg-search}; each subsection states what it reuses and
+what it adds. \Cref{app:mo-estimates} proves the closed-form estimates and
+\cref{cor:mo-decidable}.
+
+What is reused unchanged: the alignment lemma (\cref{lem:bg-alignment}); the
+label facts \cref{eq:bg-label-facts} and the desubstitution lemma
+(\cref{lem:bg-desub}); the facts on ordinary and symbolic states, start
+prefixes and entry states (\cref{app:bg-monitors,app:bg-search}); the
+comparison-preserving map lemma, the shape of level maps and the isolated
+exchange for holes (\cref{lem:bg-comparison-map,lem:bg-level-maps,%
+lem:bg-isolated-exchange}); the propagation of boundary pairs
+(\cref{lem:bg-dictionary}(2)); the shortening of unary holes
+(\cref{lem:bg-unary}); and the column summaries, column
+shortening and agreement under derivation
+(\cref{lem:bg-columns,lem:bg-agreement}). What is new is that every step that
+replaces the witness, namely isolated exchange, the top shortening, column
+shortening and supported compression, also preserves the positive condition.
+Nothing below uses finiteness of an alphabet: block alphabets are infinite,
+and only state sets, supports, type spaces and summary values must be finite.
+
+\paragraph{The constants}
+The bound $\Lensharp(N,d)$ of \cref{thm:mo-anchored} and the constants behind
+it are as follows. For integers $N\ge1$, $d\ge0$, $M\ge1$ and $k\ge0$ put
+\begin{equation}\label{eq:mo-constants}
+\begin{aligned}
+ \sCsharp(N,d)&=N^N\,2^{5N^2+10N(N+d)(d+1)+7N+1},&
+ \sAsharp(N,d)&=d+1+\sCsharp(N,d),\\
+ \Xisharp(N,d)&=6N^2+10N(N+d)(d+1)+7N+3d+4,&
+ \sGsharp(N,d)&=2+\sAsharp(N,d)\,3^d,\\
+ \scolsharp(M,k)&=M^{(M+1)k}\,2^{4M(M+1)k+2k+k^2+2(M+1)^2k^2},\\
+ \Lensharp(N,d)&=3(N+d+1)\,\scolsharp\bigl(N+d+1,\sGsharp(N,d)\bigr)^d.
+\end{aligned}
+\end{equation}
+They extend the constants \cref{eq:bg-col} of the plain-entailment proof by the new tables and
+fields: $\sCsharp(N,d)$ bounds the anchored exchange types at one level,
+$\sAsharp(N,d)$ the protected and isolated letters of a normal hole at one
+level, $\sGsharp(N,d)$ its dictionaries, $\scolsharp(M,k)$ the positive column
+summaries of $k$ blocks over a monitor with $M$ states, and $\Lensharp(N,d)$ is
+the resulting length bound; $\Xisharp(N,d)$ is the exponent of its closed form.
+All six functions are increasing in each argument, and the alphabet enters none
+of them.
+
+\subsection{The Separator Word}\label{app:mo-separator}
+
+\begin{proof}[Proof of \cref{lem:mo-sep}]
+(i) Let $y\le m$. The suffix $\wsuf wy$ contains $\sep$ at offset $m-y$. The
+suffix $\wsuf wx$ is longer, and its letter at offset $m-y$ is $w[x+m-y]$ with
+$x+m-y<m$, a letter of $\Sigma$. Hence $\wsuf wy\not\pre\wsuf wx$.
+
+(ii) Here $\wsuf w{m+1+e}=\wsuf te$ is a word over $\Sigma$ and
+$\wsuf wx=\wsuf ux\,\sep\,t$. If $\len{\wsuf te}\le\len{\wsuf ux}$, the prefix
+test reads only letters of $\wsuf ux$, so it is the test
+$\wsuf te\pre\wsuf ux$. Otherwise $\wsuf te\not\pre\wsuf ux$ by length, and also
+$\wsuf te\not\pre\wsuf wx$, because the letter of $\wsuf wx$ at offset $m-x$ is
+$\sep$, while the letter of $\wsuf te$ at that offset lies in $\Sigma$.
+
+(iii) Here $\wsuf w{m+1+i}=\wsuf ti$ and $\wsuf w{m+1+j}=\wsuf tj$.
+
+(iv) The letter $\sep$ occurs in $w$ only at $m$. The continuation letter of a
+comparison $(x,m+1+e)$ is $w[x+\len w-m-1-e]=w[x+\len t-e]$, so the comparison
+is anchored iff $x+\len t-e=m$, that is, iff $\len{\wsuf te}=\len{\wsuf ux}$.
+By~(ii), the pair is a comparison iff $\wsuf te\pre\wsuf ux$, which together
+with equal lengths says $\wsuf te=\wsuf ux$. Conversely, $\wsuf te=\wsuf ux$
+gives equal lengths and, by~(ii), a comparison.
+\end{proof}
+
+We prove \cref{lem:mo-pi-reader} for the reader $\RPi$ and the relation $\Pi$
+constructed in \cref{sec:mo-separator}. The cap $N_A$ of the counter is the
+mortal bound of \cref{def:nm-mortal-hole}, not the size of $\RPi$; for $N_A=1$
+no state $\sDone(r',k)$ is rejected, as required by $\len t-J(t)<1$.
+
+\begin{proof}[Proof of \cref{lem:mo-pi-reader}]
+The reader and $\Pi$ are computable, since mortality is decided by
+reachability in the safe graph of $A$ (\cref{def:nm-kinds}).
+
+\emph{Runs.} The states after the separator have no transition on $\sep$ other
+than into $\sSink$, which is absorbing. So a word without $\sep$ ends in a
+state $\sPre(\cdot)$ or in $\sSink$, and a word with two occurrences of $\sep$
+ends in $\sSink$. Let $w=u\sep t$ with $u,t\in\Sigma^*$ and $m=\len u$. If $u$
+is not safe, the run enters $\sSink$ within $u$ and stays there. If $u$ is
+safe, then by induction the state at a cut $x\le m$ is
+$\sPre(A_x(u),A'_x(u))$, and the separator leads to $\sAct$ of the start
+states of $B$ and $B'$ iff $A(u)$ is mortal, and to $\sSink$ otherwise. In the
+first case, by induction on $e$, the state at the cut $m+1+e$ is
+$\sAct(B_e(t),B'_e(t))$ while no earlier cut of $t$ is rejected by $B$, that is,
+for $e\le J(t)$ if $J(t)$ is defined and for all $e$ otherwise; and it is
+$\sDone(B'_e(t),\min(e-J(t),N_A))$ for $e>J(t)$.
+
+(i) Every reachable state occurs in the run of some word. By the description of
+runs, the reachable states of the forms $\sPre(q,q')$ and $\sAct(r,r')$ are
+pairs of states reachable in $A\times A'$ and in $B\times B'$, so there are at
+most $r_I+z_I$ of them; there are $N_{B'}N_A$ states $\sDone(r',k)$ and one
+sink.
+
+(iii) and rejection. By the description of runs, the last state of a word is
+rejected iff the word is $u\sep t$ with $u,t\in\Sigma^*$, $u$ is safe, $A(u)$
+is mortal, $J(t)$ is defined, and $\len t-J(t)\le N_A-1$: if $\len t=J(t)$, the
+run ends in $\sAct(B_{J(t)}(t),\cdot)$ with $B_{J(t)}(t)\in\Rej$; if $\len
+t>J(t)$, it ends in a state $\sDone$ whose counter $\min(\len t-J(t),N_A)$ is
+at most $N_A-1$ iff $\len t-J(t)\le N_A-1$. No state $\sPre$ is rejected, and
+the states $\sAct(B_e(t),\cdot)$ with $e<J(t)$ are not, so the first rejected
+cut is $m+1+J(t)$.
+
+(ii) Let $w=u\sep t$ be rejected, as just described. By \cref{lem:mo-sep}, every
+comparison of $w$ has the form $(x,m+1+e)$ with $x\le m$, a cross comparison
+$(x,e)$ of $(u,t)$, or $(m+1+i,m+1+j)$ with $i<j$, a comparison $(i,j)$ of
+$t$. Admitted pairs join a state $\sPre$ to a state $\sAct$, or two states
+$\sAct$; the states $\sAct$ occur exactly at the cuts $m+1+e$ with $e\le J(t)$.
+So a comparison $(x,m+1+e)$ is admitted iff $e\le J(t)$ and
+$(A_x(u),B_e(t))\in\Guard$, that is, iff $(x,e)$ is an event of $(u,t)$; and a
+comparison $(m+1+i,m+1+j)$ is admitted iff $j\le J(t)$ and
+$(B_i(t),B_j(t))\in\GuardS$, that is, iff $(i,j)$ is a self event of $t$. Hence
+$w$ is a hole iff $(u,t)$ has no event and $t$ has no self event. By
+\cref{lem:mo-sep}(iv), the anchored comparisons of $w$ are the pairs
+$(x,m+1+e)$ with $\wsuf ux=\wsuf te$. Their first state is
+$\sPre(A_x(u),A'_x(u))$, and their second state is $\sAct(B_e(t),B'_e(t))$ or
+$\sDone(B'_e(t),k)$, with $B'$-component $B'_e(t)$ in both cases, also when
+$e>J(t)$. So $\Pi$ holds on such a pair iff $(A'_x(u),B'_e(t))\in\Head$, and an
+anchored comparison in $\Pi$ is exactly a head event. Altogether, $w$ is a
+$\Pi$-hole iff $w=u\sep t$ where $(u,t)$ satisfies conditions (a)--(e) of
+\cref{def:ex-ss2self}, $A(u)$ is mortal and $\len t-J(t)<N_A$, that is, iff
+$(u,t)$ is a mortal hole. A word that is not rejected is not a hole.
+\end{proof}
+
+\subsection{Positive Desubstitution}\label{app:mo-desub}
+
+Throughout this subsection, $\mathcal M$ is a lettered monitor with a positive
+channel $\Theta=(F,R,S,S',\Phi)$, $\ell$ is a marker, and
+$v=X_0\ell X_1\ell\cdots X_{k-1}\ell$ is the expansion of a nonempty word
+$v'=[X_0]\cdots[X_{k-1}]$ of blocks avoiding $\ell$. We use the notation of the
+label facts \cref{eq:bg-label-facts}: the run $\zeta'_0=\star,\ldots,\zeta'_k$
+of $v'$ in $\mathcal M_\ell$, the cuts $a_i=\len{X_0\ell\cdots X_{i-1}\ell}$ at
+which the blocks begin, and $b_i=a_i+\len{X_i}$; in addition $a_k=\len v$. The
+letter of $v$ at the position $a_i+g$, for $0\le g\le\len{X_i}$, is
+$(X_i\ell)[g]$. We write $L$ and $L'$ for the labels of $v$ and $v'$.
+
+\begin{lemma}[Transport of continuation letters]\label{lem:mo-transport}
+Let $(x,y)$ be a comparison of $v$ with $y<\len v$, and let $i<i'<k$,
+$X_i=\hat x\hat y$ and $X_{i'}=\hat x'\hat y$ be as in \cref{lem:bg-alignment},
+so that $x=a_i+\len{\hat x}$, $y=a_{i'}+\len{\hat x'}$, and $(i+1,i'+1)$ is a
+comparison of $v'$. Put $r=(i+1)+k-(i'+1)$, the position of the continuation
+letter of $(i+1,i'+1)$ in $v'$. Then $i<r<k$, $x+\len v-y=a_r$, and the
+continuation letter of $(x,y)$ is $v[a_r]=(X_r\ell)[0]$.
+\end{lemma}
+
+\begin{proof}
+Since $\hat y$ ends both blocks, $b_i-x=\len{\hat y}=b_{i'}-y$. Hence
+\[
+ \len v-y=\len{\hat y}+1+\sum_{h=i'+1}^{k-1}(\len{X_h}+1)
+ =\len{\hat y}+1+(a_k-a_{i'+1}).
+\]
+Since $(i+1,i'+1)$ is a comparison of $v'$, $X_{i+1+m}=X_{i'+1+m}$ for
+$0\le m<k-i'-1$, so the sum equals $a_r-a_{i+1}$, where $r=i+k-i'$. With
+$x+\len{\hat y}+1=b_i+1=a_{i+1}$ this gives $x+\len v-y=a_r$. Finally $i<r$
+because $i'<k$, and $r<k$ because $i<i'$.
+\end{proof}
+
+For $i'+1=k$ the comparison $(i+1,k)$ of $v'$ is terminal and $r=i+1$: the
+continuation letter is $v'[i+1]$, as in clause (S$'$).
+
+\begin{proof}[Proof of \cref{lem:mo-desub}]
+The second claim follows from the first and \cref{lem:bg-desub}. For the first,
+recall from \cref{eq:bg-label-facts} that $L_{a_i+g}=\lab_g(\zeta'_i,X_i)$ for
+$g\le\len{X_i}$, $L_{\len v}=(\zeta'_k,\ell)$, and $L'_{i+1}=(\zeta'_i,X_i)$,
+with $\zeta'_k=\delta_\ell(\zeta'_{k-1},X_{k-1})$. Every cut $x<\len v$ lies in
+exactly one interval $[a_i,b_i]$, and then $x=a_i+g$ with $g\le\len{X_i}$ and
+$v[x]=(X_i\ell)[g]$.
+
+($\Rightarrow$) Suppose $\PosOp_\Theta(v)$, and consider the clause that holds.
+\begin{itemize}[leftmargin=*]
+\item (F): $F(L_{\len v})=F(\delta_\ell(\zeta'_{k-1},X_{k-1}),\ell)$ is the first
+  disjunct of $F_\ell(\zeta'_{k-1},X_{k-1})=F_\ell(L'_k)$, which is clause (F)
+  of $v'$.
+\item (R): a comparison $(x,y)$ with $y<\len v$, $R(L_x,L_y)$ and
+  $v[x+\len v-y]\in\Phi$. Take $i<i'$, $\hat x$, $\hat x'$ and $\hat y$ as in
+  \cref{lem:bg-alignment}. Then $L_x=\lab_{\len{\hat x}}(\zeta'_i,X_i)$ and
+  $L_y=\lab_{\len{\hat x'}}(\zeta'_{i'},X_{i'})$, so $R(L_x,L_y)$ witnesses
+  $R_\ell(L'_{i+1},L'_{i'+1})$. By \cref{lem:mo-transport}, the continuation
+  letter of $(x,y)$ is $(X_r\ell)[0]$, so $X_r\in\Phi_\ell$, where $v'[r]$ is
+  the continuation letter of the comparison $(i+1,i'+1)$ of $v'$. If
+  $i'+1<k$, this is clause (R) of $v'$. If $i'+1=k$, then $r=i+1$, and since
+  $S'_\ell=R_\ell$, this is clause (S$'$) of $v'$ at the cut $i+1<k$.
+\item (S) or (S$'$): a cut $x<\len v$ with $S(L_x,L_{\len v})$, or with
+  $S'(L_x,L_{\len v})$ and $v[x]\in\Phi$. Write $x=a_i+g$. Then
+  $L_x=\lab_g(\zeta'_i,X_i)$, $L_{\len v}=(\zeta'_k,\ell)$ and
+  $v[x]=(X_i\ell)[g]$, so $\ptest(\zeta'_i,X_i;\zeta'_k)$ holds. If $i<k-1$,
+  this is $S_\ell((\zeta'_i,X_i),(\zeta'_{k-1},X_{k-1}))=S_\ell(L'_{i+1},L'_k)$,
+  clause (S) of $v'$ at the cut $i+1<k$. If $i=k-1$, it is the second disjunct
+  of $F_\ell(L'_k)$, clause (F) of $v'$.
+\end{itemize}
+
+($\Leftarrow$) Suppose $\PosOp_{\Theta_\ell}(v')$. All relations of $\Theta_\ell$
+are false at $\triangleright=L'_0$, so a witnessing cut $x'$ of $v'$ satisfies
+$x'\ge1$; write $x'=i+1$.
+\begin{itemize}[leftmargin=*]
+\item (F): $F_\ell(L'_k)$. Either $F(\zeta'_k,\ell)=F(L_{\len v})$, clause (F)
+  of $v$; or $\ptest(\zeta'_{k-1},X_{k-1};\zeta'_k)$, which gives some
+  $g\le\len{X_{k-1}}$ with $S(L_x,L_{\len v})$, or with $S'(L_x,L_{\len v})$ and
+  $v[x]\in\Phi$, at the cut $x=a_{k-1}+g\le b_{k-1}<\len v$: clause (S) or
+  (S$'$) of $v$.
+\item (S): $S_\ell(L'_{i+1},L'_k)$ with $i+1<k$, that is,
+  $\ptest(\zeta'_i,X_i;\zeta'_k)$. As in the previous case this gives clause (S)
+  or (S$'$) of $v$ at a cut $x=a_i+g\le b_i<\len v$.
+\item (R) or (S$'$): a comparison $(i+1,i'+1)$ of $v'$ with
+  $R_\ell(L'_{i+1},L'_{i'+1})$ and continuation letter $v'[r]\in\Phi_\ell$,
+  where either $i'+1<k$ and $r=i+k-i'$ (clause (R)), or $i'+1=k$, $r=i+1$, and
+  the comparison is the terminal pair $(i+1,k)$, which is a comparison because
+  $i+1<k$ (clause (S$'$), since $S'_\ell=R_\ell$). In both cases $i<i'<k$.
+  The relation $R_\ell$ gives decompositions $X_i=\hat x\hat y$ and
+  $X_{i'}=\hat x'\hat y$ with
+  $R(\lab_{\len{\hat x}}(\zeta'_i,X_i),\lab_{\len{\hat x'}}(\zeta'_{i'},X_{i'}))$.
+  Put $x=a_i+\len{\hat x}$ and $y=a_{i'}+\len{\hat x'}$. Then $y\le b_{i'}<\len
+  v$, and by \cref{lem:bg-alignment} the pair $(x,y)$ is a comparison of $v$; by
+  the label facts $R(L_x,L_y)$ holds; and by \cref{lem:mo-transport} its
+  continuation letter is $(X_r\ell)[0]$, which lies in $\Phi$ because
+  $X_r\in\Phi_\ell$. This is clause (R) of $v$.
+\end{itemize}
+This proves the equivalence.
+\end{proof}
+
+\subsection{Anchored Exchange and Bounded Dictionaries}\label{app:mo-exchange}
+
+Fix a lettered monitor $\mathcal M_0$ with $N\ge1$ states and a positive
+channel $\Theta_0$ on it, and a positive hole $w$ of depth $D\le d$ with
+hierarchy $(w_i,\ell_i)$, monitors $\mathcal M_i$ and channels
+$\Theta_i=(F_i,R_i,S_i,S'_i,\Phi_i)$ as in \cref{cor:mo-tower}. We use the
+notions of step~2 of \cref{app:bg-search}: the dictionaries $\mathcal A_i$ and
+$g_i=\len{\mathcal A_i}$, the start counts $s_i$ and start prefixes, the entry
+states $U_i$ with $\len{U_i}\le N+s_i\le N+d$, the protected letters $P_i$ with
+$\len{P_i}\le s_i+1\le d+1$, the boundary pairs $\operatorname{BP}_i$ with
+$b_i=\len{\operatorname{BP}_i}$, and isolated letters. Recall that every
+occurrence of an unprotected letter has an ordinary entry state.
+
+\begin{definition}[Anchored exchange type]\label{def:mo-type}
+Let $1\le i<D$. The \emph{anchored exchange type} of an unprotected letter $a$
+of $w_i$ consists of its exchange type (\cref{app:bg-search}) together with
+the following tables of $(\mathcal M_i,\Theta_i)$:
+\begin{itemize}[leftmargin=*]
+\item the row $F_i(\zeta,a)$ for every ordinary state $\zeta$;
+\item for each $Y\in\{R_i,S_i,S'_i\}$, the self table $Y((\zeta,a),(\zeta',a))$
+  for ordinary $\zeta,\zeta'$;
+\item for each such $Y$, the protected rows $Y((\zeta,a),(\vartheta,z))$ and
+  $Y((\vartheta,z),(\zeta,a))$ for ordinary $\zeta$, $\vartheta\in U_i$ and
+  $z\in P_i$;
+\item for each such $Y$, the initial row $Y(\triangleright,(\zeta,a))$ for
+  ordinary $\zeta$, which is false at every level $i\ge1$;
+\item the bit $[a\in\Phi_i]$.
+\end{itemize}
+\end{definition}
+
+\begin{lemma}[Anchored exchange types]\label{lem:mo-types}
+At every level $1\le i<D\le d$ there are at most $\sCsharp(N,d)$ anchored
+exchange types.
+\end{lemma}
+
+\begin{proof}
+Ordinary states transition to ordinary states, so the transition table has at
+most $N^N$ values. The rows of $\Tfin_i$ and $F_i$ take $2N$ bits; the self
+tables of the five relations $\Lambda_i,\Lfin_i,R_i,S_i,S'_i$ take $5N^2$ bits,
+their protected rows $10N\len{U_i}\len{P_i}\le10N(N+d)(d+1)$ bits, and their
+initial rows $5N$ bits; and the bit of $\Phi_i$ is one more. Hence there are at
+most $N^N2^{5N^2+10N(N+d)(d+1)+7N+1}=\sCsharp(N,d)$ types.
+\end{proof}
+
+\begin{lemma}[Anchored isolated exchange]\label{lem:mo-exchange}
+Let $1\le i<D$, let $a\ne b$ be isolated letters of $w_i$ with the same
+anchored exchange type, let $h$ replace $a$ by $b$ and fix every other letter,
+and let $w'$ be the expansion of $h(w_i)$ with the original lower markers. Then
+$w'$ is a positive hole of $(\mathcal M_0,\Theta_0)$ of depth $D$, with every
+start count unchanged, no dictionary larger than the corresponding one of $w$,
+and level-$i$ dictionary $\mathcal A_i\setminus\{a\}$. If the level-zero
+expansion of $b$ is not longer than that of $a$, then $\len{w'}\le\len w$.
+\end{lemma}
+
+\begin{proof}
+The anchored type contains the exchange type, so $a$ and $b$ have the same
+exchange type, and by \cref{lem:bg-isolated-exchange} the map $h$ satisfies the
+hypotheses of \cref{lem:bg-level-maps}: it identifies no unequal predecessor
+pair of $v=w_i$, so $v$ and $h(v)$ have exactly the same comparisons
+(\cref{lem:bg-comparison-map}); it fixes the start prefix; it preserves the
+state run of $v$ in $\mathcal M_i$; and $h(v)$ is a hole of $\mathcal M_i$.
+Hence $w'$ is a hole of $\mathcal M_0$ of depth $D$ with the stated start
+counts, dictionaries and length, and its markers below $i$ are
+$\ell_0,\ldots,\ell_{i-1}$, with $w'_i=h(v)$. So the monitors and channels of
+$w'$ through level $i$ are $(\mathcal M_j,\Theta_j)_{j\le i}$, and by
+\cref{lem:mo-desub}, applied at the levels $i-1,\ldots,0$, it remains to show
+$\PosOp_{\Theta_i}(h(v))$.
+
+Write $L$ and $L^h$ for the labels of $v$ and of $h(v)$ in $\mathcal M_i$. The
+runs coincide, so $L^h_c$ is $L_c$ with its letter mapped by $h$.
+
+\emph{Claim: for every comparison $(x,y)$ of $v$ and each
+$Y\in\{R_i,S_i,S'_i\}$, $Y(L^h_x,L^h_y)\iff Y(L_x,L_y)$.} If $x=0$, then
+$L_x=L^h_x=\triangleright$, and $L_y$ is unchanged unless $v[y-1]=a$, when the
+initial row applies. Let $x\ge1$. If neither $v[x-1]$ nor $v[y-1]$ is $a$, both
+labels are unchanged. If both are $a$, the self table applies, both entry
+states being ordinary. If exactly one of them is $a$, the other letter $c$
+differs from $a$, so $(x,y)$ is left maximal. If $y<\len v$, the ordered pair of
+predecessor letters lies in $\operatorname{BP}_i$, and isolation of $a$ makes
+$c$ protected. If $y=\len v$, then $v[y-1]=\ell_i$ is protected and differs
+from $a$, so $v[x-1]=a$ and $c=\ell_i$. In both cases $c\in P_i$ is read from a
+state in $U_i$, $c\ne b$ because $b$ is unprotected, and the protected row of
+$Y$ in the appropriate orientation applies. This proves the claim.
+
+Now fix a clause witnessing $\PosOp_{\Theta_i}(v)$.
+\begin{itemize}[leftmargin=*]
+\item (F): the final label $L_{\len v}$ has the protected letter $\ell_i$, so
+  $L^h_{\len v}=L_{\len v}$.
+\item (R): a comparison $(x,y)$ with $y<\len v$. It is a comparison of $h(v)$,
+  the claim keeps $R_i(L_x,L_y)$, and the continuation letter is at the same
+  position $x+\len v-y$, since $h$ preserves lengths. That letter is either
+  unchanged or changed from $a$ to $b$, and $[a\in\Phi_i]=[b\in\Phi_i]$.
+\item (S) or (S$'$): a cut $x<\len v$. The pair $(x,\len v)$ is a terminal
+  comparison of both words, the claim keeps the value of $S_i$ or $S'_i$, and
+  for (S$'$) the letter $h(v)[x]$ lies in $\Phi_i$ iff $v[x]$ does.
+\end{itemize}
+Hence $\PosOp_{\Theta_i}(h(v))$.
+\end{proof}
+
+The merge is not injective, so it gives no agreement of the derived data
+above level $i$. After every merge we recompute the hierarchy, the towers, the
+protected sets and the anchored types of the new word; its positivity in the
+new towers follows from \cref{cor:mo-tower}.
+
+A positive hole is \emph{anchored-normal} if at every level $1\le i<D$ distinct
+isolated letters have distinct anchored exchange types, computed in its own
+hierarchy and towers.
+
+\begin{lemma}[Normal form and bounded dictionaries]\label{lem:mo-dictionary}
+\leavevmode
+\begin{enumerate}[leftmargin=*]
+\item Every positive hole of depth $D$ has an anchored-normal positive hole of
+  depth $D$, no greater length, the same start counts, and no larger dictionary
+  at any level.
+\item Let $w$ be an anchored-normal positive hole of depth $D\le d$, and put
+  $\sAsharp=\sAsharp(N,d)$. Then $g_D=1$, and for $1\le i<D$,
+  \[
+   g_i\le\sAsharp+2b_i,\qquad
+   2b_i\le(\sAsharp-1)(3^{D-1-i}-1),\qquad
+   g_i\le1+(\sAsharp-1)3^{D-1-i}\le\sGsharp(N,d).
+  \]
+\end{enumerate}
+Consequently, every positive hole of depth $D\le d$ has a positive hole of depth
+$D$ and no greater length with $g_i\le\sGsharp(N,d)$ for every $1\le i\le D$.
+\end{lemma}
+
+\begin{proof}
+(1) Use the potential $\sum_{j=0}^Dg_j$. While anchored normality fails at some
+level $1\le i<D$, merge an offending pair by \cref{lem:mo-exchange}, in the
+direction of the shorter level-zero expansion. The result is a positive hole of
+depth $D$, no longer, with the same start counts; no dictionary grows and the
+level-$i$ dictionary shrinks, so the potential decreases strictly. The process
+terminates in an anchored-normal positive hole.
+
+(2) The top level $w_D$ is unary, so $g_D=1$, and $b_D=0$ because a unary word
+has no left-maximal comparison. Let $1\le i<D$. Partition $\mathcal A_i$ into
+the protected letters, at most $d+1$; the isolated letters, at most one per
+anchored type by normality, hence at most $\sCsharp(N,d)$ by
+\cref{lem:mo-types}; and the remaining letters, each of which is unprotected and
+not isolated, hence a component of a pair in $\operatorname{BP}_i$. The two
+projections of $\operatorname{BP}_i$ have at most $2b_i$ elements, so
+$g_i\le\sAsharp+2b_i$. By the propagation in \cref{lem:bg-dictionary}(2), which
+holds for every nonempty word, $b_j\le b_{j+1}+g_{j+1}-1$ for every $j$. Hence
+$b_{D-1}\le b_D+g_D-1=0$, and for $1\le i<D-1$,
+$b_i\le b_{i+1}+\sAsharp+2b_{i+1}-1=3b_{i+1}+\sAsharp-1$. By downward induction
+on $i$, with $r=D-1-i$,
+\[
+ 2b_i\le3(\sAsharp-1)(3^{r-1}-1)+2(\sAsharp-1)=(\sAsharp-1)(3^r-1),
+\]
+the base case $r=0$ having both sides zero. Then
+$g_i\le\sAsharp+2b_i\le1+(\sAsharp-1)3^r\le2+\sAsharp3^d=\sGsharp(N,d)$.
+
+The last assertion follows from~(1) and~(2), since $g_D=1\le\sGsharp(N,d)$.
+\end{proof}
+
+\subsection{The Unary Top Level}\label{app:mo-unary}
+
+\begin{lemma}[Positive unary words]\label{lem:mo-unary}
+Let $\mathcal M$ be a lettered monitor with state set $\mathcal Q$, $\Theta$ a
+positive channel on it, and $z^m$ a positive hole of $(\mathcal M,\Theta)$.
+Then $z^{m'}$ is a positive hole of $(\mathcal M,\Theta)$ for some
+$1\le m'\le3\len{\mathcal Q}$.
+\end{lemma}
+
+\begin{proof}
+Every pair of cuts $x<y$ of a unary word is a comparison, and its continuation
+letter is $z$. Fix a clause witnessing $\PosOp_\Theta(z^m)$, and let $W$ be the
+set consisting of $m$ and the cuts of the witness other than $0$: the cuts $x$
+and $y$ for (R), the cut $x$ for (S) and (S$'$), and none for (F); so $W\cup\{0\}$
+has at most four elements.
+
+Let $i<i'\le m-1$ be cuts with equal states such that no cut of $W$ lies in
+$\{i+1,\ldots,i'\}$. Deleting the letters at the positions $i,\ldots,i'-1$ gives
+$z^{m-(i'-i)}$, a hole by \cref{lem:bg-unary}. Its cuts correspond to the cuts
+$c\le i$ and $c>i'$ of $z^m$, by $c\mapsto c$ and $c\mapsto c-(i'-i)$, an
+order-preserving map that keeps the labels: the state at the new cut $i$ is the
+state at the old cut $i'$. The cuts of $W$ are kept, with their labels and their
+order, and the last cut maps to the last cut. Since every pair of cuts is a
+comparison with continuation letter $z$, the witnessing clause holds for the
+images of its cuts. So the shorter word is again a positive hole, and $W$ maps
+onto the corresponding set of the new witness.
+
+Repeat such deletions while possible; the length decreases, so this terminates,
+in a positive hole $z^{m'}$ with $m'\ge1$, because the last letter is never
+deleted. Let $c<c'$ be consecutive elements of $W\cup\{0\}$. The states at the
+cuts $c,\ldots,c'-1$ are pairwise distinct: two equal ones at $i<i'$ would have
+$i'\le c'-1\le m'-1$ and no cut of $W$ in $\{i+1,\ldots,i'\}$, so a further
+deletion would be possible. Hence $c'-c\le\len{\mathcal Q}$, and, as there are at
+most three such gaps and they cover $[0,m']$, $m'\le3\len{\mathcal Q}$.
+\end{proof}
+
+\subsection{Agreement with Channels}\label{app:mo-agreement}
+
+We extend agreement \cref{eq:bg-agreement} to channels. Let $\mathcal U$ and
+$\mathcal V$ be lettered monitors with positive channels
+$\Theta^{\mathcal U}=(F^{\mathcal U},R^{\mathcal U},S^{\mathcal U},
+S'^{\mathcal U},\Phi^{\mathcal U})$ and $\Theta^{\mathcal V}$, let $E$ be a finite
+set of letters of $\mathcal U$, and $\rho$ a map from $E$ into the alphabet of
+$\mathcal V$. We write
+$(\mathcal U,\Theta^{\mathcal U})\equiv_{E,\rho}(\mathcal V,\Theta^{\mathcal V})$
+if $\mathcal U\equiv_{E,\rho}\mathcal V$ and, for every $a\in E$, every state
+$\zeta$, and all labels $L,L'$ whose letters lie in $E$, the start label
+included,
+\[
+ F^{\mathcal V}(\zeta,\rho(a))\iff F^{\mathcal U}(\zeta,a),\qquad
+ \rho(a)\in\Phi^{\mathcal V}\iff a\in\Phi^{\mathcal U},
+\]
+and $Y^{\mathcal V}(\widehat\rho L,\widehat\rho L')\iff Y^{\mathcal U}(L,L')$ for
+$Y\in\{R,S,S'\}$.
+
+\emph{Agreement preserves positive holes.} Let $v$ be a nonempty word over $E$.
+Agreement of the monitors gives the same states along $v$ and $\rho(v)$, labels
+that correspond under $\widehat\rho$, and holes that correspond. Since $\rho$ is
+injective on $E$, the words $v$ and $\rho(v)$ have the same letter equalities,
+hence the same comparisons, and the continuation letter of a comparison of
+$\rho(v)$ is the image of that of $v$. Each clause of the positive condition
+therefore holds for $v$ iff it holds for $\rho(v)$, and $v$ is a positive hole
+of $(\mathcal U,\Theta^{\mathcal U})$ iff $\rho(v)$ is a positive hole of
+$(\mathcal V,\Theta^{\mathcal V})$. \emph{Agreements compose}, by composing the
+maps.
+
+\begin{lemma}[Agreement under derivation]\label{lem:mo-agreement}
+Suppose $(\mathcal U,\Theta^{\mathcal U})\equiv_{E,\rho}(\mathcal
+V,\Theta^{\mathcal V})$ and $\ell\in E$. For every finite family $\mathcal F$ of
+blocks over $E$ avoiding $\ell$, the letterwise map $\rho^*$ gives
+\[
+ (\mathcal U_\ell,\Theta^{\mathcal U}_\ell)\equiv_{\mathcal F,\rho^*}
+ (\mathcal V_{\rho(\ell)},\Theta^{\mathcal V}_{\rho(\ell)}),
+\]
+and the image blocks avoid $\rho(\ell)$.
+\end{lemma}
+
+\begin{proof}
+The agreement of the derived monitors and the avoidance of $\rho(\ell)$ are
+\cref{lem:bg-agreement}. Its proof shows, by induction along a block, that for
+$X\in\mathcal F$ and $\zeta\in\mathcal Q\sqcup\{\star\}$ the shifted blocks of
+$X$ and $\rho^*(X)$ have the same states, so that
+$\lab_g(\zeta,\rho^*X)=\widehat\rho\,\lab_g(\zeta,X)$ for every $g$ and the exits
+coincide. The letters $(X\ell)[g]$ lie in $E$, and
+$(\rho^*(X)\rho(\ell))[g]=\rho((X\ell)[g])$. Hence:
+\begin{itemize}[leftmargin=*]
+\item $\rho^*(X)\in\Phi^{\mathcal V}_{\rho(\ell)}$ iff
+  $\rho((X\ell)[0])\in\Phi^{\mathcal V}$ iff $(X\ell)[0]\in\Phi^{\mathcal U}$
+  iff $X\in\Phi^{\mathcal U}_\ell$;
+\item by injectivity, the decompositions $X=xy$, $X'=x'y$ correspond exactly to
+  the decompositions of $\rho^*X$ and $\rho^*X'$ with a common suffix, and
+  $R$ agrees at the corresponding labels, whose letters lie in $E$ or which are
+  $\triangleright$; so $R_\ell$, and hence $S'_\ell$, agree;
+\item the positive terminal test $\ptest(\zeta,X;\zeta'')$ reads $S$ and $S'$
+  at the labels $\lab_g(\zeta,X)$ and $(\zeta'',\ell)$, which correspond to
+  $\lab_g(\zeta,\rho^*X)$ and $(\zeta'',\rho(\ell))$, and the letters
+  $(X\ell)[g]$; so it agrees, and with equal exits so do $S_\ell$ and, using
+  agreement of $F$ at the letter $\ell\in E$, $F_\ell$.
+\end{itemize}
+All relations at the new start label are false on both sides.
+\end{proof}
+
+\subsection{Positive Column Summaries}\label{app:mo-columns}
+
+Fix a lettered monitor $\mathcal M$ with state set $\mathcal Q$,
+$M=\len{\mathcal Q}$, start $\zeta_0$, a positive channel
+$\Theta=(F,R,S,S',\Phi)$, a marker $\ell$, and blocks $X_1,\ldots,X_k$ avoiding
+$\ell$. We use the summary, the column word and the notation $\lab_0(\zeta)$ of
+step~4 of \cref{app:bg-search}; block indices are $a,b$, entry states
+$\zeta,\zeta'$ range over $\mathcal Q\sqcup\{\star\}$, and final states $\zeta''$
+over $\mathcal Q$.
+
+\paragraph{Fields}
+The \emph{positive summary} of $(X_1,\ldots,X_k)$ consists of the four fields
+$\fexit$, $\fterm$, $\feq$ and $\fadm$ of the summary of \cref{app:bg-search} and the
+following fields:
+\begin{center}
+\small
+\begin{tabular}{@{}lp{.7\linewidth}@{}}
+\toprule
+Field & Meaning\\
+\midrule
+$\ftS_a(\zeta,\zeta'')$ & some $g\le\len{X_a}$ has
+  $S(\lab_g(\zeta,X_a),(\zeta'',\ell))$\\
+$\ftSp_a(\zeta,\zeta'')$ & some $g<\len{X_a}$ has
+  $S'(\lab_g(\zeta,X_a),(\zeta'',\ell))$ and $X_a[g]\in\Phi$\\
+$\fpend_a(\zeta,\zeta'')$ & $S'(\lab_{\len{X_a}}(\zeta,X_a),(\zeta'',\ell))$\\
+$\fne_a$ & $X_a\ne\eps$\\
+$\fphi_a$ & $X_a\ne\eps$ and $X_a[0]\in\Phi$\\
+$\frel(a,b,\zeta,\zeta')$ & some $X_a=xy$, $X_b=x'y$ has
+  $R(\lab_{\len x}(\zeta,X_a),\lab_{\len{x'}}(\zeta',X_b))$\\
+\bottomrule
+\end{tabular}
+\end{center}
+The field $\fpend$ records an $S'$-test at the last position of the shifted
+block, whose letter is not known yet: it is the next letter of the block, or the
+marker if the block ends there. Counting assignments, the positive summary
+takes at most $\scolsharp(M,k)$ values: the four fields of \cref{app:bg-search} give
+$M^{(M+1)k}2^{M(M+1)k+k^2+(M+1)^2k^2}$ (\cref{app:bg-constants}); the fields
+$\ftS$, $\ftSp$ and $\fpend$ give $2^{3M(M+1)k}$; $\fne$ and $\fphi$ give
+$2^{2k}$; and $\frel$ gives $2^{(M+1)^2k^2}$.
+
+\paragraph{The automaton}
+The tuple of empty blocks has the initial summary of \cref{app:bg-search} and
+\[
+ \ftS_a(\zeta,\zeta'')=S(\lab_0(\zeta),(\zeta'',\ell)),\qquad
+ \fpend_a(\zeta,\zeta'')=S'(\lab_0(\zeta),(\zeta'',\ell)),
+\]
+$\ftSp_a$, $\fne_a$ and $\fphi_a$ false,
+and $\frel(a,b,\zeta,\zeta')=R(\lab_0(\zeta),\lab_0(\zeta'))$. Reading a column
+$\gamma$ updates the four fields as in \cref{app:bg-search} and the new
+fields as follows, simultaneously and from the old values. If $\gamma_a$ is
+absent, the fields of block $a$ are unchanged. If $\gamma_a=z$, then, with
+$e=\fexit_a(\zeta)$ the old exit,
+\[
+\begin{aligned}
+ \ftS'_a(\zeta,\zeta'')&=\ftS_a(\zeta,\zeta'')\lor S((e,z),(\zeta'',\ell)),\\
+ \ftSp'_a(\zeta,\zeta'')&=\ftSp_a(\zeta,\zeta'')\lor
+   \bigl(\fpend_a(\zeta,\zeta'')\land z\in\Phi\bigr),\\
+ \fpend'_a(\zeta,\zeta'')&=S'((e,z),(\zeta'',\ell)),\\
+ \fne'_a&=\mathrm{true},\qquad
+ \fphi'_a=\fphi_a\text{ if }\fne_a,\ \text{and }[z\in\Phi]\text{ otherwise}.
+\end{aligned}
+\]
+The field $\frel$ is updated exactly as $\fadm$, with $R$ in place of $\Lambda$.
+
+\begin{lemma}[Positive summaries]\label{lem:mo-summary}
+\leavevmode
+\begin{enumerate}[leftmargin=*]
+\item After every prefix of a valid column word, every field equals its meaning
+  for the current tuple.
+\item The final positive summary of $(X_1,\ldots,X_k)$ determines the derived
+  channel $\Theta_\ell$ on the letters $X_1,\ldots,X_k$, at every state of
+  $\mathcal M_\ell$. With
+  \[
+   T_a(\zeta,\zeta'')=\ftS_a(\zeta,\zeta'')\lor\ftSp_a(\zeta,\zeta'')\lor
+   \bigl(\fpend_a(\zeta,\zeta'')\land\ell\in\Phi\bigr),
+  \]
+  it is given by
+  \[
+  \begin{aligned}
+   X_a\in\Phi_\ell&\iff\fphi_a\lor(\neg\fne_a\land\ell\in\Phi),\\
+   R_\ell((\zeta,X_a),(\zeta',X_b))\iff S'_\ell((\zeta,X_a),(\zeta',X_b))
+     &\iff\frel(a,b,\zeta,\zeta'),\\
+   S_\ell((\zeta,X_a),(\zeta',X_b))&\iff T_a(\zeta,\fexit_b(\zeta')),\\
+   F_\ell(\zeta,X_a)&\iff F(\fexit_a(\zeta),\ell)\lor
+     T_a(\zeta,\fexit_a(\zeta)).
+  \end{aligned}
+  \]
+  In particular $S_\ell$ has no $F$-term. All relations at the start label of
+  $\mathcal M_\ell$ are false by definition.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(1) Induction on the number of columns read. The initial values are the
+meanings for empty blocks: the shifted block of $\eps$ read from $\zeta$ has the
+single label $\lab_0(\zeta)$, no position $g<0$ exists, and the only
+decomposition of two empty blocks is $x=x'=y=\eps$. An absent entry leaves the
+prefix of its track unchanged. Let track $a$ read $z$, so that its prefix $X$
+becomes $Xz$. The labels of the shifted block of $Xz$ are those of $X$ at the
+positions $g\le\len X$, and the new last label
+$\lab_{\len X+1}(\zeta,Xz)=(\fexit_a(\zeta),z)$. The letter at position $\len X$
+of $Xz$ is $z$, and the letters at the positions $g<\len X$ are unchanged. This
+proves the updates of $\ftS$, $\ftSp$ and $\fpend$: the new position $\len X$
+of $\ftSp$ carries the old pending test $\fpend$ and the letter $z$. By
+validity, letters are appended to a track in order, so the first letter of a
+nonempty track is the letter read when $\fne$ changes, which proves the updates
+of $\fne$ and $\fphi$. The field $\frel$ is the defining formula of $R_\ell$
+and is updated as $\fadm$ (\cref{app:bg-search}), by the same argument.
+
+(2) By~(1), the final fields are their meanings for $(X_1,\ldots,X_k)$. In
+\cref{def:mo-channel-derivative}, $(X_a\ell)[0]$ is $X_a[0]$ if $X_a\ne\eps$ and
+$\ell$ otherwise, which gives $\Phi_\ell$. The field $\frel$ is the defining
+formula of $R_\ell=S'_\ell$. The positive terminal test is
+$\ptest(\zeta,X_a;\zeta'')=T_a(\zeta,\zeta'')$, because $(X_a\ell)[g]$ is
+$X_a[g]$ for $g<\len{X_a}$ and $\ell$ for $g=\len{X_a}$. Finally
+$\delta_\ell(\zeta',X_b)=\fexit_b(\zeta')$.
+\end{proof}
+
+The four fields of \cref{app:bg-search} alone do not suffice, as \cref{ex:mo-loses} shows.
+We now give the positive fields in that example.
+
+\begin{example}[\cref{ex:mo-loses} continued: the positive fields]\label{ex:mo-loses-fields}
+In \cref{ex:mo-loses} the top letter $[ab]$ is shortened as the single track
+$ab$ over the level-$1$ monitor $\mathcal M_1$ and channel $\Theta_1$, with the
+marker $c=[\sep1]$. For every state $\zeta''$ of $\mathcal M_1$, the shifted block
+of $c$ read from $\zeta''$ reads $0\sep1$ from an ordinary state, or $\sep1$
+from the start, and in both cases the state before the final $1$ is $4$. After
+the prefix $a$, the last label of the shifted track is $(2,a)$ from an ordinary
+entry, or $(\star_1,a)$ from the fresh entry, and the only common suffix of the
+blocks $\eps$ and $\sep1$ is empty. So $\fpend$, the value of
+$S'_1=R_1$ at that label and the final label $(\zeta'',c)$, compares the states
+$\delta(2,0)=0$, or the start state $0$, with $\delta(4,1)=2$; as
+$(0,2)\notin\Pi$, $\fpend$ is false everywhere. After the prefix $ab$ the last
+label is $(0,b)$, and the common suffix $1$ of the blocks $1$ and $\sep1$
+compares the states $\delta(0,0)=3$ and $4$; as $(3,4)\in\Pi$, $\fpend$ is true
+everywhere. This is the original witness $(1,4)$, and it enters $F_2$ through
+the disjunct $\fpend\land c\in\Phi_1$ of \cref{lem:mo-summary}(2), since the
+expansion of $c$ starts with $\sep$. Hence the positive summaries after $a$ and
+after $ab$ differ, and the column holding $b$ is kept. At level $0$ the tracks
+$\eps$, $1$ and $\sep1$ admit no deletion either: their column word has two
+columns, each of which is the first column of a nonempty track, where $\fne$
+changes. The compression returns $w$ itself.
+\end{example}
+
+\begin{lemma}[Positive column shortening]\label{lem:mo-columns}
+Let $\mathcal F=\{X_1,\ldots,X_k\}$ be a set of $k$ distinct blocks avoiding
+$\ell$. There are subsequences $\tau(X_a)$ of the blocks $X_a$, obtained by
+deleting the same set of columns, such that $\len{\tau(X_a)}<\scolsharp(M,k)$
+for every $a$; $\tau(X_a)=\eps$ iff $X_a=\eps$, and $\tau(X_a)[0]=X_a[0]$
+whenever $X_a\ne\eps$; and
+\[
+ (\mathcal M_\ell,\Theta_\ell)\equiv_{\mathcal F,\tau}(\mathcal M_\ell,\Theta_\ell).
+\]
+\end{lemma}
+
+\begin{proof}
+The new positive summary is a function of the old one and the column, and there
+are at most $\scolsharp(M,k)$ positive summaries. If the column word has at least
+$\scolsharp(M,k)$ columns, two of its cuts carry the same positive summary.
+Deleting the columns between them leaves a valid column word, and the same final
+summary, because the remaining columns are read from the same summary. On each
+track, $\fne$ has the same value at the two cuts, so either the track is still
+empty at the second cut and no letter of it is deleted, or it is already
+nonempty at the first cut and its first letter lies before the deleted columns.
+Repeating, we reach fewer than $\scolsharp(M,k)$ columns. Equal final summaries
+give equal equality bits, so $\tau$ preserves equality and inequality of blocks
+and is injective on $\mathcal F$; by \cref{lem:bg-columns} and
+\cref{app:bg-search}, the four fields of the summary determine $\mathcal M_\ell$ on the
+letters, and by \cref{lem:mo-summary}(2) the positive fields determine
+$\Theta_\ell$ on them, at every state and at labels with letters in $\mathcal F$
+or the start label. Both sides are the same monitor and channel, with the same
+states and start.
+\end{proof}
+
+\subsection{Supported Compression}\label{app:mo-compression}
+
+For markers $\boldsymbol\ell=(\ell_0,\ldots,\ell_{j-1})$ write
+$(\mathcal M^{\boldsymbol\ell}_0,\Theta^{\boldsymbol\ell}_0)=(\mathcal
+M_0,\Theta_0)$ and $(\mathcal M^{\boldsymbol\ell}_{h+1},
+\Theta^{\boldsymbol\ell}_{h+1})=((\mathcal M^{\boldsymbol\ell}_h)_{\ell_h},
+(\Theta^{\boldsymbol\ell}_h)_{\ell_h})$, and use valid families and the
+expansions $\Exp_{\boldsymbol\ell,j}$ as in \cref{app:bg-search}.
+
+\begin{lemma}[Supported compression with channels]\label{lem:mo-compression}
+Fix a nonempty word $w$ with hierarchy markers $\boldsymbol\ell$ and dictionaries
+$\mathcal A_h$, and $j\le d$. Suppose $\len{\mathcal A_h}\le g$ for $1\le h\le
+j$, and put $\kappa_\sharp=\scolsharp(N+d+1,g)$. For every set $E_j\subseteq
+\mathcal A_j$ there are new markers $\widetilde{\boldsymbol\ell}=
+(\widetilde\ell_0,\ldots,\widetilde\ell_{j-1})$ and a map $\rho_j$, injective on
+$E_j$, such that
+\[
+ (\mathcal M^{\boldsymbol\ell}_j,\Theta^{\boldsymbol\ell}_j)\equiv_{E_j,\rho_j}
+ (\mathcal M^{\widetilde{\boldsymbol\ell}}_j,\Theta^{\widetilde{\boldsymbol\ell}}_j),
+ \qquad
+ \len{\Exp_{\widetilde{\boldsymbol\ell},j}(\rho_j(a))}\le\kappa_\sharp^j
+ \quad(a\in E_j),
+\]
+and the image family is valid for the new markers.
+\end{lemma}
+
+\begin{proof}
+This is the induction of \cref{lem:bg-compression}, with positive
+summaries and agreement with channels. For $j=0$ take the identity: a letter
+expands to itself, of length $1=\kappa_\sharp^0$, whatever the size of $E_0$.
+
+For the step from $j$ to $j+1\le d$, let $E_{j+1}\subseteq\mathcal A_{j+1}$, so
+$\len{E_{j+1}}\le g$. Put $(\mathcal U,\Theta^{\mathcal U})=(\mathcal
+M^{\boldsymbol\ell}_j,\Theta^{\boldsymbol\ell}_j)$, which has $N+j$ states. The
+blocks in $E_{j+1}$ are distinct words over $\mathcal A_j$ avoiding $\ell_j$.
+\Cref{lem:mo-columns} gives subsequences $\tau(X)$ with
+$\len{\tau(X)}<\scolsharp(N+j,\len{E_{j+1}})\le\kappa_\sharp$, by monotonicity,
+and $(\mathcal U_{\ell_j},\Theta^{\mathcal U}_{\ell_j})\equiv_{E_{j+1},\tau}
+(\mathcal U_{\ell_j},\Theta^{\mathcal U}_{\ell_j})$. Put
+\[
+ E_j=\{\ell_j\}\cup\bigcup_{X\in E_{j+1}}\alphof(\tau(X))\ \subseteq\ \mathcal A_j .
+\]
+The induction hypothesis gives markers $\widetilde\ell_0,\ldots,
+\widetilde\ell_{j-1}$, the monitor and channel $(\mathcal V,\Theta^{\mathcal
+V})=(\mathcal M^{\widetilde{\boldsymbol\ell}}_j,
+\Theta^{\widetilde{\boldsymbol\ell}}_j)$, and $\rho_j$ with $(\mathcal
+U,\Theta^{\mathcal U})\equiv_{E_j,\rho_j}(\mathcal V,\Theta^{\mathcal V})$ and
+expansions of length at most $\kappa_\sharp^j$. Set
+$\widetilde\ell_j=\rho_j(\ell_j)$ and $\rho_{j+1}(X)=\rho_j^*(\tau(X))$ for
+$X\in E_{j+1}$. By \cref{lem:mo-agreement}, applied to the family
+$\tau(E_{j+1})$ of blocks over $E_j$ avoiding $\ell_j$,
+$(\mathcal U_{\ell_j},\Theta^{\mathcal U}_{\ell_j})\equiv_{\tau(E_{j+1}),
+\rho_j^*}(\mathcal V_{\widetilde\ell_j},\Theta^{\mathcal V}_{\widetilde\ell_j})$,
+and composition with the column agreement gives
+$(\mathcal M^{\boldsymbol\ell}_{j+1},\Theta^{\boldsymbol\ell}_{j+1})
+\equiv_{E_{j+1},\rho_{j+1}}(\mathcal M^{\widetilde{\boldsymbol\ell}}_{j+1},
+\Theta^{\widetilde{\boldsymbol\ell}}_{j+1})$. The image blocks avoid
+$\widetilde\ell_j$ and their letters lie in the valid family $\rho_j(E_j)$, so
+the new family is valid. Each new block followed by its marker has at most
+$\kappa_\sharp$ letters, each expanding to at most $\kappa_\sharp^j$ letters, so
+every new letter expands to at most $\kappa_\sharp^{j+1}$ letters. No dictionary
+or normality property of an intermediate compressed word is used.
+\end{proof}
+
+\subsection{Proof of the Anchored Compression Theorem}\label{app:mo-proof}
+
+Let $\mathcal M_0$ be a lettered monitor with $N\ge1$ states and $\Theta_0$ a
+positive channel on it, and suppose that $(\mathcal M_0,\Theta_0)$ has a
+positive hole of depth at most $d$. By \cref{lem:mo-dictionary}, it has a
+positive hole $w$ of some depth $D\le d$ with $g_i\le\sGsharp(N,d)$ for $1\le
+i\le D$. Keep $w$, its hierarchy $(w_i,\ell_i)$ and its dictionaries fixed, and
+put $\kappa_\sharp=\scolsharp(N+d+1,\sGsharp(N,d))\ge1$.
+
+\emph{The top level.} By \cref{cor:mo-tower}, the unary word $w_D=z^m$ is a
+positive hole of $(\mathcal M_D,\Theta_D)$, and $\mathcal M_D$ has $N+D$ states.
+By \cref{lem:mo-unary}, $z^{m'}$ is a positive hole of $(\mathcal
+M_D,\Theta_D)$ for some $1\le m'\le3(N+D)$.
+
+\emph{Compression.} Apply \cref{lem:mo-compression} with $j=D$,
+$g=\sGsharp(N,d)$ and $E_D=\{z\}$. It gives markers $\widetilde{\boldsymbol\ell}$
+and $\rho_D$ with $(\mathcal M_D,\Theta_D)\equiv_{\{z\},\rho_D}(\mathcal
+M^{\widetilde{\boldsymbol\ell}}_D,\Theta^{\widetilde{\boldsymbol\ell}}_D)$.
+Agreement preserves positive holes, so $\widetilde w_D=\rho_D(z)^{m'}$ is a
+positive hole of $(\mathcal M^{\widetilde{\boldsymbol\ell}}_D,
+\Theta^{\widetilde{\boldsymbol\ell}}_D)$.
+
+\emph{Expansion.} For $i<D$ let $\widetilde w_i$ be the expansion of
+$\widetilde w_{i+1}$ with the marker $\widetilde\ell_i$. By validity,
+$\widetilde w_{i+1}$ is a nonempty word of blocks avoiding $\widetilde\ell_i$, so
+\cref{lem:mo-desub} shows, by downward induction, that $\widetilde w_i$ is a
+positive hole of $(\mathcal M^{\widetilde{\boldsymbol\ell}}_i,
+\Theta^{\widetilde{\boldsymbol\ell}}_i)$. At $i=0$, $\widetilde w=\widetilde w_0$
+is a positive hole of $(\mathcal M_0,\Theta_0)$. Its length is
+\[
+ m'\,\len{\Exp_{\widetilde{\boldsymbol\ell},D}(\rho_D(z))}
+ \le3(N+D)\,\kappa_\sharp^D\le3(N+d+1)\,\kappa_\sharp^d=\Lensharp(N,d).
+\]
+
+\emph{Depth.} Each $\widetilde w_i$ with $i<D$ ends with its marker
+$\widetilde\ell_i$, and cutting it at that marker returns $\widetilde w_{i+1}$.
+So the canonical hierarchy of $\widetilde w$ is $\widetilde w_0,\ldots,
+\widetilde w_D$ through level $D$, and $\widetilde w_D$ is unary. Hence
+$\depth(\widetilde w)\le D\le d$.
+
+If $D=0$, there is no compression: $w$ is unary and \cref{lem:mo-unary} gives a
+positive hole of length at most $3N\le\Lensharp(N,0)$ and depth $0$.
+
+This proves the general statement of \cref{thm:mo-anchored}. For a reader with
+a relation $\Pi$, apply it to the lettered monitor of the reader and the base
+channel $\Theta_\Pi$, whose positive holes are the $\Pi$-holes
+(\cref{lem:mo-base}); the monitor has the $N$ states of the reader, and a
+nonempty word has the same depth whichever monitor reads it. The estimates are
+\cref{lem:mo-closed-form} below.
+
+\subsection{Estimates and Decision Procedures}\label{app:mo-estimates}
+
+\begin{lemma}[Closed form]\label{lem:mo-closed-form}
+For $N\ge1$ and $d\ge0$, with $\Xisharp=\Xisharp(N,d)$,
+\[
+ \sGsharp(N,d)\le2^{\Xisharp}
+ \qquad\text{and}\qquad
+ \Lensharp(N,d)\le2^{2^{5\Xisharp}} .
+\]
+\end{lemma}
+
+\begin{proof}
+Put $\Xi_0=\Xisharp-3d-3=6N^2+10N(N+d)(d+1)+7N+1$. Since $N\le2^N$, we have
+$N^N\le2^{N^2}$, so $\sCsharp(N,d)\le2^{\Xi_0}$. For nonnegative $x$ and $y$,
+$2^x+2^y\le2^{x+y+1}$; with $d+1\le2^{d+1}$ this gives
+$\sAsharp(N,d)\le2^{\Xi_0+d+2}$. Using $3^d\le2^{2d}$,
+\[
+ \sGsharp(N,d)=2+\sAsharp(N,d)\,3^d\le2+2^{\Xi_0+3d+2}\le2^{\Xi_0+3d+3}
+ =2^{\Xisharp}.
+\]
+If $d=0$, then $\Lensharp(N,0)=3(N+1)\le2^{N+2}\le2^{\Xisharp}$. Let $d\ge1$,
+so that $\Xisharp\ge\Xisharp(1,1)=60$, and put $M=N+d+1$, $g=\sGsharp(N,d)$ and
+$P=2^{\Xisharp}$. Then $M+1\le\Xisharp\le P$ and $g\le P$. Using $\log_2M\le M$,
+\[
+ \log_2\scolsharp(M,g)\le(M+1)Mg+4M(M+1)g+2g+g^2+2(M+1)^2g^2
+ \le5P^3+2P+P^2+2P^4\le3P^4\le2^{4\Xisharp+2}.
+\]
+Therefore, since $d\le\Xisharp\le2^{\Xisharp-3}$ and $\log_2(3M)\le2M\le
+2^{5\Xisharp-1}$,
+\[
+ \log_2\Lensharp(N,d)=\log_2(3M)+d\log_2\scolsharp(M,g)
+ \le2^{5\Xisharp-1}+2^{\Xisharp-3}\,2^{4\Xisharp+2}\le2^{5\Xisharp}. \qedhere
+\]
+\end{proof}
+
+\begin{proof}[Proof of \cref{lem:mo-estimate}]
+Put $N_0=2^\alpha$ and $D_0=2^{\alpha+\beta+1}$. Then $\Nbar\le N_0$ and
+$d_I=2\Nbar N_A-1<D_0$, so, by monotonicity and \cref{lem:mo-closed-form},
+$\Lensharp_I\le\Lensharp(N_0,D_0)\le2^{2^{5\Xisharp(N_0,D_0)}}$. Since
+$\alpha\ge3$ and $\beta\ge0$, we have $N_0\ge8$, $D_0\ge16$ and $N_0\le D_0/2$.
+Hence $10N_0(N_0+D_0)(D_0+1)\le10N_0\cdot\frac32D_0\cdot\frac{17}{16}D_0<16N_0D_0^2$,
+$6N_0^2\le3N_0D_0\le\frac3{16}N_0D_0^2$, and
+$7N_0+3D_0+4\le N_0D_0\le\frac1{16}N_0D_0^2$, so that
+\[
+ \Xisharp(N_0,D_0)\le17N_0D_0^2=17\cdot2^{3\alpha+2\beta+2}
+ \qquad\text{and}\qquad
+ 5\Xisharp(N_0,D_0)<2^{3\alpha+2\beta+9}.
+\]
+Therefore $\Lensharp_I\le2^{2^{2^{3\alpha+2\beta+9}}}=E_3(3\alpha+2\beta+9)$.
+\end{proof}
+
+\begin{proof}[Proof of \cref{cor:mo-decidable}]
+Compute $\Lensharp_I$, and test every pair $(u,t)$ of words over $\Sigma$ with
+$\len u+\len t<\Lensharp_I$: check conditions (a)--(e) of \cref{def:ex-ss2self}
+over the finitely many cuts, decide whether $A(u)$ is mortal by reachability in
+the safe graph, and check $\len t-J(t)<N_A$. A pair that passes all tests is a
+mortal hole. If a mortal hole exists, \cref{thm:mo-short} supplies one among the
+tested pairs.
+\end{proof}

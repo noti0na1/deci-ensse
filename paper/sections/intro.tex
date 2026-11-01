@@ -1,0 +1,520 @@
+%% intro -- the problem, its history, the main theorem and the bounds, the
+%% mechanization, an overview of the uniform proof route with pointers to the
+%% sections, the running examples, contributions, and the map of the paper.
+
+\providecommand{\parity}{\operatorname{par}}
+\providecommand{\CondI}{\textup{(I0)}}
+\providecommand{\CondU}{\textup{(U)}}
+\providecommand{\CondII}{\textup{(II)}}
+
+\section{Introduction}\label{sec:intro}
+
+Type inference with subtyping expresses the requirements of a program as
+subtype constraints between type expressions with unknowns
+\citep{Mitchell91,FuhMishra90,AikenWimmers93,EifrigSmithTrifonov95,Pottier98}.
+An inferred \emph{constrained type} $\forall\bar\alpha.\,C\Rightarrow\tau$
+pairs a type $\tau$ with a conjunction $C$ of constraints; its instances are
+the types $\rho(\tau)$ for the solutions $\rho$ of $C$
+\citep{TrifonovSmith96}. Inferred constraint sets grow quickly, and practical
+systems simplify them
+\citep{Pottier96,Pottier01,TrifonovSmith96,FahndrichAiken96,AikenWimmersPalsberg99,FlanaganFelleisen99}.
+Whether a simplification is correct, and whether one constrained type may be
+used where another is expected, are questions about the solution sets of
+constraint systems.
+
+The simplest such question is \emph{entailment}: does every solution of a
+conjunction $\varphi$ satisfy an inequality $x\le y$? Constrained types,
+however, also involve variables that occur on one side only. Let
+$\varphi(\bar x)$ and $\psi(\bar x,\bar z)$ be finite conjunctions of subtype
+constraints, where the \emph{hidden} variables $\bar z$ do not occur in
+$\varphi$. \emph{Existential entailment} $\varphi\entails\Exists\psi$ holds if
+every solution of $\varphi$ extends to a solution of $\psi$ by some choice of
+trees for $\bar z$ (\cref{def:bg-existential}); logically, it is the validity
+of $\forall\bar x\,(\varphi\Rightarrow\Exists\psi)$. Plain entailment is the
+case without hidden variables, and satisfiability of $\psi$ is the case in
+which $\varphi$ is empty and every variable is hidden.
+
+\paragraph{Subsumption and Simplification}
+\citet{TrifonovSmith96} define subtyping between constrained types
+semantically: $\forall\bar\alpha.\,C_1\Rightarrow\tau_1$ is below
+$\forall\bar\beta.\,C_2\Rightarrow\tau_2$ if every instance of the right-hand
+type is a supertype of some instance of the left-hand type. With $\bar\alpha$
+and $\bar\beta$ renamed apart from each other and from the free variables of
+both types (\cref{prop:ap-subsumption}), this is the existential entailment
+\begin{equation}\label{eq:intro-subsumption}
+  \forall\bar\alpha.\,C_1\Rightarrow\tau_1
+  \;\le\;
+  \forall\bar\beta.\,C_2\Rightarrow\tau_2
+  \quad\iff\quad
+  C_2\entails\exists\bar\alpha\,(C_1\wedge\tau_1\le\tau_2),
+\end{equation}
+in which the variables of the right-hand type are universally quantified and
+the witnesses belong to the smaller, more general type. For example,
+$\forall\alpha.\,\alpha\to\alpha\le\beta\to\beta$ holds with the witness
+$\alpha=\beta$, while the converse fails; \cref{prop:ap-subsumption} adds the
+assumptions on program variables of \citet{TrifonovSmith96}. Likewise,
+replacing a system $C(\bar x,\bar z)$ by $D(\bar x,\bar k)$, where $\bar x$
+remain observable, is correct when $C\entails\exists\bar k\,D$ and
+$D\entails\exists\bar z\,C$. Removing a redundant constraint needs only plain
+entailment; eliminating or merging internal variables needs the existential
+form (\cref{sec:ap}). The arrow is contravariant in its domain, so a variable
+of a constrained type of a higher-order program typically occurs both co- and
+contravariantly, as $\alpha$ does in $\alpha\to\alpha$.
+
+\paragraph{Why Plain Entailment Does Not Suffice}
+Consider trees built from a bottom element~$\Bot$ and a binary covariant
+constructor~$f$, and the consequent
+\[
+  \psi \;=\; x\le z \,\wedge\, z\le y \,\wedge\, z\le f(z,z).
+\]
+The literal $z\le f(z,z)$ says that all subtrees of $z$ lie below $z$. Write
+$x\cdot\eta$ for the subtree of $x$ at the path $\eta\in\{0,1\}^*$, with
+$x\cdot\eta=\Bot$ when $x$ has no node at $\eta$. Then $\exists z\,\psi$ holds
+exactly when $x\cdot\eta\le y$ for every path $\eta$: necessity follows from
+$x\cdot\eta\le z\cdot\eta\le z\le y$, and the least upper bound of all the
+subtrees $x\cdot\eta$ is a witness. Thus $\varphi\entails\exists z\,\psi$ is an
+infinite family of plain entailments, and the witness for $z$ depends on the
+solution of $\varphi$. Sound tests replace hidden variables by canonical
+bounds or search for syntactic derivations
+\citep{TrifonovSmith96,Pottier01}; they are incomplete, and \cref{sec:ap}
+recalls a correct simplification of \citet{Pottier98thesis} that such a test
+misses.
+
+\begin{example}[Shift closure: the running example]\label{ex:intro-shift}
+Take $\psi$ as above, with $x,y$ visible and $z$ hidden. Let
+$\Kpos(x)\subseteq\{0,1\}^*$ be the set of positions of the $f$-nodes of $x$,
+so that $x\le y$ iff $\Kpos(x)\subseteq\Kpos(y)$ (\cref{lem:bg-bf-order}), and
+let $\Suf(L)$ be the set of suffixes of words of~$L$. Since
+$\Kpos(x\cdot\eta)=\eta^{-1}\Kpos(x)$, the condition ``$x\cdot\eta\le y$ for
+every $\eta$'' says that $\exists z\,\psi$ holds iff
+$\Suf(\Kpos(x))\subseteq\Kpos(y)$. For $\varphi_1=x\le y$ the entailment fails:
+the solution $x=y=f(f(\Bot,f(\Bot,\Bot)),\Bot)$ of $\varphi_1$, with
+$\Kpos(x)=\{\eps,0,01\}$, has the position $01$, whose suffix $1$ is not in
+$\Kpos(y)$. For $\varphi_2=x\le y\wedge x\le f(x,b)\wedge b=\Bot$, the
+entailment holds: $z=x$ is a witness, because $x\le f(x,b)\le f(x,x)$. For
+$\varphi_3=x\le y\wedge x\le f(f(\Bot,f(\Bot,\Bot)),\Bot)$ the entailment
+fails with the same countermodel as for $\varphi_1$, in which $x$ takes the
+largest value that $\varphi_3$ allows.
+\end{example}
+
+\Cref{fig:intro-shift} draws two solutions of $\varphi_1$. For the first, the
+join of all subtrees of $x$ fits below $y$ and is the least witness for $z$;
+for the second it does not, and no witness exists. The choice of $z$ is made
+after $x$ and $y$ are known, from their values.
+
+\input{figures/intro-shift}
+
+\paragraph{An Open Problem}
+In non-structural subtyping, $\Bot\le t\le\Top$ relates trees of different
+shapes. Plain non-structural subtype entailment was posed as an open problem
+in 1996 \citep{Rehof96TLCA}, and \citet{Zhao26} decides it for one
+constructor of any arity and variance. The existential
+problem has been open since the same year. \citet[Section~1]{TrifonovSmith96}
+``leave open the question whether it is decidable'' and decide a sound
+approximation. \citet[Section~3.2]{FahndrichAiken96} write that ``no complete
+algorithm is known''. \citet[Section~7.2.2]{Su02} writes that ``for
+existential entailment and subtyping constrained types, virtually nothing is
+known at this point, except the lower bounds carried over from entailment'',
+and that for non-structural subtyping the problem ``may in fact be
+undecidable'', because an alternative undecidability proof for the
+first-order theory appears to use a single quantifier alternation.
+\citet[Section~1.4.2]{Priesnitz04} calls subtyping of constrained types a
+``prominent open problem''. The first-order theory is indeed undecidable,
+already over $\BF$ with $f$ binary and covariant, in all three tree classes
+\citep{SuAikenNiehrenPriesnitzTreinen02}, but with six quantifier blocks and a
+matrix with disjunctions and negations, whereas existential entailment has one
+alternation, and its antecedent and consequent are conjunctions. Over feature
+trees, existential entailment is decided by an inclusion of finite automata
+\citep{MullerNiehrenTreinen98,MullerNiehrenTreinen01}, in a setting where a
+fresh feature is always available, which a constructor of fixed arity does not
+offer (\cref{sec:rel}).
+
+\paragraph{Our Result}
+We fix one constructor $f$ of arity $n\ge0$ and a \emph{variance}
+$c:\{0,\ldots,n-1\}\to\{0,1\}$, which makes each argument covariant or
+contravariant; the arrow is $n=2$ with $c(0)=1$ and $c(1)=0$
+(\cref{sec:bg-trees}). Trees may be infinite unless stated otherwise.
+
+\begin{theorem}[Main theorem]\label{thm:intro-main}
+For every arity $n\ge0$ and every variance $c$, existential entailment
+$\varphi\entails\Exists\psi$ over $\BFT$ is decidable over arbitrary, over
+regular, and over finite trees. Over $\BF$, the same holds when $f$ is
+covariant. If $\varphi$ and $\psi$ are satisfiable in the tree class considered
+and the entailment fails, then the failure is certified by a
+\emph{counterexample word} of length at most $E_3(O(s))$: a word over the
+argument positions of $f$, or two such words joined by a separator, from which
+a countermodel is computed (\cref{def:as-certificate}). Here
+$E_3(x)=2^{2^{2^x}}$, $s$ is the number of variables after flattening, every
+introduced name and every hidden variable included, and the constant does not
+depend on $n$.
+\end{theorem}
+
+\Cref{sec:as} defines counterexample words (\cref{def:as-certificate}),
+states the theorem precisely (\cref{thm:as-main}), shows that every
+counterexample word yields a countermodel effectively
+(\cref{lem:as-countermodel}), and assembles the proof. The theorem needs no restriction on the polarity of
+the variables: a variable may occur both co- and contravariantly, in the
+antecedent and in the consequent. In particular, it decides the subsumption of
+\citet{TrifonovSmith96} between constrained types over $\Bot$, $\to$ and
+$\Top$, and the correctness of simplifications of such types
+(\cref{sec:ap}). We do not claim the signature $\BF$ with a contravariant
+argument; \cref{rem:tc-gadget-needed} explains why the reduction to $\BFT$
+needs covariance.
+
+\paragraph{Bounds and Complexity}
+\Cref{prop:as-bounds} and \cref{sec:cx} refine the theorem. Only two kinds of
+failure, both described in \cref{sec:intro-overview}, have triply exponential
+bounds: failures of condition \CondU\ and \emph{mortal holes}. The larger
+bound belongs to the mortal holes, the only case that needs a new compression
+technique; all other failures have singly exponential witnesses. The decision procedure does not enumerate words: a
+nondeterministic search builds a witness level by level, keeping only a
+summary of each level, and runs in 2-EXPSPACE, hence in 3-EXPTIME
+(\cref{prop:cx-search,thm:cx-upper}); for plain entailment this saves one
+exponential in space over the procedure of \citet{Zhao26} (\cref{rem:cx-plain}). For a unary
+constructor, $n=1$, witnesses are singly exponential and the problem is in
+PSPACE, for both variances and all three tree classes (\cref{thm:cx-unary}),
+and for $n=0$ it is a finite enumeration (\cref{rem:cx-nullary}). On the
+other side, shortest counterexample words can have length $2^{\Omega(s)}$
+(\cref{prop:cx-length}), and the problem is PSPACE-hard for every fixed arity
+$n\ge2$, already with $f$ covariant, by explicit reductions that use the additional arguments of $f$; bare
+padding of a binary construction does not suffice (\cref{thm:cx-hard} and
+\cref{ex:cx-padding}). The gap between PSPACE and 2-EXPSPACE, the gap between
+singly and triply exponential witnesses, and hardness for $n=1$ remain open.
+
+\paragraph{Mechanization}
+The decidability results are checked in the Lean~4 proof assistant
+\citep{MouraUllrich21} with Mathlib \citep{Mathlib20}: over $\BFT$ for every
+arity, arity zero included, every variance and all three tree classes, and
+over $\BF$ with $f$ covariant (\cref{sec:mechanization}). Each of the six
+procedures is a computable definition with a correctness theorem without
+premises, and plain entailment is decided as the special case without hidden
+variables. The anchored compression of \cref{sec:mo} is mechanized with an
+elementary bound of the same form as ours, and all search bounds are explicit
+functions of the numbers of automaton states. The procedures take flat
+literals as input. The flattening of arbitrary type expressions
+(\cref{lem:bg-flattening}), the bounds in terms of the number of variables, the
+construction of countermodels and the complexity results are not mechanized.
+
+\subsection{Overview of the Proof}\label{sec:intro-overview}
+
+The proof follows a single route for all arities and variances
+(\cref{fig:intro-overview}). It works over $\BFT$ and arbitrary trees and
+transfers the result to the other tree classes and to $\BF$ at the end. We end
+in the hole problem of the plain-entailment proof~\citep{Zhao26}, whose readers, holes and bounds
+\cref{sec:bg} recalls: a \emph{reader} is a deterministic automaton with
+rejected states and an admission relation on pairs of states; a
+\emph{comparison} of a word $w$ is a pair of cuts $(s,e)$, $s<e$, such that the
+suffix after $e$ is a prefix of the suffix after $s$; and a \emph{hole} is a
+rejected word without an admitted comparison. That proof bounds a
+shortest hole in three steps: a short rejected tail, a bound on the
+\emph{depth}, a measure of nested repetition, and a compression of words of
+bounded depth. What is new here is that some of our holes must also
+\emph{contain} a comparison of a particular kind, and that a single word may
+be dead because of a comparison with itself.
+
+\begin{figure}[tbp]
+\centering
+\small
+\hyphenpenalty=10000\relax
+\begin{tikzpicture}[
+    node distance=6mm,
+    >=Stealth,
+    stepbox/.style={draw, rounded corners=2pt, align=flush center,
+                 text width=0.62\linewidth, inner sep=3pt, font=\small},
+    ubox/.style={draw, rounded corners=2pt, align=flush center,
+                 text width=0.25\linewidth, inner sep=3pt, font=\footnotesize},
+    sidebox/.style={draw, dashed, rounded corners=2pt, align=flush left,
+                 text width=0.43\linewidth, inner sep=3pt, font=\footnotesize},
+    thm/.style={right, font=\footnotesize, inner sep=2pt}]
+  \node[stepbox] (ent)
+    {\textbf{Existential entailment}\\
+     $\varphi\entails\Exists\psi$ over $\BFT$, any arity and variance, arbitrary
+     trees, $\varphi$ and $\psi$ satisfiable};
+  \node[stepbox, below=of ent] (ch)
+    {\textbf{Leaf cones and the characterization}
+     (\cref{sec:lf,sec:ch})\\
+     \CondI\ the forced visible atoms of $\psi$ are forced by $\varphi$;
+     \CondU\ no live seed derives a forbidden root of $\psi$;
+     \CondII\ every visible $\psi$-consequence of a live seed lies in its
+     $\varphi$-closure};
+  \node[stepbox, below=of ch] (ex)
+    {\textbf{Automata and holes} (\cref{sec:sm,sec:ex})\\
+     \CondI\ is an inclusion of automata; under \CondU, \CondII\ says that no
+     extracted two-word instance $I_{pq}$ has a hole, with self events and
+     forced target heads};
+  \node[stepbox, below=of ex] (nm)
+    {\textbf{Three cases} (\cref{sec:nm})\\
+     $I_{pq}$ has a hole iff it has a short hole, found through a branching
+     state, a lasso or the pump, or a mortal hole};
+  \node[stepbox, below=of nm] (mo)
+    {\textbf{One separator word of bounded depth} (\cref{sec:mo})\\
+     mortal holes $(u,t)$ are the $\Pi$-holes $u\sep t$ of one reader; their
+     depth is bounded, and anchored compression bounds their length};
+  \node[ubox, right=5mm of ex] (u)
+    {\textbf{\CondU}: unit readers and the plain-entailment bounds
+     (\cref{sec:un}, \cref{thm:un-decidable})};
+  \draw[<->] (ent) -- node[thm]{\cref{thm:ch-characterization}} (ch);
+  \draw[<->] (ch) -- node[thm]{\cref{thm:ex-reduction}} (ex);
+  \draw[<->] (ex) -- node[thm]{\cref{thm:nm-three-cases}} (nm);
+  \draw[<->] (nm) -- node[thm, align=left]{mortal branch,
+    \cref{thm:mo-decide}} (mo);
+  \draw[<->] (ch.east) -| (u.north);
+  \node[sidebox, below=6mm of mo.south west, anchor=north west] (cls)
+    {\textbf{Tree classes}: regular trees agree with arbitrary trees; finite
+     trees add two finite-satisfiability tests
+     (\cref{thm:tc-regular,thm:tc-finite}).};
+  \node[sidebox, right=2mm of cls] (bf)
+    {\textbf{The signature $\BF$}, $f$ covariant: a gadget on every variable
+     reduces it to $\BFT$ (\cref{thm:tc-gadget}).};
+\end{tikzpicture}
+\caption{The route of the proof, for satisfiable $\varphi$ and $\psi$ over
+$\BFT$ and arbitrary trees. Each double arrow is an equivalence, labeled with
+the result that proves it, or for condition \CondU\ with its box; the last
+vertical one concerns only the mortal branch of the case split, whose short
+holes are found directly. Condition \CondU\ leaves the
+main route: it is a hole problem of the kind solved for plain entailment,
+decided by the bounds of \citet{Zhao26}. Here $p,q$ range over the visible signed variables. The
+dashed boxes describe the transfers to the other tree classes and to $\BF$.
+\Cref{sec:as} assembles the steps.}
+\Description{Five boxes connected by double arrows, each labeled with a
+theorem, lead from existential entailment to the characterization by three
+conditions on leaf cones, to automata and two-word hole problems, to a case
+split into short holes and mortal holes, and, for the mortal branch, to holes
+of one separator word of bounded depth. A side box, reached from the
+characterization, decides condition (U) by unit readers and the
+plain-entailment bounds. Two dashed boxes describe the regular and finite tree classes and the
+signature without top.}
+\label{fig:intro-overview}
+\end{figure}
+
+\paragraph{Leaf cones}
+Over $\BF$ with $f$ covariant, a tree is its set of constructor positions,
+solution sets are closed under unions and intersections, and every literal
+becomes a set of implications with one premise (\cref{rem:ch-one-sign}).
+With $\Top$ and variance, a literal can relate a leaf $\Top$ of one tree to a
+leaf $\Bot$ of another, and one set of positions no longer describes a tree.
+We restore a Horn structure for every arity and variance by describing a tree
+$t$ through
+its two \emph{leaf cones}: the words whose path meets a leaf of $t$ of
+\emph{sign}~$0$, and those whose path meets a leaf of sign~$1$, where the sign
+of a leaf combines its label, $\Top$ or $\Bot$, with the polarity of its path.
+The two cones are disjoint and closed under extension, every such pair of sets
+is the pair of exactly one tree, and the order of variance $c$ adds leaves of
+sign~$0$ and removes leaves of sign~$1$ (\cref{thm:lf-representation}). An
+\emph{atom} $(v^\pm,w)$ says that $w$ lies in a cone of $v$. Every literal
+becomes \emph{pure moves}, implications between atoms that copy, push or pop
+the first letter of the word as on a stack, together with \emph{facts}, atoms
+that every solution contains, and \emph{forbidden roots}, atoms that none
+contains (\cref{lem:lf-clauses}). The only all-negative binary clauses are the
+exclusions of opposite atoms, which are the same for every system. So least models are
+closures of seeds, every atom of a closure has a single seed
+(\cref{lem:lf-closure}), every pure move has a dual of opposite sign
+(\cref{lem:lf-duality}), and two derivations that collide in an exclusion can
+be merged into one (\cref{lem:lf-collision}).
+
+\paragraph{Three conditions}
+Collision return turns every obstruction to extending a solution of $\varphi$
+into an obstruction at a single seed. If both systems are satisfiable,
+$\varphi\entails\Exists\psi$ holds iff three conditions hold
+(\cref{thm:ch-characterization}): \CondI, every visible atom that $\psi$
+forces is forced by $\varphi$; \CondU, $\psi$ derives no forbidden root from a
+visible atom that some solution of $\varphi$ contains; and \CondII, every
+visible atom that $\psi$ derives from such an atom lies in the least solution
+of $\varphi$ that contains it.
+
+\paragraph{Pushdown summaries}
+The pure moves form a pushdown system whose control states are the signed
+variables. Two deterministic automata summarize it: after reading a word
+$\gamma$, the \emph{upper automaton} of $p$ holds the signed variables reached
+from $p$ by popping $\gamma$, and after reading $\beta$ the \emph{lower
+automaton} of $q$ holds those from which $q$ is reached by pushing $\beta$.
+Every pure derivation splits at its lowest point into a \emph{pop head}, read
+by the first, and a \emph{push head}, read by the second, above a common
+suffix (\cref{lem:sm-lowest-point}). Variance adds a new reason for an atom to
+be dead. Besides a reachable forbidden root, or an opposite extension forced
+by the facts, which make an atom \emph{dead by support}, the closure of a seed
+$(p,w)$ may contain the opposite of an extension of the seed. For a seed that is not already dead
+by support, this happens exactly when two cuts of the single word $w$ form a
+comparison whose automaton states are related: a \emph{self event} (\cref{thm:sm-dead}). Self events occur only
+through contravariant directions (\cref{rem:sm-parity}), and the set of live
+words need not be regular (\cref{ex:sm-arrow}). Condition \CondI\ is an
+inclusion of automata, decidable in polynomial space (\cref{prop:sm-decide}).
+
+\paragraph{Condition (U) as a hole problem}
+A failure of \CondU\ is a word $w$ such that $(p,w)$ is live in $\varphi$ and
+leads to a forbidden root in $\psi$. Liveness is the absence of deadness by
+support, a regular property, and of self events, which are comparisons of $w$.
+So the failures are exactly the holes of a single reader, the \emph{unit
+reader}, whose admitted comparisons are the self events
+(\cref{lem:un-holes}). It has the rejected-path property of \citet{Zhao26}, and
+the bounds proved there decide \CondU\ (\cref{thm:un-decidable}). A smaller reader
+with the same holes, together with a clock that reads only the antecedent and
+bounds the depth, keeps the length bound for \CondU\ below the one for mortal
+holes.
+
+\paragraph{Two-word holes with self events}
+A failure of \CondII\ consists of a live seed $(p,t)$, a pure derivation of
+$\psi$ from it to a visible atom $(q,u)$, and the fact that $(q,u)$ lies
+outside the closure of the seed in $\varphi$. Each part is read by automata on
+the two words: the derivation is a \emph{head event}, a pair of cuts at which
+$t$ and $u$ have equal suffixes; membership in the closure is an \emph{event},
+a pair of cuts $(s,e)$ at which the suffix of $t$ after $e$ is a prefix of the
+suffix of $u$ after $s$; and liveness of the seed forbids self events of $t$.
+So, once \CondU\ holds, \CondII\ fails iff an \emph{extracted instance}
+$I_{pq}$ of a hole problem for two words has a \emph{hole}: a safe spine $u$,
+a rejected target $t$, a head event, and neither an event nor a self event
+(\cref{def:ex-ss2self,thm:ex-reduction}). The target automaton marks a cut of
+the seed as rejected only while the seed is still a candidate, neither dead by
+support in $\varphi$ nor root-dead in $\psi$. Under \CondU\ this enriched
+rejection loses nothing, and it forces every pop head of $\psi$ to end before
+the first rejected cut, condition (FH) (\cref{lem:ex-fh}).
+
+\paragraph{Holes that are not mortal}
+Cut a hole $(u,t)$ at the first rejected cut of its target. By (FH) the rest
+$\theta$ of the target is a common suffix of both words, and what remains is a
+\emph{pre-hole}. Appending $\theta$ to a pre-hole creates no new event and no
+new self event, and it keeps an old one exactly when $\theta$ continues its
+\emph{overhang}, the part of one suffix that the other does not cover,
+periodically (\cref{lem:nm-continuation}). So the question is whether one safe
+continuation breaks every such periodicity obligation. If the spine ends
+in a \emph{branching} state, which reaches a cycle with a choice of letters, a
+breaking continuation exists by the theorem of \citet{FineWilf65}
+(\cref{lem:nm-breaker}). If it ends in a \emph{thin} state, long safe
+continuations follow finitely many lassos; a lasso that is not purely periodic
+breaks everything, and for a purely periodic lasso the \emph{pump} shortens
+the pre-hole itself, keeping the obligations broken (\cref{thm:nm-pump}).
+Short pre-holes are found by a finite graph (\cref{prop:nm-short-prehole}). In
+the remaining case the hole is \emph{mortal}: its spine ends in a state
+without an infinite safe continuation, and its target ends shortly after its
+first rejected cut (\cref{thm:nm-three-cases}). Outside the mortal case,
+holes are polynomial in the sizes of the automata, hence singly exponential
+in~$s$.
+
+\paragraph{Mortal holes}
+In a mortal hole the continuation is short, but the common suffix of the two
+words can be long, so the pair itself must be shortened, with both words
+together. We pack them into one word $u\sep t$ around a separator. Events and
+self events become comparisons of this word, and a head event becomes an
+\emph{anchored} comparison, one whose matched factor is followed by the
+separator (\cref{lem:mo-sep}). Mortal holes are exactly the
+\emph{$\Pi$-holes} of one reader, its holes with an anchored comparison whose
+state pair lies in a relation $\Pi$ (\cref{lem:mo-pi-reader}), and the short
+rejected tail bounds their depth by the depth theorem of \citet{Zhao26}
+(\cref{lem:mo-depth}). The bounded-depth compression of that paper keeps every negative
+condition but can delete the letters on which the anchored comparison depends
+(\cref{ex:mo-loses}). A \emph{positive channel} records the anchored witness
+at each level of the hierarchy (\cref{lem:mo-desub}). The channel is added to
+the information that this compression compares before it merges
+letters or deletes columns, so every shortening keeps some anchored witness.
+This gives the anchored compression theorem (\cref{thm:mo-anchored}) and a
+triply exponential bound on mortal holes (\cref{cor:mo-extracted}), the
+largest of our bounds, which decides the two-word problem under (FH)
+(\cref{thm:mo-decide}).
+
+\paragraph{Tree classes and the signature without top}
+Over regular trees the closure of regular seeds is regular, and a failure has
+at most two seeds, so regular and arbitrary trees give the same answer
+(\cref{thm:tc-regular}). Least models are infinite in general, so finite trees
+need a different argument: the at most two observations behind a failure are
+expressed by finite ground bounds, and adding finite ground bounds preserves
+finite satisfiability, for every variance (\cref{thm:tc-pinning}). This gives
+the dispatch of \cref{thm:tc-finite}. For $\BF$ with $f$ covariant, the
+literals $v\le y_v$ and $y_v\le f(y_v,\ldots,y_v)$ force $v$ to be free of
+$\Top$, and placing them on every visible and every hidden variable reduces
+$\BF$ to $\BFT$ in each tree class (\cref{thm:tc-gadget}).
+
+\paragraph{The running examples}
+Two examples recur through the paper (\cref{tab:intro-examples}). The first is
+the shift closure of \cref{ex:intro-shift}, for a covariant constructor; the
+second follows the antecedent $x\le x\to x$ for the arrow, in which $x$ occurs
+at both polarities. For a covariant constructor, and more generally on
+instances with a joint parity assignment, self events do not occur and every
+dead atom is dead by support
+(\cref{rem:ch-parity,rem:sm-parity,rem:ex-covariant}); over $\BF$ the three
+conditions compare unions of solutions, least solutions, and closures of
+single positions (\cref{rem:ch-one-sign}).
+
+\begin{table}[tbp]
+\caption{The running examples.}
+\label{tab:intro-examples}
+\centering
+\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.21\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.54\linewidth}@{}}
+\toprule
+Example & Sections & What it shows\\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Shift closure}: $\psi=x\le z\wedge z\le y\wedge
+  z\le f(z,z)$, with $f$ binary and covariant}\\
+\cref{ex:intro-shift} & \cref{sec:intro} & an existential entailment that is
+  an infinite family of plain entailments\\
+\cref{ex:sm-running} & \cref{sec:sm} & the signed system over $\BFT$ and its
+  pure derivations\\
+\cref{ex:un-running} & \cref{sec:un} & \CondU\ fails at $x=y=\Top$, and holds
+  once $y$ is restricted to trees without $\Top$\\
+\cref{ex:ex-running} & \cref{sec:ex} & \CondII\ fails by the hole $(01,1)$ of
+  an extracted instance, whose spine ends in a branching state\\
+\cref{ex:nm-running} & \cref{sec:nm} & the pre-hole $(0,\eps)$, its single
+  obligation, and, after \cref{lem:nm-breaker}, a breaker\\
+\cref{ex:as-running} & \cref{sec:as} & the procedure end to end: the hole word
+  $01\sep1$, its two pins, and the finite countermodel of
+  \cref{ex:intro-shift}\\
+\midrule
+\multicolumn{3}{@{}l}{\emph{The arrow}: the antecedent $x\le x\to x$}\\
+\cref{ex:lf-clauses,ex:lf-least} & \cref{sec:lf} & a single-seed
+  inconsistency\\
+\cref{ex:ch-arrow} & \cref{sec:ch} & the entailment
+  $x\le x\to x\entails\exists z\,(x\le z\to z)$, whose failure without the
+  antecedent needs collision return\\
+\cref{ex:sm-arrow} & \cref{sec:sm} & a nonregular set of dead words\\
+\cref{ex:un-arrow,ex:ex-arrow} & \cref{sec:un,sec:ex} & why admitted self
+  events and the enrichment of the target automaton are needed\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Contributions}
+\begin{itemize}[leftmargin=*]
+\item \emph{Decidability} (\cref{thm:intro-main}). Existential entailment is
+  decidable for one constructor of every arity and every variance over
+  $\BFT$, and over $\BF$ with $f$ covariant, in all three tree classes. This
+  settles the decidability question of \citet{TrifonovSmith96} for semantic
+  subsumption of constrained types.
+\item \emph{Signed leaf cones} (\cref{sec:lf,sec:ch}). A representation of
+  trees of any variance in which every system is a Horn system with unary
+  rules, and a characterization of existential entailment by three conditions
+  on single seeds.
+\item \emph{Self events} (\cref{sec:sm,sec:un,sec:ex}). Deadness is deadness by
+  support or a self event, a comparison of one word with itself. Both
+  \CondU\ and \CondII\ become hole problems whose admissions include self
+  events, the second with an enriched rejection that makes target heads forced.
+\item \emph{Non-mortal holes} (\cref{sec:nm}). Breakers, lassos and a pump
+  with polynomial capacity give singly exponential witnesses outside the
+  mortal case.
+\item \emph{Anchored compression} (\cref{sec:mo}). Positive channels extend the
+  bounded-depth compression of \citet{Zhao26} to holes that must contain
+  an anchored comparison.
+\item \emph{Tree classes and $\BF$} (\cref{sec:tc}). Regular and finite
+  transfers for every variance, and a reduction of covariant $\BF$ to $\BFT$.
+\item \emph{Complexity} (\cref{sec:cx}). Elementary witness bounds; a
+  2-EXPSPACE decision by summary search; PSPACE for $n\le1$; exponential
+  shortest witnesses; and PSPACE-hardness for every fixed arity $n\ge2$,
+  already with $f$ covariant.
+\item \emph{Applications} (\cref{sec:ap}). Subsumption of constrained type
+  schemes and correctness of simplification are decidable, including arrow
+  types without any restriction on polarity, and several classes reduce
+  directly to plain entailment.
+\item \emph{Mechanization} (\cref{sec:mechanization}). Computable decision
+  procedures for all six cases of \cref{thm:intro-main}, checked in Lean~4,
+  including anchored compression with an elementary bound.
+\end{itemize}
+
+\paragraph{Organization}
+\Cref{sec:bg} fixes notation and recalls the results of \citet{Zhao26} that we use.
+\Cref{sec:lf,sec:ch,sec:sm,sec:un,sec:ex,sec:nm,sec:mo,sec:tc} follow the
+route above, and \cref{sec:as} assembles the proof.
+\Cref{sec:ap,sec:cx,sec:mechanization,sec:rel,sec:concl} discuss
+applications, complexity, the mechanization, related work, and open problems. Omitted proofs are in the appendices.
+\Cref{sec:lf,sec:ch} give the characterization, and
+\cref{sec:sm,sec:un,sec:ex} turn it into hole problems; \cref{sec:nm,sec:mo} are the technical core, and
+\cref{sec:mo} assumes \cref{sec:bg-hierarchy}. A reader interested in the
+result and its use may go from \cref{sec:ch} to \cref{sec:as,sec:ap}.
