@@ -1,6 +1,6 @@
-name = "deci_nsse"
+name = "deci_ensse"
 version = "0.1.0"
-defaultTargets = ["DeciNSSE", "nsse-check", "nsse"]
+defaultTargets = ["DeciNSSE", "DeciENSSE"]
 
 [leanOptions]
 pp.unicode.fun = true
@@ -15,10 +15,6 @@ rev = "v4.35.0"
 name = "DeciNSSE"
 allowNonModules = true
 
-[[lean_exe]]
-name = "nsse-check"
-root = "DeciNSSE.Certificates.Command"
-
-[[lean_exe]]
-name = "nsse"
-root = "DeciNSSE.Solver.Command"
+[[lean_lib]]
+name = "DeciENSSE"
+allowNonModules = true

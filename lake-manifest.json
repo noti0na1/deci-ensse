@@ -91,6 +91,6 @@
    "inputRev": "v4.35.0",
    "inherited": true,
    "configFile": "lakefile.toml"}],
- "name": "deci_nsse",
+ "name": "deci_ensse",
  "lakeDir": ".lake",
  "fixedToolchain": false}
