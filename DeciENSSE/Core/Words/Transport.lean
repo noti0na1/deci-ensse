@@ -1,14 +1,13 @@
-import DeciENSSE.Core.Words.Statements
+import DeciENSSE.Core.Words.TwoWordInstance
 
 /-! # Renaming states and alphabets
 
-State and alphabet equivalences preserve holes, forced target heads conditions, and length bounds.
+State and alphabet equivalences preserve holes, forced target heads and mortality.
 
 ## Main declarations
 
 - `TwoWordInstance.rename`
 - `TwoWordInstance.mapAlpha`
-- `TwoWordInstance.shortHoleBound_transport`
 -/
 
 namespace DeciENSSE.Core.Words
@@ -64,11 +63,6 @@ def rename : TwoWordInstance α TA TB TC TD where
 @[simp] theorem rename_hasHole : (I.rename a b c d).HasHole ↔ I.HasHole := by
   simp [HasHole]
 
-/-- The same words witness every length bound after renaming. -/
-theorem rename_boundedHole (L : ℕ) :
-    (∃ u t, (I.rename a b c d).IsHole u t ∧ u.length + t.length ≤ L) ↔
-      ∃ u t, I.IsHole u t ∧ u.length + t.length ≤ L := by simp
-
 /-- State renaming preserves the forced target heads condition. -/
 @[simp] theorem rename_forcedHeads : (I.rename a b c d).ForcedHeads ↔ I.ForcedHeads := by
   unfold ForcedHeads
@@ -107,20 +101,6 @@ theorem rename_boundedHole (L : ℕ) :
 /-- State renaming preserves mortal-hole existence. -/
 @[simp] theorem rename_hasMortalHole :
     (I.rename a b c d).HasMortalHole ↔ I.HasMortalHole := by simp [HasMortalHole]
-
-/-- Apply the Fin-indexed bound to arbitrary finite state types. -/
-theorem shortHoleBound_transport [Fintype α] [DecidableEq α] (B : HoleBound) (hB : ShortHoleBound
-  α B)
-    (hfh : I.ForcedHeads) (hh : I.HasHole) :
-    ∃ u t, I.IsHole u t ∧ u.length + t.length ≤
-      B (Fintype.card SA) (Fintype.card SB) (Fintype.card SC) (Fintype.card SD) := by
-  let a := Fintype.equivFin SA
-  let b := Fintype.equivFin SB
-  let c := Fintype.equivFin SC
-  let d := Fintype.equivFin SD
-  exact (rename_boundedHole I a b c d _).mp
-    (hB _ _ _ _ (I.rename a b c d) ((rename_forcedHeads I a b c d).mpr hfh)
-      ((rename_hasHole I a b c d).mpr hh))
 
 end TwoWordInstance
 

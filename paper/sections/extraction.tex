@@ -194,12 +194,10 @@ $A'$, $B'$, $\Head$ & $Q^\psi_{q,s}(u)\cap P^\psi_{p,e}(t)$ &
 \end{tabular}
 \end{table}
 
-\Cref{tab:ex-instance} summarizes the instance. The run of $B'$ on $t$ is the
-third component of the run of $B$, so the reachable pairs of states of $B$ and
-$B'$ are at most $N_B$ in number. The automata have $N_A=2^{2\len X}$,
-$N_B=2^{4\len X+2\len Z+1}$, and $N_{A'}=N_{B'}=2^{2(\len X+\len Z)}$ states,
-and the $4\len X^2$ instances are computable from $\varphi$ and $\psi$ in time
-polynomial in $2^{\len X+\len Z}$ and the size of $\varphi$ and $\psi$.
+\Cref{tab:ex-instance} summarizes the instance. The automata have
+$N_A=2^{2\len X}$, $N_B=2^{4\len X+2\len Z+1}$, and
+$N_{A'}=N_{B'}=2^{2(\len X+\len Z)}$ states, and the $4\len X^2$ instances are
+computable from $\varphi$ and $\psi$.
 
 Rejection is enriched: a cut of the seed is rejected only if it is neither
 dead by support in $\varphi$ nor root-dead in $\psi$. Both properties are
@@ -270,7 +268,7 @@ Conditions \CondI\ and \CondU\ are decidable
 satisfies (FH) (\cref{lem:ex-fh}). It remains to decide the hole problem for
 instances with forced target heads, which \cref{sec:nm,sec:mo} do.
 
-\begin{remark}[Condition (U) cannot be dropped]\label{rem:ex-u-needed}
+\begin{example}[Condition (U) cannot be dropped]\label{ex:ex-u-needed}
 Without \CondU, a failure of \CondII\ need not be a hole. Let $\varphi$ be
 empty over $X=\{x,y\}$, and let $\psi=\{x\le y,\ x\le f(a,b)\}$ with $a,b$
 hidden and $f$ binary and covariant. The seed $(x^0,\eps)$ is live in
@@ -283,13 +281,14 @@ with the countermodel $x=\Top$. The enrichment trades \CondU\ for (FH): with
 the rejection test given by the failure of $\mathrm{dt}$ alone, the holes still
 characterize the failures of \CondII\ when $\varphi$ is satisfiable, without
 assuming \CondU, but (FH) can fail (\cref{ex:ex-arrow}).
-\end{remark}
+\end{example}
 
 \begin{remark}[Covariant and joint-parity instances]\label{rem:ex-covariant}
-If $\varphi$ has a parity assignment (\cref{rem:ch-parity}), in particular if
-$f$ is covariant, then no pair of reachable states of the target automaton
-lies in $\GuardS$ (\cref{rem:sm-parity}), and every extracted instance is an
-instance of the suffix-sharing two-word problem without self events.
+Informally, if $\varphi$ has a parity assignment (\cref{rem:ch-parity}), in
+particular if $f$ is covariant, the self guard never applies to reachable
+states of the target automaton (\cref{rem:sm-parity}), and the extracted
+instances behave like instances of the suffix-sharing two-word problem
+without self events.
 \end{remark}
 
 \begin{example}[Shift closure: a hole]\label{ex:ex-running}

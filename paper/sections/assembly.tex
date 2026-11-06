@@ -1,7 +1,8 @@
 %% assembly -- the main theorem, stated once; counterexample words; the
 %% decision procedure as a numbered algorithm with its dependency table;
 %% countermodels from counterexample words; counterexample bounds per case;
-%% and the proof of the main theorem by assembling the earlier sections.
+%% the proof of the main theorem by assembling the earlier sections; and plain
+%% entailment as a corollary. The remark on complexity is in complexity.tex.
 
 \providecommand{\parity}{\operatorname{par}}
 \providecommand{\Mod}{\operatorname{Mod}}
@@ -29,7 +30,7 @@
 \section{The Main Theorem}\label{sec:as}
 
 This section states the main theorem and proves it by assembling the results
-of \cref{sec:bg,sec:lf,sec:ch,sec:sm,sec:un,sec:ex,sec:nm,sec:mo,sec:tc}.
+of \cref{sec:bg,sec:lf,sec:ch,sec:tc,sec:sm,sec:un,sec:ex,sec:nm,sec:mo}.
 Apart from bookkeeping, only two things are proved here: how a
 counterexample word yields a countermodel (\cref{lem:as-countermodel}), and
 two short estimates that turn the length bounds of the earlier sections into
@@ -85,10 +86,10 @@ Let $n\ge0$ be an arity and $c$ a variance of $f$.
   $\BFT$, with $v=\len X$ and $s=\len X+\len Z$, and let $\mathcal D$ be a tree
   class. If $\varphi$ and $\psi$ are $\mathcal D$-satisfiable and
   $\varphi\not\models_{\mathcal D}\Exists\psi$, then $(\varphi,\psi)$ has a
-  counterexample word of length at most $E_3(10v+6s+18)\le E_3(16s+18)$.
-  Every counterexample
-  word determines, effectively, a solution of $\varphi$ with values in
-  $\mathcal D$ that has no extension with values in $\mathcal D$ to a
+  counterexample word of length at most $E_3(10v+12s+15)\le E_3(22s+15)$.
+  Every counterexample word determines at most two visible observations such
+  that $\varphi$ has solutions with values in $\mathcal D$ in which they hold,
+  and no such solution has an extension with values in $\mathcal D$ to a
   solution of $\psi$.
 \item Let $f$ be covariant, let $\varphi$ and $\psi$ be flat systems over
   $\BF$ with $v=\len X$ and $s=\len X+\len Z$, and let $\mathcal D$ be a tree
@@ -96,11 +97,10 @@ Let $n\ge0$ be an arity and $c$ a variance of $f$.
   $\varphi$ and $\psi$ are $\mathcal D$-satisfiable over $\BF$ and the
   entailment fails over $\BF$ in $\mathcal D$, then the pair
   $(\varphi^\natural,\psi^\natural)$ of \cref{thm:tc-gadget} has a
-  counterexample word of length at most $E_3(20v+12s+18)\le E_3(32s+18)$, and
-  every
-  counterexample word of this pair determines, effectively, a solution of
-  $\varphi$ over $\BF$ in $\mathcal D$ without an extension over $\BF$ in
-  $\mathcal D$ to a solution of $\psi$.
+  counterexample word of length at most $E_3(20v+24s+15)\le E_3(44s+15)$, and
+  every counterexample word of this pair determines a solution of $\varphi$
+  over $\BF$ in $\mathcal D$ without an extension over $\BF$ in $\mathcal D$ to
+  a solution of $\psi$.
 \end{enumerate}
 The bounds in (3) and (4) depend neither on $n$ nor on $c$.
 \end{theorem}
@@ -113,8 +113,7 @@ $\mathcal D$-satisfiable the entailment holds, and if $\varphi$ is
 $\mathcal D$-satisfiable and $\psi$ is not, every $\mathcal D$-solution of
 $\varphi$ is a countermodel. The bounds concern certificates, not
 countermodels or witnesses: a countermodel is in general an infinite regular
-tree assignment, described by finite automata (\cref{lem:as-countermodel}),
-and when the entailment holds the witnesses for the hidden variables may have
+tree assignment (\cref{lem:as-countermodel}), and when the entailment holds the witnesses for the hidden variables may have
 to be infinite (\cref{rem:tc-examples}). Part (2) is not claimed for $\BF$
 with a contravariant argument; the reduction of \cref{thm:tc-gadget} needs
 covariance (\cref{rem:tc-gadget-needed}).
@@ -127,8 +126,8 @@ conjunctions $\varphi$ and $\psi$ of inequalities and equalities between
 type expressions, with visible variables $X$ and hidden variables $Z$. The
 output is whether $\varphi\models_{\mathcal D}\Exists\psi$ holds and, if it
 fails, a certificate: a counterexample word when both systems are
-$\mathcal D$-satisfiable, and otherwise a solution of $\varphi$ in
-$\mathcal D$, which is then a countermodel. Each step cites the result that
+$\mathcal D$-satisfiable, and otherwise the failure of the
+$\mathcal D$-satisfiability test for $\psi$. Each step cites the result that
 justifies it; \cref{tab:as-steps} lists the sections involved.
 
 \begin{enumerate}[label=\textbf{Step \arabic*.},ref=\arabic*,leftmargin=*,align=left]
@@ -153,28 +152,19 @@ justifies it; \cref{tab:as-steps} lists the sections involved.
   $\mathcal D=\Trees$ by \cref{prop:sm-decide}(1), for
   $\mathcal D=\Trees_{\mathrm{reg}}$ by the same test, since
   $\Sat_{\mathrm{reg}}=\Sat$ (\cref{thm:bg-nsse}(1)), and for
-  $\mathcal D=\Trees_{\mathrm{fin}}$ by \cref{thm:bg-nsse}(1), with the
-  criteria of \cref{thm:bg-nsse-sat,lem:bg-signed-sat}. If $\varphi$ is not
-  $\mathcal D$-satisfiable, answer \emph{holds}. If $\varphi$ is
-  $\mathcal D$-satisfiable and $\psi$ is not, answer \emph{fails}, with a
-  solution of $\varphi$ in $\mathcal D$, which no assignment of $Z$ extends:
-  for $\mathcal D=\Trees$ or $\Trees_{\mathrm{reg}}$ the least solution, which
-  is regular and decoded from $\mu_\varphi$ with finite automata for its leaf
-  cones (the proof of \cref{lem:as-countermodel}(1) for $A=\varnothing$ uses
-  only that $\varphi$ is satisfiable), and for
-  $\mathcal D=\Trees_{\mathrm{fin}}$ the first solution of $\varphi$ in an
-  enumeration of the finite assignments of $X$, which terminates because one
-  exists. Otherwise both systems are satisfiable over arbitrary trees;
-  continue.
+  $\mathcal D=\Trees_{\mathrm{fin}}$ by \cref{thm:bg-nsse}(2). If $\varphi$ is
+  not $\mathcal D$-satisfiable, answer \emph{holds}. If $\varphi$ is
+  $\mathcal D$-satisfiable and $\psi$ is not, answer \emph{fails}: every
+  solution of $\varphi$ in $\mathcal D$ is a countermodel. Otherwise both
+  systems are satisfiable over arbitrary trees; continue.
 \item\label[asstep]{as:step-i0} \emph{Condition \CondI.} For each $q\in X^\pm$,
   decide whether some word $w$ has $(q,w)\in\mu_\psi$ and
   $(q,w)\notin\mu_\varphi$ (\cref{prop:sm-decide}(2)). If so, answer
   \emph{fails}, with the \CondI-word $w$.
 \item\label[asstep]{as:step-u} \emph{Condition \CondU.} For each
   $p\in X^\pm$, test the words $w$ of length at most
-  $\holeBound(K_{\mathrm U},D_{\mathrm U})$, with the constants
-  $K_{\mathrm U}=2^{2\len X+\len Z+1}$ and
-  $D_{\mathrm U}=2^{\len X+2}(4K_{\mathrm U}-1)-1$ of \cref{thm:un-decidable},
+  $\holeBound(N_{\mathrm U},d_{N_{\mathrm U}})$, with
+  $N_{\mathrm U}=2^{4\len X+2\len Z+1}$ as in \cref{thm:un-decidable},
   for $(p,w)$ live in $\varphi$ and $\DeadU_\psi(p,w)$, using the source
   automaton $\Bsrc_p$ and its self guard
   (\cref{thm:un-decidable,lem:un-source,lem:un-holes}). If one passes, answer
@@ -186,7 +176,7 @@ justifies it; \cref{tab:as-steps} lists the sections involved.
    K_{pq}=\max\bigl(\Lnm(N_A,N_B,N_{A'},N_{B'}),\ \Lensharp_{I_{pq}}\bigr),
   \]
   with the state counts of $I_{pq}$, and test the pairs $(u,t)$ with
-  $\len u+\len t<K_{pq}$ for conditions (a)--(e) of \cref{def:ex-ss2self}.
+  $\len u+\len t\le K_{pq}$ for conditions (a)--(e) of \cref{def:ex-ss2self}.
   This search finds a hole iff $I_{pq}$ has one: by \cref{lem:ex-fh},
   $I_{pq}$ has forced target heads, so \cref{cor:nm-short-holes} leaves only
   holes shorter than $\Lnm$ and mortal holes, and \cref{thm:mo-short} shortens
@@ -223,18 +213,17 @@ Step & Task & Results used & Sections\\
 \cref{as:step-gadget} & $\BF$ & \cref{lem:tc-gadget,thm:tc-gadget,cor:tc-bf} &
   \cref{sec:tc}\\
 \cref{as:step-sat} & satisfiability & \cref{prop:sm-decide}(1),
-  \cref{thm:bg-nsse,thm:bg-nsse-sat,lem:bg-signed-sat},
+  \cref{thm:bg-nsse,thm:bg-nsse-sat},
   \cref{thm:ch-characterization}(1) &
   \cref{sec:bg,sec:sm,sec:ch}, \cref{app:bg}\\
 \cref{as:step-i0} & \CondI & \cref{lem:sm-mu}, \cref{prop:sm-decide}(2) &
   \cref{sec:sm}\\
-\cref{as:step-u} & \CondU & \cref{lem:un-holes,lem:un-reduced,lem:un-clock,thm:un-decidable};
-  \cref{thm:bg-brt,thm:bg-search} & \cref{sec:un,sec:bg}\\
+\cref{as:step-u} & \CondU & \cref{lem:un-holes,lem:un-rejected-path,thm:un-decidable};
+  \cref{cor:bg-hole-decision} & \cref{sec:un,sec:bg}\\
 \cref{as:step-ii} & \CondII & \cref{thm:ex-reduction,cor:ex-entailment,lem:ex-fh};
   \cref{cor:nm-short-holes}; \cref{thm:mo-short,thm:mo-decide,cor:mo-extracted} &
   \cref{sec:ex,sec:nm,sec:mo}\\
-\cref{as:step-classes} & tree classes & \cref{thm:tc-regular,thm:tc-finite,cor:tc-decidable},
-  \cref{lem:as-countermodel} & \cref{sec:tc,sec:as}\\
+\cref{as:step-classes} & tree classes & \cref{thm:tc-regular,thm:tc-finite,cor:tc-decidable} & \cref{sec:tc}\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -242,10 +231,10 @@ Step & Task & Results used & Sections\\
 Condition \CondU\ is decided in \cref{as:step-u} before the holes of the
 extracted instances are used in \cref{as:step-ii}. This order matters:
 \cref{thm:ex-reduction} assumes \CondU, and without it a failure of \CondII\
-need not be a hole (\cref{rem:ex-u-needed}). The bounded search of
+need not be a hole (\cref{ex:ex-u-needed}). The bounded search of
 \cref{as:step-ii} itself needs only forced target heads, condition (FH), which
 every extracted instance satisfies by construction (\cref{lem:ex-fh}); without
-(FH) the search would be incomplete (\cref{rem:nm-fh}). Equivalently, after \cref{as:step-sat} one may test all
+(FH) the search would be incomplete (\cref{ex:nm-fh}). Equivalently, after \cref{as:step-sat} one may test all
 candidate words of the three kinds of \cref{def:as-certificate} up to the
 bound of \cref{thm:as-main}(3): a candidate hole of some $I_{pq}$ found while
 \CondU\ fails still gives the correct answer \emph{fails}, and if no candidate
@@ -255,8 +244,8 @@ passes, all three conditions hold by \cref{prop:as-bounds}.
 
 A counterexample word determines a countermodel through least closures: the
 least model of $\varphi$ that contains the seed of the word is a solution of
-$\varphi$ that no solution of $\psi$ extends. For finite trees, the word
-gives at most two observations, which are pinned by finite ground bounds.
+$\varphi$ that no solution of $\psi$ extends. The word also gives at most two
+observations, which ground bounds pin in every tree class.
 
 \begin{lemma}[Countermodels]\label{lem:as-countermodel}
 Let $\varphi$ over $X$ and $\psi$ over $X\cup Z$ be flat systems over $\BFT$,
@@ -273,20 +262,16 @@ Define a set $A$ of seeds and a set $\mathcal O$ of visible observations
 \end{itemize}
 \begin{enumerate}[leftmargin=*]
 \item $H_\varphi(A)$ is a model of $\varphi$, namely $\mu_\varphi$,
-  $\Cl_\varphi(p,w)$ or $\Cl_\varphi(p,t)$. It decodes to a regular solution
-  $\rho_A$ of $\varphi$ in which the observations of $\mathcal O$ hold, and
-  finite automata for the leaf cones of $\rho_A$ are computable from the
-  certificate.
+  $\Cl_\varphi(p,w)$ or $\Cl_\varphi(p,t)$. It decodes to a solution
+  $\rho_A$ of $\varphi$ in which the observations of $\mathcal O$ hold.
 \item No assignment of $X$ in which the observations of $\mathcal O$ hold
   extends to a solution of $\psi$. In particular, $\rho_A$ is a countermodel
-  over arbitrary and over regular trees.
-\item Suppose that $\varphi$ has a finite solution. Let $B$ be the set of
-  finite ground bounds equivalent to the observations of $\mathcal O$ by
-  \cref{lem:tc-pins}; each has at most $1+n(L+1)$ positions, where $L$ is the
-  length of the counterexample word. Then $\varphi\cup B$ has a finite
-  solution, and every finite solution of $\varphi\cup B$ is a finite solution
-  of $\varphi$ without any extension to a solution of $\psi$. Such a solution
-  is found by enumerating the finite assignments of $X$.
+  over arbitrary trees.
+\item Let $\mathcal D$ be a tree class in which $\varphi$ is satisfiable, and
+  let $B$ be the set of finite ground bounds equivalent to the observations of
+  $\mathcal O$ by \cref{lem:tc-pins}. Then $\varphi\cup B$ has a solution in
+  $\mathcal D$, and every such solution is a solution of $\varphi$ in
+  $\mathcal D$ without any extension to a solution of $\psi$.
 \item Suppose that $(\varphi,\psi)=(\varphi_0^\natural,\psi_0^\natural)$ for
   systems $\varphi_0$ over $X_0$ and $\psi_0$ over $X_0\cup Z_0$ over $\BF$,
   with $f$ covariant, as in \cref{thm:tc-gadget}. If $\rho$ is a solution of
@@ -307,10 +292,7 @@ $\varphi$ that contains the seed (\cref{lem:lf-closure}(2)). The observations
 hold in $H_\varphi(A)$: $(q,w)\notin\mu_\varphi$ by definition, the seed lies
 in its own closure, and $(q,u)\notin\Cl_\varphi(p,t)$ by
 \cref{thm:ex-reduction}. By \cref{lem:lf-clauses}, $H_\varphi(A)$ is
-$S_{\rho_A}$ for a unique solution $\rho_A$ of $\varphi$. The set $A$ is
-finite, so its slices are regular, and \cref{lem:sm-regular-closure} gives
-computable finite automata for the slices of $H_\varphi(A)$, which are the leaf
-cones of $\rho_A$. By \cref{thm:lf-representation}(4), $\rho_A$ is regular.
+$S_{\rho_A}$ for a unique solution $\rho_A$ of $\varphi$.
 
 (2) Let $\rho'$ be an assignment of $X$ in which the observations hold, and
 suppose that it extends to a solution of $\psi$. By \cref{lem:lf-clauses},
@@ -322,17 +304,17 @@ $(q,w)\in S_{\rho'}$, against the denial. For a \CondU-word, $(p,w)\in T$, so
 $T\supseteq\Reach_\psi(p,w)$ contains a forbidden root of $\psi$, against the
 consistency of $T$. For a hole word, $(p,t)\in T$ and
 $(p,t)\to^*_\psi(q,u)$ by \cref{thm:ex-reduction}, so $(q,u)\in T|_X=S_{\rho'}$,
-against the denial. Applied to $\rho_A$, which is regular by (1), this proves
-the second claim; \cref{thm:ex-reduction}(2) is the case of a hole word.
+against the denial. Applied to $\rho_A$, this proves the second claim;
+\cref{thm:ex-reduction}(2) is the case of a hole word.
 
 (3) By \cref{lem:tc-pins}, an observation holds in an assignment iff the
-corresponding ground bound does, and the bound has at most $1+n(\len w+1)$
-positions for the word $w$ of the observation, which is at most $L$ long. So
-$\rho_A$ solves $\varphi\cup B$, and \cref{thm:tc-pinning} gives a finite
+corresponding ground bound does, so $\rho_A$ solves $\varphi\cup B$. For
+$\mathcal D=\Trees$ take $\rho_A$; for $\mathcal D=\Trees_{\mathrm{reg}}$,
+\cref{lem:tc-pinning-regular} gives a regular solution, the bounds being
+finite and hence regular; and for $\mathcal D=\Trees_{\mathrm{fin}}$,
+\cref{thm:tc-pinning} gives a finite one, since $\varphi$ has a finite
 solution. Every solution of $\varphi\cup B$ satisfies the observations, so it
-has no extension at all by (2), in particular no finite one. Whether a finite
-assignment solves $\varphi\cup B$ is decidable, since it compares finite
-trees, so the enumeration terminates.
+has no extension by (2).
 
 (4) The values $\rho(x)$, $x\in X_0$, lie below the values $\rho(y_x)$, which
 satisfy $y_x\le f(y_x^n)$, so they are $\Top$-free by \cref{lem:tc-gadget}(1),
@@ -343,6 +325,10 @@ $\mathcal D=\Trees_{\mathrm{fin}}$, and $\sigma(y_z)=\Omega$ otherwise. By
 \cref{lem:tc-gadget}(2), $\rho$ together with $\sigma$ solves $\psi$, which
 does not constrain the variables $y_x$; this contradicts the choice of $\rho$.
 \end{proof}
+
+Informally, a countermodel in $\mathcal D$ can then be found by enumerating
+the finite assignments, or finite graph presentations, of $X$ and testing
+$\varphi\cup B$; we do not analyze this search.
 
 \begin{example}[Shift closure: the procedure end to end]\label{ex:as-running}
 Run the procedure on \cref{ex:intro-shift} with $\varphi_1=\{x\le y\}$ and
@@ -395,10 +381,8 @@ The automata of the extracted instances have
 \[
  N_A=2^{2v},\qquad N_B=2^{4v+2h+1}=2^{2v+2s+1},\qquad N_{A'}=N_{B'}=2^{2s}
 \]
-states (\cref{sec:ex-instances}). For condition \CondU, the reduced unit
-readers have fewer than $K_{\mathrm U}=2^{v+s+1}$ states, and the antecedent
-clock that bounds their depth has fewer than $A_{\mathrm U}=2^{v+1}$
-(\cref{lem:un-reduced,lem:un-clock}).
+states (\cref{sec:ex-instances}), and the unit readers of condition \CondU\
+have $N_{\mathrm U}=N_B$ states (\cref{thm:un-decidable}).
 
 \begin{proposition}[Counterexample bounds]\label{prop:as-bounds}
 Let $\varphi$ over $X$ and $\psi$ over $X\cup Z$ be flat systems over $\BFT$,
@@ -407,54 +391,40 @@ both satisfiable, with $v=\len X$ and $s=\len X+\len Z$.
 \item If \CondI\ fails, there is an \CondI-word of length less than
   $2^{2v+2s+2}$.
 \item If \CondU\ fails, there is a \CondU-word of length at most
-  $\holeBound(K_{\mathrm U},D_{\mathrm U})\le E_3(5v+3s+16)$, where
-  $D_{\mathrm U}=2A_{\mathrm U}(4K_{\mathrm U}-1)-1$.
+  $\holeBound(N_{\mathrm U},d_{N_{\mathrm U}})\le E_3(10v+10s+17)$.
 \item If \CondI\ and \CondU\ hold and \CondII\ fails, there are
   $p,q\in X^\pm$ and a hole $(u,t)$ of $I_{pq}$ such that either
-  $\len u+\len t<\Lnm(N_A,N_B,N_{A'},N_{B'})$, a bound singly exponential in
+  $\len u+\len t\le\Lnm(N_A,N_B,N_{A'},N_{B'})$, a bound singly exponential in
   $s$, or $(u,t)$ is a mortal hole and
-  $\len{u\sep t}\le\Lensharp_{I_{pq}}\le E_3(10v+6s+18)$.
+  $\len{u\sep t}\le\Lensharp_{I_{pq}}\le E_3(10v+12s+15)$.
 \end{enumerate}
-If $v\ge1$, each of these bounds is at most $E_3(10v+6s+18)\le E_3(16s+18)$,
-and the mortal bound is the largest. If $v=0$, there is no counterexample
+If $v\ge1$, each of these bounds is at most $E_3(10v+12s+15)\le E_3(22s+15)$,
+and the mortal closed form is the largest. If $v=0$, there is no counterexample
 word.
 \end{proposition}
 
 \begin{proof}
-(1) By \cref{lem:sm-mu}, $(q,w)\in\mu_\chi$ iff some cut $e\le\len w$ has
-$Q^\chi_{q,e}(w)\cap\Fup\chi\ne\varnothing$. The lower automaton of $q$ in
-$\chi$, extended by a bit that records whether some state read so far meets
-$\Fup\chi$, is a deterministic automaton that reads this property; for
-$\chi=\psi$ it has $2^{2s+1}$ states, and for $\chi=\varphi$ it has
-$2^{2v+1}$. An \CondI-word for $q$ is a word that leads their product to a
-state whose $\psi$-bit is set and whose $\varphi$-bit is not. A shortest such
-word visits no state of the product twice, so it is shorter than
-$2^{2v+2s+2}$.
+(1) This is \cref{prop:sm-decide}(2), with $\len X=v$ and $\len{X\cup Z}=s$.
 
-(2) This is \cref{thm:un-decidable}. A reduced unit reader with a hole has
-one with a rejected tail of at most $4K_{\mathrm U}-2$ (\cref{thm:bg-brt}),
-the clock turns this tail bound into the depth bound $D_{\mathrm U}$
-(\cref{lem:un-clock}), and the bounded-depth search at depth $D_{\mathrm U}$
-gives the length (\cref{thm:bg-search}); \cref{lem:bg-estimate} gives the
-closed form.
+(2) This is \cref{thm:un-decidable}.
 
 (3) By \cref{thm:ex-reduction}(1), which applies because $\varphi$ is
 satisfiable and \CondU\ holds, some $I_{pq}$ has a hole. It satisfies (FH) by
 \cref{lem:ex-fh}, so by \cref{cor:nm-short-holes} it has a hole with
-$\len u+\len t<\Lnm(N_A,N_B,N_{A'},N_{B'})$ or a mortal hole. The function
+$\len u+\len t\le\Lnm(N_A,N_B,N_{A'},N_{B'})$ or a mortal hole. The function
 $\Lnm$ is a polynomial in the four state counts (\cref{sec:nm-three-cases}),
 each of which is at most $2^{2v+2s+1}$, so the first bound is singly
 exponential in $s$. In the second case, \cref{thm:mo-short} gives a mortal hole
 whose separator word has length at most $\Lensharp_{I_{pq}}$, and
-\cref{cor:mo-extracted} bounds this by $E_3(10v+6s+18)$.
+\cref{cor:mo-extracted} bounds this by $E_3(10v+12s+15)$.
 
-For the comparison, let $v\ge1$. The bound of (1) is below $2^{4s+2}$, and
-the non-mortal bound is $\Lnm\le54N_A^2N_BN_{A'}N_{B'}<2^{6v+6s+7}$
-(\cref{sec:nm-three-cases}); both are far below the triply exponential bounds.
-Of the two triply exponential bounds, $E_3(5v+3s+16)$ is below the mortal
-bound $E_3(10v+6s+18)$, which is therefore the largest, and
-$E_3(10v+6s+18)\le E_3(16s+18)$ since $v\le s$. If
-$v=0$, then $X^\pm$ is empty, and \cref{def:as-certificate} admits no word.
+For the comparison, let $v\ge1$, so that $s\ge1$. The bound of (1) is at most
+$2^{4s+2}$, and the non-mortal hole word has length at most
+$\Lnm+1\le54N_A^2N_BN_{A'}N_{B'}+1<2^{6v+6s+7}$ (\cref{sec:nm-three-cases});
+both are far below the triply exponential bounds. Of these,
+$E_3(10v+10s+17)\le E_3(10v+12s+15)$ since $s\ge1$, so the mortal closed form is the
+largest, and $E_3(10v+12s+15)\le E_3(22s+15)$ since $v\le s$. If $v=0$, then
+$X^\pm$ is empty, and \cref{def:as-certificate} admits no word.
 \end{proof}
 
 \begin{table}[tbp]
@@ -471,11 +441,11 @@ Failing condition & Word & Length bound & Growth & Source\\
 \midrule
 \CondI & $w$ & $<2^{2v+2s+2}$ & single &
   \cref{prop:as-bounds}(1)\\
-\CondU & $w$ & $\le E_3(5v+3s+16)$ & triple &
+\CondU & $w$ & $\le E_3(10v+10s+17)$ & triple &
   \cref{thm:un-decidable}\\
-\CondII, not mortal & $u\sep t$ & $\le\Lnm(N_A,N_B,N_{A'},N_{B'})$ & single &
+\CondII, not mortal & $u\sep t$ & $\le\Lnm(N_A,N_B,N_{A'},N_{B'})+1$ & single &
   \cref{cor:nm-short-holes}\\
-\CondII, mortal & $u\sep t$ & $\le E_3(10v+6s+18)$ & triple &
+\CondII, mortal & $u\sep t$ & $\le E_3(10v+12s+15)$ & triple &
   \cref{thm:mo-short,cor:mo-extracted}\\
 \bottomrule
 \end{tabular}
@@ -486,13 +456,18 @@ from the bounded-depth search of \citet{Zhao26} and its anchored
 extension, and in both cases the depth is bounded through a short rejected
 tail (\cref{thm:bg-depth}). A mortal hole has a rejected tail shorter than
 $N_A=2^{2v}$, which involves only visible variables; its reader has
-$\Nbar\le2^{2v+2s+3}$ states, and its depth is at most
-$d_I=2\Nbar N_A-1<2^{4v+2s+4}$ (\cref{lem:mo-depth}). A reduced unit reader has fewer than
-$K_{\mathrm U}=2^{v+s+1}$ states. The tail bound of \cref{thm:bg-brt} allows it a tail
-of up to $4K_{\mathrm U}-2$, but the clock of \cref{lem:un-clock}, which reads
-only the antecedent, bounds the depth by
-$D_{\mathrm U}<2^{2v+s+5}$. The mortal reader is larger and deeper, which is
-why the mortal bound is the largest.
+$\Nbar\le2^{2v+4s+2}$ states, and its depth is at most
+$d_I=2\Nbar N_A-1<2^{4v+4s+3}$ (\cref{lem:mo-depth}). A unit reader has
+$N_{\mathrm U}=2^{2v+2s+1}$ states, and the search of
+\cref{cor:bg-hole-decision} bounds the depth of a suitable hole by
+$d_{N_{\mathrm U}}<2^{4v+4s+5}$. The mortal closed form is the largest of the
+closed forms in the table. This does not order the exact bounds: for
+$s\le2$ and $v\ge1$, the exact \CondU\ bound exceeds the exact mortal bound,
+because $d_{N_{\mathrm U}}\approx8N_{\mathrm U}^2$ is much larger than $d_I$.
+In the part that is not mechanized, the smaller reader of
+\cref{sec:un-smaller} gives an even smaller bound for \CondU\
+(\cref{prop:un-sharper}), and \cref{sec:cx} analyzes the complexity of the
+procedure.
 
 \subsection{Proof of the Main Theorem}\label{sec:as-proof}
 
@@ -523,14 +498,12 @@ or \CondII\ fails. In the first two cases \cref{prop:as-bounds}(1,2) gives an
 \CondI-word or a \CondU-word; otherwise \CondI\ and \CondU\ hold and
 \cref{prop:as-bounds}(3) gives a hole word. A counterexample word exists only
 if $v\ge1$, and then its length is at most
-$E_3(10v+6s+18)\le E_3(16s+18)$ by \cref{prop:as-bounds}. This argument uses no hypothesis on $n$; for $n=0$
-the only word is $\eps$, and every counterexample word has length at most
-$1$. By
-\cref{lem:as-countermodel}(1,2), every counterexample word yields a regular
-countermodel, which serves for $\Trees$ and $\Trees_{\mathrm{reg}}$, and by
-\cref{lem:as-countermodel}(3) a finite one when $\varphi$ has a finite
-solution, which is the case for $\mathcal D=\Trees_{\mathrm{fin}}$. All of
-them are computed from the word. None of the bounds involves $n$ or $c$.
+$E_3(10v+12s+15)\le E_3(22s+15)$ by \cref{prop:as-bounds}. This argument uses
+no hypothesis on $n$; for $n=0$ the only word is $\eps$, and every
+counterexample word has length at most $1$. By
+\cref{lem:as-countermodel}(3), every counterexample word yields a
+countermodel in $\mathcal D$, since $\varphi$ is $\mathcal D$-satisfiable.
+None of the bounds involves $n$ or $c$.
 
 \emph{Part (4).} Let $f$ be covariant, and let $\varphi$ and $\psi$ over $\BF$
 be $\mathcal D$-satisfiable over $\BF$, with failing entailment over $\BF$ in
@@ -543,15 +516,34 @@ and by \cref{thm:tc-gadget} the entailment of $(\varphi^\natural,
 \psi^\natural)$ fails in $\mathcal D$. This pair has $2\len X$ visible and
 $2\len Z$ hidden variables (\cref{cor:tc-bf}), so (3), applied with $2v$
 and $2s$, gives a counterexample word of length at most
-$E_3(10\cdot2v+6\cdot2s+18)=E_3(20v+12s+18)\le E_3(32s+18)$. It yields a countermodel for
+$E_3(10\cdot2v+12\cdot2s+15)=E_3(20v+24s+15)\le E_3(44s+15)$. It yields a countermodel for
 $(\varphi^\natural,\psi^\natural)$ in $\mathcal D$, which restricts to a
 countermodel over $\BF$ in $\mathcal D$ by \cref{lem:as-countermodel}(4).
 \end{proof}
 
-\begin{remark}[Complexity]\label{rem:as-complexity}
-The procedure of \cref{sec:as-procedure} is written to make its correctness
-evident: \cref{as:step-u,as:step-ii} enumerate all words up to a triply
-exponential length. \Cref{sec:ap} applies the theorem to constrained types and
-their simplification, and needs only its statement; \cref{sec:cx} then gives
-the complexity of the problem, sharper procedures and lower bounds.
-\end{remark}
+\subsection{Plain Entailment}\label{sec:as-plain}
+
+Plain entailment is the special case of existential entailment without hidden
+variables and with the consequent $x\le y$ (\cref{def:bg-existential}). Its
+decidability, proved by \citet{Zhao26}, is therefore a corollary, with the same
+procedure.
+
+\begin{corollary}[Plain entailment]\label{cor:as-plain}
+For every arity $n\ge0$ and every variance $c$, plain entailment
+$\varphi\models_{\mathcal D}x\le y$ over $\BFT$ is decidable for each tree class
+$\mathcal D$, and
+\[
+ \varphi\models_{\mathrm{reg}}x\le y\iff\varphi\models x\le y,\qquad
+ \varphi\models_{\mathrm{fin}}x\le y\iff
+ \neg\Sat_{\mathrm{fin}}(\varphi)\ \lor\ \varphi\models x\le y .
+\]
+If $f$ is covariant, plain entailment over $\BF$ is decidable for each tree
+class.
+\end{corollary}
+
+\begin{proof}
+With $Z=\varnothing$ and $\psi=\{x\le y\}$, \cref{thm:as-main}(1,2) decides the
+entailment. The consequent has the solution $x=y=\Bot$ in every tree class, so
+\cref{thm:tc-regular} gives the first equivalence and \cref{eq:tc-finite} the
+second.
+\end{proof}

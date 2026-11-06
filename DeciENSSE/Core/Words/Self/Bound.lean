@@ -19,15 +19,27 @@ open DeciENSSE.Core.Words.Mortal
 
 variable {α : Type*} [Fintype α] [DecidableEq α]
 
-/-- Explicit computable maximum of the non-mortal and mortal bounds. -/
+/-- The bound for all holes with self events: the maximum of the non-mortal bound `Lnm` and
+the mortal bound. -/
 def selfHoleBound (a b c d : ℕ) : ℕ :=
   max (pumpHoleBound a b c d) (mortalHoleBound a b c d)
 
-/-- Self-aware pumping supplies the periodic shortening premise. -/
-theorem nonMortalShortHoleBoundSelf [Inhabited α] : NonMortalShortHoleBoundSelf α pumpHoleBound :=
-  nonMortalShortHoleBoundSelf_of_periodic purelyPeriodicShortPreHole_capacity
+/-- The bound `Lnm` in the non-mortal cases (`thm:nm-three-cases`, last claim),
+for every finite alphabet: the pump with self events supplies the periodic shortening
+premise, and over the empty alphabet neither non-mortal case can occur. -/
+theorem nonMortalShortHoleBoundSelf : NonMortalShortHoleBoundSelf α pumpHoleBound := by
+  cases isEmpty_or_nonempty α with
+  | inl h =>
+    rintro a b c d I ⟨u, t, -, ⟨-, r, -, -, x, -⟩ | ⟨-, ξ, -⟩⟩
+    · exact isEmptyElim x
+    · exact isEmptyElim (ξ 0)
+  | inr h =>
+    have := Classical.inhabited_of_nonempty h
+    exact nonMortalShortHoleBoundSelf_of_periodic purelyPeriodicShortPreHole_capacity
 
-/-- Every ForcedHeads instance with a self-aware hole has one within the explicit bound. -/
+/-- **Short holes** (`thm:mo-decide`): over every finite alphabet, an instance with state counts
+`a, b, c, d`, forced target heads and a hole has a hole `(u, t)` with
+`|u| + |t| ≤ selfHoleBound a b c d`. -/
 theorem shortHoleBoundSelf (α : Type*) [Fintype α] [DecidableEq α] :
     ShortHoleBoundSelf α selfHoleBound := by
   cases isEmpty_or_nonempty α with

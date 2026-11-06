@@ -8,7 +8,7 @@
 
 This appendix collects what we use from the decidability proof for plain
 entailment of \citet{Zhao26} beyond \cref{sec:bg}: the satisfiability criteria
-and their extension to copy literals (\cref{app:bg-sat}); the cores of the
+(\cref{app:bg-sat}); the cores of the
 canonical hierarchy (\cref{app:bg-cores}); the ordinary and symbolic states
 of derived monitors (\cref{app:bg-monitors}); the structure of the proof of
 \cref{thm:bg-search} in the precise terms that later sections extend
@@ -29,8 +29,8 @@ transitive relation on $V$ such that, for every $i\in\Sigma$,
  \frac{f(a_j)_j\le u\in\chi\qquad D^{\mathrm{cov}}_\chi(u,v)\qquad v\le f(b_j)_j\in\chi}
       {D^{\mathrm{cov}}_\chi(a_i,b_i)} .
 \end{equation}
-It is computed by saturation in time polynomial in the size of $\chi$, since
-there are $\len V^2$ pairs. The \emph{path bounds} $\Up(\eta,u,v)$ and
+It is computed by saturation, which terminates since there are $\len V^2$
+pairs. The \emph{path bounds} $\Up(\eta,u,v)$ and
 $\Lo(\eta,u,v)$, for words $\eta\in\Sigma^*$ and $u,v\in V$, are defined by
 $\Up(\eps,u,v)\iff\Lo(\eps,u,v)\iff D^{\mathrm{cov}}_\chi(u,v)$ and
 \begin{equation}\label{eq:bg-paths}
@@ -59,11 +59,9 @@ For every arity and every variance:
 \item Let $\chi$ be a covariant system without copy literals. In every
   solution $\sigma$ of $\chi$, $D^{\mathrm{cov}}_\chi(u,v)$ implies $\sigma(u)\le\sigma(v)$.
   The system $\chi$ has a solution iff it has no label clash, and a finite
-  solution iff it has neither a label clash nor a cycle clash. A cycle clash
-  exists iff the finite graph on the pairs $(a,b)$ with $D^{\mathrm{cov}}_\chi(a,b)$, with an
-  edge from $(a,b)$ to $(a',b')$ whenever $\Lo(i,a',a)$ and $\Up(i,b,b')$ for
-  some letter $i$, has a cycle; it suffices to test words $\eta$ of lengths $1$
-  through $\len V^2$.
+  solution iff it has neither a label clash nor a cycle clash. If $\chi$ has no
+  label clash, then it has a cycle clash iff it has one whose word $\eta$ has
+  length at most $\len V^2$.
 \item For every system $\chi$ without copy literals and every variance
   $c$, $\Sat_c(\chi)\iff\Sat(\chi^\pm)$ and
   $\Sat_{\mathrm{fin},c}(\chi)\iff\Sat_{\mathrm{fin}}(\chi^\pm)$.
@@ -74,58 +72,10 @@ For every arity and every variance:
 
 The signed system of a system without copy literals again has no copy
 literals, so part (1) decides both satisfiability problems of part (2). The
-following lemma extends parts (2) and (3) to copy literals and to all three
-tree classes.
-
-\begin{lemma}[Signed satisfiability]\label{lem:bg-signed-sat}
-For every arity $n\ge0$, every variance $c$, every system $\chi$ over $\BFT$,
-copy literals included, and every tree class $\mathcal D$,
-\[
- \Sat_{\mathcal D,c}(\chi)\iff\Sat_{\mathcal D}(\chi^\pm),
- \qquad\text{and}\qquad
- \Sat_c(\chi)\iff\Sat_{\mathrm{reg},c}(\chi).
-\]
-\end{lemma}
-\begin{proof}
-If $\rho$ is a $\mathcal D$-solution of $\chi$, then $\rho^\pm$ is a
-$\mathcal D$-solution of $\chi^\pm$ by \cref{lem:bg-signed}. For the converse
-let $\sigma$ be a $\mathcal D$-solution of $\chi^\pm$.
-
-For $n=0$ there are no children, so the literals of $\chi^\pm$ of sign $+$ in
-\cref{tab:bg-signed} are the literals of $\chi$ with every variable $v$ replaced
-by $v^+$, and the order is the same chain for every variance. Hence
-$v\mapsto\sigma(v^+)$ solves $\chi$, and the three classes coincide.
-
-Let $n\ge1$, and let $\chi^\flat$ be obtained by \cref{lem:bg-sandwich}, with
-fresh variables $y,o$ for each copy literal $u\le v$ and the literals
-$f(a_i)_i\le y$ and $y\le f(b_i)_i$. We extend $\sigma$ to a $\mathcal
-D$-solution of $(\chi^\flat)^\pm$. The four signed literals of the two new
-literals are
-\[
- f(a_i^{c(i)})_i\le y^+,\quad y^-\le f(a_i^{\bar c(i)})_i,\quad
- y^+\le f(b_i^{c(i)})_i,\quad f(b_i^{\bar c(i)})_i\le y^- .
-\]
-Put $\sigma(o^+)=\sigma(o^-)=\Bot$, $\sigma(y^+)=f(\sigma(a_i^{c(i)}))_i$, and
-$\sigma(y^-)=f(\sigma(b_i^{\bar c(i)}))_i$. The first and fourth literals hold
-with equality. The other two hold iff
-$\sigma(a_i^{c(i)})\le\sigma(b_i^{c(i)})$ and
-$\sigma(b_i^{\bar c(i)})\le\sigma(a_i^{\bar c(i)})$ for every $i$. For $i\ge1$
-both sides are $\sigma(o^\pm)$. For $i=0$ these are the two inequalities
-$\sigma(u^+)\le\sigma(v^+)$ and $\sigma(v^-)\le\sigma(u^-)$, in either case of
-$c(0)$, and they hold because $u^+\le v^+$ and $v^-\le u^-$ are the signed
-literals of $u\le v$. The new values lie in $\mathcal D$.
-
-So $(\chi^\flat)^\pm$ is $\mathcal D$-satisfiable, and in particular satisfiable.
-By \cref{thm:bg-nsse-sat}(2), $\chi^\flat$ has a solution, and a finite one
-if $\mathcal D=\Trees_{\mathrm{fin}}$; by \cref{thm:bg-nsse-sat}(3) it has a
-regular one. In each case $\chi^\flat$ has a $\mathcal D$-solution for the
-variance $c$, whose restriction to the variables of $\chi$ is a
-$\mathcal D$-solution of $\chi$ by \cref{lem:bg-sandwich}.
-
-Finally, if $\chi$ has a solution, then so has $\chi^\flat$ by
-\cref{lem:bg-sandwich}, hence a regular one by \cref{thm:bg-nsse-sat}(3),
-and its restriction is a regular solution of $\chi$.
-\end{proof}
+extension of parts (2) and (3) to copy literals and to all three tree classes,
+\cref{lem:bg-signed-sat}, serves only the complexity bounds of the part of the
+paper that is not mechanized (\cref{sec:cx}); the decision procedure does not
+need it.
 
 \subsection{Cores}\label{app:bg-cores}
 
@@ -262,12 +212,15 @@ dictionary of $w'$ is larger than the corresponding one of $w$.
 
 \begin{lemma}[Isolated exchange {\nssecite{Lemma ``Isolated exchange''}}]\label{lem:bg-isolated-exchange}
 Let $1\le i<D$, and let distinct isolated letters $a,b$ of $w_i$ have the same
-exchange type. The level map that replaces $a$ by $b$ satisfies the hypotheses
-of \cref{lem:bg-level-maps}, so the resulting word is a hole of depth $D$ with
-every start count unchanged and no dictionary larger; its level-$i$ dictionary
-is strictly smaller. Choosing, between the two directions, the letter with the
-shorter level-zero expansion as the image also makes the word no longer.
+exchange type, where the level-zero expansion of $b$ is not longer than that
+of $a$. The level map that replaces $a$ by $b$ satisfies the hypotheses of
+\cref{lem:bg-level-maps}, so the resulting word is a hole of depth $D$, no
+longer than $w$, with every start count unchanged and no dictionary larger;
+its level-$i$ dictionary is strictly smaller.
 \end{lemma}
+
+Of two isolated letters with the same exchange type, one always has the
+shorter expansion, so the lemma applies in one of the two directions.
 
 A hole is \emph{normal} if, at every level $1\le i<D$, distinct isolated
 letters have distinct exchange types, computed in its own hierarchy.
@@ -302,16 +255,23 @@ is needed.
 \paragraph{Step 3: the top level}
 
 \begin{lemma}[Unary words {\nssecite{Appendix ``Details of the Bounded-Depth Compression''}}]\label{lem:bg-unary}
-Let $z^m$ be a hole of a lettered monitor with state set $\mathcal Q$. If two of
-the nonfinal cuts $i<i'\le m-1$ have equal states, deleting the letters between
-them gives a hole whose labels are a subsequence of those of $z^m$ with the same
-last label. Repeating this gives a unary hole $z^{m'}$ with
-$1\le m'\le\len{\mathcal Q}$.
+Let $z^m$ be a hole of a lettered monitor with state set $\mathcal Q$. Then
+$z^{m'}$ is a hole for some $1\le m'\le\len{\mathcal Q}$.
 \end{lemma}
+\begin{proof}
+Let $\zeta_k$ be the state at the cut $k$ of $z^m$, so that the label of the
+cut $k\ge1$ is $(\zeta_{k-1},z)$. The states $\zeta_0,\zeta_1,\ldots$ are the
+orbit of the start state under the letter $z$, so every state of the orbit
+occurs first at an index below $\len{\mathcal Q}$; let $t$ be the least index
+with $\zeta_t=\zeta_{m-1}$, so that $t<\len{\mathcal Q}$ and $t\le m-1$. The
+prefix $z^{t+1}$ has the labels of $z^m$ at its cuts, and its last label
+$(\zeta_t,z)$ is the last label of $z^m$. Every pair of cuts of a unary word
+is a comparison, so a nonterminal comparison of $z^{t+1}$ is one of $z^m$ with
+the same labels, and a terminal one $(s,t+1)$ has the labels of the terminal
+comparison $(s,m)$ of $z^m$. Hence $z^{t+1}$ is a hole.
+\end{proof}
 
-Every pair of cuts of a unary word is a comparison, so this deletion creates no
-new kind of label pair. Applied to $w_D$ in $\mathcal M_D$, it gives at most
-$N+D$ letters.
+Applied to $w_D$ in $\mathcal M_D$, the lemma gives at most $N+D$ letters.
 
 \paragraph{Step 4: simultaneous compression}
 Let $\mathcal M$ be a lettered monitor with state set $\mathcal Q$ and start

@@ -1,0 +1,140 @@
+%% appendix-complexity -- proofs for the part that is not mechanized
+%% (sec:cx): the smaller unit reader and the antecedent rejection clock
+%% (sec:un-smaller), leaf cones and tree classes, and signed satisfiability
+%% with copy literals (sec:cx-facts).
+
+\section{Proofs for Complexity and Sharper Bounds (Not Mechanized)}\label{app:cx}
+
+This appendix proves the results of \cref{sec:cx} whose proofs were omitted
+there. Like that section, it is not mechanized, and nothing outside
+\cref{sec:cx} uses it.
+
+\subsection{The Smaller Unit Reader and the Rejection Clock}\label{app:cx-smaller}
+
+\begin{proof}[Proof of \cref{lem:un-reduced}]
+(1) The bit $b$ never returns from $1$ to $0$, and if $\mathrm{du}$ fails at a
+cut, it fails at every later cut (\cref{lem:un-source}(2)). So the replaced
+states are closed under the transitions of $\RU(p)$, and a run that meets one
+of them stays among them. None of them is rejected, since a rejected state has
+$b=0$ and satisfies $\mathrm{du}$. Hence a word rejected by $\RU(p)$ meets no
+replaced state, and a word rejected by $\widehat{\mathcal R}_p$ never meets the
+absorbing state $\bot$. In both cases the run consists of kept states, between
+which the transitions are unchanged, so the word has the same run in both
+readers and is rejected by both. Each comparison of the word is tested on
+states of this run, which carry the same self guard in both readers. So the two
+readers reject the same words, with the same states at every cut and the same
+admitted comparisons, and they have the same holes.
+
+(2) If two prefixes of a word are rejected by $\widehat{\mathcal R}_p$, they
+are rejected by $\RU(p)$ by (1); by betweenness for $\RU(p)$
+(\cref{lem:un-rejected-path}), so is every intermediate prefix, and by (1)
+again it is rejected by $\widehat{\mathcal R}_p$. A word rejected by
+$\widehat{\mathcal R}_p$ has, by (1), the same first rejected cut and the same
+admitted comparisons in both readers, so the admission cone of $\RU(p)$
+transfers.
+
+(3) A kept state after a word $u$ is
+$\zeta=(P^\varphi_p(u),0,P^\psi_p(u))$ by \cref{lem:un-source}(1), and
+$\mathrm{du}(\zeta)$ gives $P^\psi_p(u)\cap\DeadU^\eps_\psi\ne\varnothing$, so
+$P^\psi_p(u)\ne\varnothing$. By \cref{lem:sm-duality}(3), applied in $\varphi$
+and in $\psi$ to the same seed $p$ and the same word $u$, all elements of
+$P^\varphi_p(u)$ and of $P^\psi_p(u)$ have the sign $\sgn(p)\oplus\parity(u)$,
+which the nonempty set $P^\psi_p(u)$ determines. For each sign there are at
+most $2^v$ sets $P\subseteq X^\pm$ and $2^s-1$ nonempty sets
+$P'\subseteq(X\cup Z)^\pm$ of that sign. Adding $\bot$ gives at most
+$1+2^{v+1}(2^s-1)=2^{v+s+1}-2^{v+1}+1<2^{v+s+1}$ states.
+\end{proof}
+
+\begin{proof}[Proof of \cref{lem:un-clock}]
+Let $w$ be rejected by $\RU(p)$, and let $\zeta_j=(P_j,b_j,P'_j)$ be the state
+of $\Bsrc_p$ at the cut $j$, so that $P_j=P^\varphi_{p,j}(w)$ is also the state
+of $\mathcal A_p$ there. At the last cut, $b=0$ and $\mathrm{du}$ holds, so by
+\cref{lem:un-source}(2) and the monotonicity of the bit, $b_j=0$ and
+$\mathrm{du}(\zeta_j)$ hold at every cut $j$. Hence $\zeta_j\in\Rej_{\mathrm U}$
+iff $\mathrm{dt}(\zeta_j)$ fails, iff
+$P_j\cap\DeadT^\eps_\varphi=\varnothing$, which is rejection by $\mathcal A_p$
+at the cut $j$. So $w$ is rejected by $\mathcal A_p$, with the same first
+rejected cut, and $r(w)$ is the same for both readers. By sign coherence
+(\cref{lem:sm-duality}(3)), every reachable state of $\mathcal A_p$ is empty or
+a nonempty set of elements of $X^\pm$ of one sign, so $\mathcal A_p$ has at
+most $2(2^v-1)+1=2^{v+1}-1$ states. \Cref{thm:bg-depth} holds for every reader
+and every nonempty rejected word, without any condition on the admission
+relation, so for $w\ne\eps$ it gives
+$\depth(w)\le2(2^{v+1}-1)(r(w)+1)-1$.
+\end{proof}
+
+\subsection{Tree Classes and Signed Systems}\label{app:cx-facts}
+
+For the first proof we use the terminology of \cref{app:lf}: for a tree $t$, a
+word $w$ \emph{meets} a leaf $v$ of $t$ if $v\pre w$; by the chain property
+(\cref{sec:lf}), a word meets at most one leaf, a word that meets no leaf is a
+position labeled $f$, and a proper prefix of a position is never a leaf; and
+$w\in L^s_t$ iff $w$ meets a leaf of $t$ of sign $s$ (\cref{eq:lf-direct}).
+
+\begin{proof}[Proof of \cref{lem:lf-classes}]
+A word $w$ is a position labeled $f$ iff it meets no leaf, that is, iff
+$w\notin L^0_t\cup L^1_t$. The positions of $t$ are $\eps$ and the children
+of its positions labeled $f$, so $t$ has at most $1+nk$ positions if it has
+$k$ positions labeled $f$; hence $t$ is finite iff
+$\Sigma^*\setminus(L^0_t\cup L^1_t)$ is finite.
+
+For regularity, let $w$ be a position of $t$ and $w^{-1}t$ the subtree of $t$
+at $w$. The proper prefixes of $w$ are not leaves, so $wv$ meets a leaf of $t$
+iff it meets a leaf $wv'$ with $v'$ a leaf of $w^{-1}t$, and the sign of
+$wv'$ in $t$ is the sign of $v'$ in $w^{-1}t$ plus $\parity(w)$. Hence
+\begin{equation}\label{eq:app-lf-quotient}
+ L^s_{w^{-1}t}=w^{-1}L^{s\oplus\parity(w)}_t\qquad
+ \text{for every position $w$ of $t$ and every sign $s$.}
+\end{equation}
+If $w$ is not a position of $t$, then a proper prefix of $w$ is a leaf, of
+some sign $s$, and $w^{-1}L^s_t=\Sigma^*$ and $w^{-1}L^{1-s}_t=\varnothing$.
+Suppose $L^0_t$ and $L^1_t$ are regular. By the Myhill--Nerode theorem they
+have finitely many left quotients, so by \cref{eq:app-lf-quotient} the
+subtrees of $t$ have finitely many leaf pairs, and by \cref{thm:lf-representation}(1) $t$ has finitely
+many distinct subtrees. Conversely, if $t$ has finitely many distinct
+subtrees, then by \cref{eq:app-lf-quotient} and the case of non-positions,
+the pair $(w^{-1}L^0_t,w^{-1}L^1_t)$ takes finitely many values as $w$
+ranges over all words, so both languages have finitely many left quotients
+and are regular.
+\end{proof}
+
+\begin{proof}[Proof of \cref{lem:bg-signed-sat}]
+If $\rho$ is a $\mathcal D$-solution of $\chi$, then $\rho^\pm$ is a
+$\mathcal D$-solution of $\chi^\pm$ by \cref{lem:bg-signed}. For the converse
+let $\sigma$ be a $\mathcal D$-solution of $\chi^\pm$.
+
+For $n=0$ there are no children, so the literals of $\chi^\pm$ of sign $+$ in
+\cref{tab:bg-signed} are the literals of $\chi$ with every variable $v$ replaced
+by $v^+$, and the order is the same chain for every variance. Hence
+$v\mapsto\sigma(v^+)$ solves $\chi$, and the three classes coincide.
+
+Let $n\ge1$, and let $\chi^\flat$ be obtained by \cref{lem:bg-sandwich}, with
+a fresh variable $y=y_{uv}$ for each copy literal $u\le v$ and the literals
+$f(a_i)_i\le y$ and $y\le f(b_i)_i$. We extend $\sigma$ to a $\mathcal
+D$-solution of $(\chi^\flat)^\pm$. The four signed literals of the two new
+literals are
+\[
+ f(a_i^{c(i)})_i\le y^+,\quad y^-\le f(a_i^{\bar c(i)})_i,\quad
+ y^+\le f(b_i^{c(i)})_i,\quad f(b_i^{\bar c(i)})_i\le y^- .
+\]
+Put $\sigma(y^+)=f(\sigma(a_i^{c(i)}))_i$ and
+$\sigma(y^-)=f(\sigma(b_i^{\bar c(i)}))_i$. The first and fourth literals hold
+with equality. The other two hold iff
+$\sigma(a_i^{c(i)})\le\sigma(b_i^{c(i)})$ and
+$\sigma(b_i^{\bar c(i)})\le\sigma(a_i^{\bar c(i)})$ for every $i$. For $i\ge1$
+we have $a_i=b_i=u$, so both sides are equal. For $i=0$ these are the two inequalities
+$\sigma(u^+)\le\sigma(v^+)$ and $\sigma(v^-)\le\sigma(u^-)$, in either case of
+$c(0)$, and they hold because $u^+\le v^+$ and $v^-\le u^-$ are the signed
+literals of $u\le v$. The new values lie in $\mathcal D$.
+
+So $(\chi^\flat)^\pm$ is $\mathcal D$-satisfiable, and in particular satisfiable.
+By \cref{thm:bg-nsse-sat}(2), $\chi^\flat$ has a solution, and a finite one
+if $\mathcal D=\Trees_{\mathrm{fin}}$; by \cref{thm:bg-nsse-sat}(3) it has a
+regular one. In each case $\chi^\flat$ has a $\mathcal D$-solution for the
+variance $c$, whose restriction to the variables of $\chi$ is a
+$\mathcal D$-solution of $\chi$ by \cref{lem:bg-sandwich}.
+
+Finally, if $\chi$ has a solution, then so has $\chi^\flat$ by
+\cref{lem:bg-sandwich}, hence a regular one by \cref{thm:bg-nsse-sat}(3),
+and its restriction is a regular solution of $\chi$.
+\end{proof}

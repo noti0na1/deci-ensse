@@ -51,9 +51,6 @@ $L^1_u\subseteq L^1_t$.
 \item $g_4\le t$ iff $L^1_t\subseteq\Sigma^*\setminus\operatorname{Pref}(w)$, iff
   $w\notin L^1_t$, as in the second case.
 \end{itemize}
-The pin path has $\len w+1$ positions, there are $(n-1)\len w$ children off
-the pin path, and the end of the pin path has at most $n$ children. So each tree has at
-most $1+n(\len w+1)$ positions.
 
 For the consequence, let $x$ be a visible variable and $\rho$ an assignment.
 The cones of $\rho(x)$ are the covariant cones of $t=\nu_0\rho(x)$, since
@@ -101,7 +98,7 @@ Write $\operatorname{maj}(L_1,L_2,L_3)$ for the set of words that lie in at
 least two of the sets $L_j$. It is symmetric and monotone for inclusion, and
 $\operatorname{maj}(L,L,L')=L$.
 
-(1) Symmetry is clear. If $t_j\le t'_j$ for $j=1,2,3$, then
+(1) Symmetry in the first two arguments is clear. If $t_j\le t'_j$ for $j=1,2,3$, then
 $L^0_{t_j}\subseteq L^0_{t'_j}$ and $L^1_{t'_j}\subseteq L^1_{t_j}$ by
 \cref{thm:lf-representation}(2), so the same inclusions hold between the
 cones of the medians, and $\tcmed(t_1,t_2,t_3)\le\tcmed(t'_1,t'_2,t'_3)$. The
@@ -150,101 +147,130 @@ clashes of a covariant system without copy literals, as defined in
 solution iff it has no label clash, and a finite solution iff it has neither a
 label clash nor a cycle clash.
 
+\paragraph{Path pins}
+For a covariant tree $t$, $L^0_t$ is the set of words that meet a leaf $\Top$
+of $t$, and $L^1_t$ the set of words that meet a leaf $\Bot$. A \emph{path
+pin} on a variable $x$ is a covariant observation on $x$: one of the four
+conditions $w\in L^0_x$, $w\notin L^0_x$, $w\in L^1_x$ and $w\notin L^1_x$ on
+the value of $x$, for a word $w$. By \cref{lem:tc-pins}, each is a bound by one
+of the four trees $\emb_\Bot(w,\Top)$, $\emb_\Top(w,f(\Top^n))$,
+$\emb_\Top(w,\Bot)$ and $\emb_\Bot(w,f(\Bot^n))$.
+
+\begin{lemma}[Ground bounds as path pins]\label{lem:tc-ground-pins}
+For a finite ground tree $g$ and a covariant tree $t$, $g\le t$ iff
+$\pi\notin L^1_t$ for every position $\pi$ of $g$ labeled $f$ and $\pi\in L^0_t$
+for every position $\pi$ of $g$ labeled $\Top$; and $t\le g$ iff
+$\pi\notin L^0_t$ for every position $\pi$ of $g$ labeled $f$ and $\pi\in L^1_t$
+for every position $\pi$ of $g$ labeled $\Bot$.
+\end{lemma}
+
+\begin{proof}
+For a tree $t$ and a letter $i$, let $t_i$ be the subtree of $t$ at $i$ if $t$
+is a constructor tree, and $t$ itself if $t$ is a leaf. Then $iv\in L^s_t$ iff
+$v\in L^s_{t_i}$, for every word $v$ and sign $s$: for a constructor tree by
+\cref{thm:lf-representation}(3), and for a leaf because its cones are
+$\Sigma^*$ and $\varnothing$. We prove the first claim by induction on
+$g$; the second is symmetric. For $g=\Bot$ both sides hold, and for $g=\Top$
+both sides say $t=\Top$, that is, $\eps\in L^0_t$. Let $g=f(g_i)_i$. Then
+$g\le t$ iff $t\ne\Bot$ and $g_i\le t_i$ for every $i$: for $t=\Top$ both hold,
+and for a constructor tree $t$ this is the covariant rule. Now $t\ne\Bot$ says
+$\eps\notin L^1_t$, the condition at the root of $g$, and by induction and the
+description of $t_i$, $g_i\le t_i$ is the condition at the positions $i\pi$ of
+$g$.
+\end{proof}
+
+So a finite set of finite ground bounds is equivalent to a finite set of path
+pins, and each path pin is a bound by one of the four pin trees.
+
+\paragraph{Chains}
+Let $x$ be a variable and $w$ a word. A bound $\emb_b(w,g)\le x$ by a lower pin
+tree, with $b=\Bot$ and $g\in\{\Top,f(\Bot^n)\}$, is expressed by fresh
+variables $x_1,\ldots,x_{\len w}$ and a fresh filler $o$, with $x_0=x$, and the
+\emph{chain}
+\[
+ f(a^{(j)}_i)_i\le x_j\quad(j<\len w),\qquad
+ o=\Bot,\qquad
+ \Top\le x_{\len w}\ \text{or}\ f(o,\ldots,o)\le x_{\len w},
+\]
+where $a^{(j)}_i=x_{j+1}$ for $i=w[j]$ and $a^{(j)}_i=o$ otherwise. An upper
+pin tree is expressed dually, with upper constructor literals, the filler
+literal $\Top\le o$, and $x_{\len w}=\Bot$ or $x_{\len w}\le f(o,\ldots,o)$. By
+induction on $\len w$, using monotonicity of the covariant constructor in one
+direction and the trees $t_i$ of the proof of \cref{lem:tc-ground-pins} in the
+other, an assignment satisfies the bound iff it extends to a solution of the
+chain: put $o=\Bot$ or $\Top$, and let $x_j$ be the tree reached from the value
+of $x$ along $\wpre wj$, a leaf standing for itself below it. Give $x_j$ the
+rank $j$ and the filler the rank $\len w+1$, and call the fresh variables of a
+lower chain \emph{sources} and those of an upper chain \emph{sinks}. Then every
+lower constructor literal of the chain has source children of a larger rank
+than its root, which is not a sink, and every upper constructor literal has sink
+children of a larger rank than its root, which is not a source.
+
+\begin{lemma}[Ranked extensions {\nssecite{proof of Theorem ``Finite countermodel transfer''}}]\label{lem:tc-ranked}
+Let $F_0$ be a covariant system without copy literals over $V_0$, and let
+$F\supseteq F_0$ be a covariant system without copy literals over
+$V\supseteq V_0$, whose variables outside $V_0$ are sources or sinks, not
+both, with ranks in $\mathbb N$, the old variables in $V_0$ having rank $0$.
+Suppose that every constructor literal of $F$ that is not a literal of $F_0$ is
+a lower literal whose children are sources of a larger rank than its root,
+which is not a sink, or an upper literal whose children are sinks of a larger
+rank than its root, which is not a source. Then $F$ has a cycle clash iff
+$F_0$ has one.
+\end{lemma}
+
+\begin{proof}
+Write $D,\Lo,\Up$ for the closure and the path bounds of $F$, and
+$D_0,\Lo_0,\Up_0$ for those of $F_0$. Upper constructor literals have no source
+children, and lower ones no sink children. By induction on the derivation of
+$D(a,b)$: (a) if $b$ is a source, then $a=b$; (b) if $a$ is a sink, then $b=a$;
+(c) if $a$ and $b$ are old, then $D_0(a,b)$. For transitivity, a middle
+variable between old endpoints is neither a source nor a sink, by (a) and (b).
+For the decomposition rule \cref{eq:bg-decomp}, the conclusion
+$D(a_i,b_i)$ has a child of an upper literal on the right and a child of a
+lower literal on the left, so (a) and (b) hold vacuously; if $a_i$ and $b_i$
+are old, both literals have an old child, so they are literals of $F_0$, with
+old roots $u,v$; the induction hypothesis gives $D_0(u,v)$, hence
+$D_0(a_i,b_i)$. By induction on $\eta$, using (a) and (b): (d) if $\Lo(\eta,a,s)$
+and $s$ is a source, then $a$ is a source of rank at least
+$\operatorname{rank}(s)+\len\eta$; (e) if $\Up(\eta,t,b)$ and $t$ is a sink,
+then $b$ is a sink of rank at least $\operatorname{rank}(t)+\len\eta$; and (f)
+between old variables, $\Lo$ and $\Up$ are $\Lo_0$ and $\Up_0$, since a new
+literal would lead into a source or out of a sink. In a cycle clash
+$\Lo(\eta,a,a)$, $D(a,b)$, $\Up(\eta,b,b)$ with $\eta\ne\eps$, $a$ is not a
+source by (d), $b$ is not a sink by (e), $a$ is not a sink since (b) would make
+$b=a$ a sink, and $b$ is not a source since (a) would make $a=b$ a source. So
+both are old, and by (c) and (f) the clash is one of $F_0$. Conversely
+$D_0\subseteq D$, $\Lo_0\subseteq\Lo$ and $\Up_0\subseteq\Up$.
+\end{proof}
+
 \begin{proof}[Proof of \cref{lem:tc-pinning-covariant}]
 Let $F$ be a covariant system over $V$ with a finite solution $\delta$, let $B$
-be a finite set of ground bounds on $V$, and let $\rho$ be a solution of
+be a finite set of finite ground bounds on $V$, and let $\rho$ be a solution of
 $F\cup B$.
 
-\emph{Copy literals.} Let $F_0=F^\flat$ be obtained by
-\cref{lem:bg-sandwich}, applied to every copy literal of $F$. The variables of
-$F_0$ are called \emph{old}. By \cref{lem:bg-sandwich}, $\delta$ extends to a
-finite solution of $F_0$, $\rho$ extends to a solution of $F_0\cup B$, and
-every solution of $F_0\cup B$ restricts to a solution of $F\cup B$.
+\emph{Copy literals.} Let $F_0=F^\flat$ be obtained by \cref{lem:bg-sandwich},
+applied to every copy literal of $F$. Then $\delta$ extends to a finite
+solution of $F_0$, $\rho$ extends to a solution of $F_0$ that satisfies $B$,
+and every solution of $F_0$ restricts to a solution of $F$
+(\cref{sec:bg-nsse}).
 
-\emph{Encoding the bounds.} For a finite ground tree $g$ and a variable $x$
-define systems $L(g,x)$, expressing $g\le x$, and $U(x,g)$, expressing $x\le
-g$, with fresh variables:
-\[
-\begin{aligned}
- L(\Bot,x)&=\varnothing,\quad L(\Top,x)=\{\Top\le x\},\quad
- L(f(g_i)_i,x)=\{f(y_i)_i\le x\}\cup\textstyle\bigcup_iL(g_i,y_i),\\
- U(x,\Top)&=\varnothing,\quad U(x,\Bot)=\{x=\Bot\},\quad
- U(x,f(g_i)_i)=\{x\le f(y_i)_i\}\cup\textstyle\bigcup_iU(y_i,g_i).
-\end{aligned}
-\]
-Each fresh variable stands for a nonempty position $\pi$ of $g$, and its
-\emph{rank} is $\len\pi$; old variables have rank $0$. By induction on $g$, an
-assignment that satisfies $L(g,x)$ satisfies $g\le x$, since $f(g_i)_i\le
-f(y_i)_i\le x$ by monotonicity of the covariant constructor; conversely, an
-assignment that satisfies $g\le x$ extends to $L(g,x)$ by giving each fresh
-variable the subtree of $g$ at its position. The same holds for $U(x,g)$. Let
-$F''$ be $F_0$ together with the encodings of all bounds of $B$, with distinct
-fresh variables. Then $F''$ has a solution, which extends one of $F_0\cup B$,
-and every solution of $F''$ restricts to a solution of $F_0\cup B$. The fresh
-variables of the systems $L$ are \emph{sources}, those of the systems $U$ are
-\emph{sinks}, and the literals of $F''$ outside $F_0$ are \emph{new}. The
-system $F''$ has no copy literals, and by construction:
-\begin{enumerate}[label=(O\arabic*),leftmargin=*]
-\item the literals of $F_0$ contain only old variables;
-\item the new lower literals are $f(y_i)_i\le x$ and $\Top\le x$, where $x$ is
-  old or a source and every $y_i$ is a source of rank one more than $x$; the
-  new upper literals are $x\le f(y_i)_i$ and $x=\Bot$, where $x$ is old or a
-  sink and every $y_i$ is a sink of rank one more than $x$.
-\end{enumerate}
-In particular, the children of a lower constructor literal are all old or all
-sources, and the children of an upper constructor literal are all old or all
-sinks.
+\emph{Pins.} By \cref{lem:tc-ground-pins}, $B$ is equivalent to a finite list
+$p_1,\ldots,p_m$ of path pins on variables of $V$. Let $F_k$ be $F_0$ together
+with the chains of $p_1,\ldots,p_k$, with distinct fresh variables. We show by
+induction on $k$ that $F_k$ has a finite solution and that some solution of
+$F_k$ satisfies $p_{k+1},\ldots,p_m$; for $k=0$ these are $\delta$ and the
+extension of $\rho$. For the step, a solution of $F_k$ that satisfies
+$p_{k+1},\ldots,p_m$ extends to a solution of $F_{k+1}$ by the chain of
+$p_{k+1}$, and the extension still satisfies $p_{k+2},\ldots,p_m$, which
+concern old variables. So $F_{k+1}$ has a solution, and no label clash. The
+system $F_{k+1}$ is an extension of $F_k$ as in \cref{lem:tc-ranked}, with the
+variables of $F_k$ as the old ones, so it has a cycle clash iff $F_k$ has one;
+and $F_k$ has none, because it has a finite solution. By
+\cref{thm:bg-nsse-sat}(1), $F_{k+1}$ has a finite solution.
 
-\emph{Separation.} Write $D=D^{\mathrm{cov}}_{F''}$, $\Lo$, $\Up$ for the
-closure and the path bounds of $F''$, and $D_0=D^{\mathrm{cov}}_{F_0}$, $\Lo_0$,
-$\Up_0$ for those of $F_0$. We show by
-induction on the derivation of $D(a,b)$:
-(a) if $b$ is a source, then $a=b$;
-(b) if $a$ is a sink, then $b=a$;
-(c) if $a$ and $b$ are old, then $D_0(a,b)$.
-Reflexivity is clear. Let $D(a,b)$ follow from $D(a,m)$ and $D(m,b)$. For (a),
-the induction hypothesis gives $m=b$ and then $a=m$; (b) is symmetric. For (c),
-$m$ is not a source, since (a) would give $a=m$, and not a sink, since (b)
-would give $b=m$; so $m$ is old, and $D_0(a,m)$ and $D_0(m,b)$. Let
-$D(a_i,b_i)$ follow by \cref{eq:bg-decomp} from literals $f(a_j)_j\le u$ and
-$v\le f(b_j)_j$ and $D(u,v)$. Then $b_i$ is old or a sink and $a_i$ is old or
-a source, so (a) and (b) hold vacuously. If $a_i$ and $b_i$ are old, the two
-literals have old children; by (O2) they are not new, so they are literals of
-$F_0$, and $u,v$ are old by (O1). By the induction hypothesis $D_0(u,v)$, hence
-$D_0(a_i,b_i)$. Conversely $D_0\subseteq D$, so $D$ and $D_0$ agree on old
-variables.
-
-\emph{Paths.} We show by induction on $\eta$:
-(d) if $\Lo(\eta,a,s)$ and $s$ is a source, then $a$ is a source of rank
-$\operatorname{rank}(s)+\len\eta$;
-(e) if $\Up(\eta,t,b)$ and $t$ is a sink, then $b$ is a sink of rank
-$\operatorname{rank}(t)+\len\eta$;
-(f) if $a,b$ are old, then $\Lo(\eta,a,b)$ implies $\Lo_0(\eta,a,b)$ and
-$\Up(\eta,a,b)$ implies $\Up_0(\eta,a,b)$.
-For $\eta=\eps$ use (a)--(c). For (d), by \cref{eq:bg-paths},
-$\Lo(i\eta,a,s)$ gives a literal $f(a'_j)_j\le z$ with $D(z,s)$ and
-$\Lo(\eta,a,a'_i)$. By (a), $z=s$, so the literal has a source as its root; by
-(O1) it is new, and by (O2) $a'_i$ is a source of rank
-$\operatorname{rank}(s)+1$. The induction hypothesis applies to
-$\Lo(\eta,a,a'_i)$. (e) is symmetric, using (b). For (f), $\Lo(i\eta,a,b)$
-gives $f(a'_j)_j\le z$ with $D(z,b)$ and $\Lo(\eta,a,a'_i)$. If the literal
-were new, $a'_i$ would be a source, and (d) would make $a$ a source. So it is a
-literal of $F_0$, $z$ and $a'_i$ are old, $D_0(z,b)$ by (c), and
-$\Lo_0(\eta,a,a'_i)$ by the induction hypothesis. The case of $\Up$ is
-symmetric, using (e).
-
-\emph{No cycle clash.} Suppose that $F''$ had a cycle clash
-\cref{eq:bg-cycle-clash}: $\eta\ne\eps$, $\Lo(\eta,a,a)$, $D(a,b)$ and
-$\Up(\eta,b,b)$. If $a$ were a source, (d) would give
-$\operatorname{rank}(a)=\operatorname{rank}(a)+\len\eta$. If $b$ were a sink,
-(e) would give the same contradiction for $b$. If $a$ were a sink, (b) would
-give $b=a$, a sink; if $b$ were a source, (a) would give $a=b$, a source. So
-$a$ and $b$ are old, and by (c) and (f) the clash is a cycle clash of $F_0$.
-But $F_0$ has a finite solution, so it has no cycle clash.
-
-\emph{Conclusion.} The system $F''$ has a solution, so it has no label clash,
-and it has no cycle clash. Hence it has a finite solution, whose restriction is
-a finite solution of $F_0\cup B$ and then of $F\cup B$.
+\emph{Conclusion.} A finite solution of $F_m$ satisfies every pin, by its
+chain, so its restriction is a finite solution of $F_0$ that satisfies $B$, and
+its further restriction is a finite solution of $F\cup B$.
 \end{proof}
 
 The proof extends the argument of
@@ -270,34 +296,7 @@ and $\tau$ extend to solutions $\rho'$ and $\tau'$ of $\psi$, then
 $\rho'\leafmeet\tau'$ is a solution of $\psi$ that extends
 $\rho\leafmeet\tau$.
 
-(2) Commutativity, associativity and idempotence hold coordinatewise. If
-$t\le_c t'$, then $L^0_t\cap L^0_u\subseteq L^0_{t'}\cap L^0_u$ and
-$L^1_{t'}\cap L^1_u\subseteq L^1_t\cap L^1_u$, so
-$t\leafmeet u\le_c t'\leafmeet u$ by \cref{thm:lf-representation}(2). For the
-constructor, \cref{thm:lf-representation}(3) gives
-$L^s_{f(t_i)_i}=\bigcup_iiL^{s\oplus c(i)}_{t_i}$, a union of sets of words
-with distinct first letters. Intersection therefore distributes over these
-unions, and the leaf pairs of both sides of the identity agree; by
-\cref{thm:lf-representation}(1) the trees agree.
-
-For the median, observe that the pairs
-$(L^0_t\cup L^0_u,\ L^1_t\cap L^1_u)$ and
-$(L^0_t\cap L^0_u,\ L^1_t\cup L^1_u)$ are disjoint and extension closed: for
-instance, a word of $L^0_t$ in $L^1_t\cap L^1_u$ would lie in both cones of
-$t$. By \cref{thm:lf-representation}(1,2) they are the leaf pairs of the least
-upper bound $t\vee u$ and the greatest lower bound $t\wedge u$ of $t$ and $u$
-for $\le_c$. So the trees form a lattice whose joins and meets act on the
-cone of sign $0$ by union and intersection and on the cone of sign $1$ by
-intersection and union; in particular this lattice is distributive. The
-median $(t\wedge u)\vee(u\wedge v)\vee(v\wedge t)$ of three trees therefore
-has, as each of its two cones, the set of words that lie in the corresponding
-cones of at least two of $t$, $u$ and $v$. For $v=\Omega$, whose cones are
-empty, these are the words that lie in the cones of both $t$ and $u$, so the
-median is $t\leafmeet u$.
-
-(3) Regular languages are closed under intersection, so the first claim
-follows from \cref{thm:lf-representation}(4). The cones of $\Bot\leafmeet\Top$
-are $\varnothing\cap\Sigma^*$ and $\Sigma^*\cap\varnothing$, so it is $\Omega$,
-all of whose words are positions labeled $f$; for $n\ge1$ there are infinitely
-many.
+(2) The cones of $\Bot\leafmeet\Top$ are $\varnothing\cap\Sigma^*$ and
+$\Sigma^*\cap\varnothing$, so it is $\Omega$, all of whose words are positions
+labeled $f$; for $n\ge1$ there are infinitely many.
 \end{proof}

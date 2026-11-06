@@ -13,6 +13,9 @@ least candidate extension. Exclusions detect incompatible opposite leaf atoms.
 - `Move`, `Clause`, `Fact`, `Neg`, `Sol`, `sat_iff_sol`,
   `sol_iff_assignment`, `sol_sInter`, `projected_sInter`, `Hull`,
   `extends_iff_hull`, `least_extension`, `sat_infoInter`.
+- Least closures (`lem:lf-closure`): `hull_least` (1), `exists_sol_superset_iff`
+  and `hull_sol` (2), `hull_obstruction` (3), `projected_iff_hull` and
+  `hull_least_projected` (5).
 -/
 
 namespace DeciENSSE.Core.Mixed
@@ -275,6 +278,47 @@ theorem hull_least {A S : Set (Config n V)} (hc : Closed c χ S)
   · exact hr.mem_of_closed hc (hf hf')
   · exact hr.mem_of_closed hc (ha ha')
 
+/-- **Least closures** (2) (`lem:lf-closure`(2)). Some model of `χ` contains
+the seed set `A` iff `H_χ(A)` is consistent: it avoids the forbidden roots and
+has no exclusion pair. -/
+theorem exists_sol_superset_iff (A : Set (Config n V)) :
+    (∃ S, Sol c χ S ∧ A ⊆ S) ↔ Avoids χ (Hull c χ A) ∧ Consistent (Hull c χ A) := by
+  constructor
+  · rintro ⟨S, hS, hA⟩
+    have hsub := hull_least hS.closed hS.facts hA
+    exact ⟨fun {_} hp => hS.avoids (hsub hp),
+      fun {_ _} h hp hq => hS.consistent h (hsub hp) (hsub hq)⟩
+  · rintro ⟨hn, hd⟩
+    exact ⟨Hull c χ A, ⟨hull_closed _, (fun {_} => hull_facts _), hn, hd⟩, subset_hull _⟩
+
+/-- **Least closures** (2), second claim: a consistent `H_χ(A)` is the least
+model of `χ` that contains `A`. -/
+theorem hull_sol {A : Set (Config n V)} (hn : Avoids χ (Hull c χ A))
+    (hd : Consistent (Hull c χ A)) :
+    Sol c χ (Hull c χ A) ∧ A ⊆ Hull c χ A ∧
+      ∀ S, Sol c χ S → A ⊆ S → Hull c χ A ⊆ S :=
+  ⟨⟨hull_closed _, (fun {_} => hull_facts _), hn, hd⟩, subset_hull _,
+    fun _ hS hA => hull_least hS.closed hS.facts hA⟩
+
+/-- **Least closures** (3) (`lem:lf-closure`(3)). An inconsistent `H_χ(A)` has
+seeds `x, y ∈ Fact_χ ∪ A`, possibly equal, such that `x` reaches a forbidden
+root, or `x` and `y` reach the two atoms of an exclusion pair. -/
+theorem hull_obstruction {A : Set (Config n V)}
+    (h : ¬ (Avoids χ (Hull c χ A) ∧ Consistent (Hull c χ A))) :
+    ∃ x y, (Fact χ x ∨ x ∈ A) ∧ (Fact χ y ∨ y ∈ A) ∧
+      ((∃ p, Reach c χ x p ∧ Neg χ p) ∨
+        ∃ p q, Exclusion p q ∧ Reach c χ x p ∧ Reach c χ y q) := by
+  rcases not_and_or.mp h with hn | hd
+  · obtain ⟨p, ⟨x, hx, hxp⟩, hneg⟩ : ∃ p, p ∈ Hull c χ A ∧ Neg χ p := by
+      by_contra hc
+      exact hn fun {p} hp hneg => hc ⟨p, hp, hneg⟩
+    exact ⟨x, x, hx, hx, Or.inl ⟨p, hxp, hneg⟩⟩
+  · obtain ⟨p, q, hpq, ⟨x, hx, hxp⟩, ⟨y, hy, hyq⟩⟩ :
+        ∃ p q, Exclusion p q ∧ p ∈ Hull c χ A ∧ q ∈ Hull c χ A := by
+      by_contra hc
+      exact hd fun {p q} hpq hp hq => hc ⟨p, q, hpq, hp, hq⟩
+    exact ⟨x, y, hx, hy, Or.inr ⟨p, q, hpq, hxp, hyq⟩⟩
+
 variable {X Z : Type*}
 
 /-- Embed a visible atom into the combined variable space. -/
@@ -336,31 +380,44 @@ theorem projected_sInter (ψ : List (LitT n (X ⊕ Z)))
 def visibleSeeds (c : Fin n → Bool) (ρ : X → Tree n) : Set (Config n (X ⊕ Z)) :=
   visible '' configSet c ρ
 
+/-- **Least closures** (5) (`lem:lf-closure`(5)). A set `S` of visible atoms is
+the visible part of a model of `ψ` iff `H_ψ(S)` is consistent and has visible
+part `S`; then `H_ψ(S)` is such a model, and it is the least one
+(`hull_least_projected`). No hypothesis on `S` is needed. -/
+theorem projected_iff_hull (S : Set (Config n X)) (ψ : List (LitT n (X ⊕ Z))) :
+    S ∈ Projected c ψ ↔
+      Avoids ψ (Hull c ψ (visible '' S)) ∧ Consistent (Hull c ψ (visible '' S)) ∧
+        restrict (Hull c ψ (visible '' S)) = S := by
+  constructor
+  · rintro ⟨T, ht, rfl⟩
+    have hh := hull_least ht.closed ht.facts (show visible '' restrict T ⊆ T by
+      rintro _ ⟨a, ha, rfl⟩; exact ha)
+    refine ⟨fun {_} hp => ht.avoids (hh hp),
+      fun {_ _} h hp hq => ht.consistent h (hh hp) (hh hq), ?_⟩
+    exact Set.Subset.antisymm (fun a ha => hh ha) (fun a ha => subset_hull _ ⟨a, ha, rfl⟩)
+  · rintro ⟨hn, hd, hv⟩
+    exact ⟨_, ⟨hull_closed _, (fun {_} => hull_facts _), hn, hd⟩, hv⟩
+
+/-- **Least closures** (5), last claim: `H_ψ(S)` lies below every model of `ψ`
+with visible part `S`. -/
+theorem hull_least_projected {S : Set (Config n X)} {ψ : List (LitT n (X ⊕ Z))}
+    {T : Set (Config n (X ⊕ Z))} (ht : Sol c ψ T) (hT : restrict T = S) :
+    Hull c ψ (visible '' S) ⊆ T := by
+  subst hT
+  exact hull_least ht.closed ht.facts (by rintro _ ⟨a, ha, rfl⟩; exact ha)
+
 /-- Extension is equivalent to consistency, avoidance of negative units,
-and no new visible atoms. -/
+and no new visible atoms: `lem:lf-closure`(5) for `S = S_ρ` (`lem:tc-extension`). -/
 theorem extends_iff_hull (ρ : X → Tree n) (ψ : List (LitT n (X ⊕ Z))) :
     (∃ σ, SatT c (Sum.elim ρ σ) ψ) ↔
       Avoids ψ (Hull c ψ (visibleSeeds c ρ)) ∧
       Consistent (Hull c ψ (visibleSeeds c ρ)) ∧
       restrict (Hull c ψ (visibleSeeds c ρ)) ⊆ configSet c ρ := by
-  rw [← projected_configSet]
-  constructor
-  · rintro ⟨T, ht, he⟩
-    have ha : visibleSeeds c ρ ⊆ T := by
-      rintro _ ⟨a, ha, rfl⟩
-      change a ∈ restrict T
-      rwa [he]
-    have hh := hull_least ht.closed ht.facts ha
-    refine ⟨fun {_} hp => ht.avoids (hh hp),
-      fun {_ _} h hp hq => ht.consistent h (hh hp) (hh hq), ?_⟩
-    intro a ha
-    rw [← he]
-    exact hh ha
-  · rintro ⟨hn, hd, hv⟩
-    refine ⟨Hull c ψ (visibleSeeds c ρ),
-      ⟨hull_closed _, (fun {_} => hull_facts _), hn, hd⟩, Set.Subset.antisymm hv ?_⟩
-    intro a ha
-    exact subset_hull _ ⟨a, ha, rfl⟩
+  rw [← projected_configSet, projected_iff_hull]
+  have hsub : configSet c ρ ⊆ restrict (Hull c ψ (visibleSeeds c ρ)) :=
+    fun a ha => subset_hull _ ⟨a, ha, rfl⟩
+  exact and_congr_right fun _ => and_congr_right fun _ =>
+    ⟨fun h => h.le, fun h => h.antisymm hsub⟩
 
 /-- When the checks pass, the closure itself is the least full extension. -/
 theorem least_extension (ρ : X → Tree n) (ψ : List (LitT n (X ⊕ Z)))

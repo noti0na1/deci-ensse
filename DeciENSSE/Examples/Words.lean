@@ -1,5 +1,5 @@
 import DeciENSSE.Examples.Fixtures
-import DeciENSSE.Core.Words.Bound
+import DeciENSSE.Core.Words.Self.Bound
 import DeciENSSE.Core.Words.Periodic
 
 /-! # Two-word examples
@@ -42,7 +42,7 @@ theorem ternary_cross :
   unfold TwoWordInstance.Cross TwoWordInstance.Aligned
   decide +kernel
 
-/-- Exercise the departure theorem itself with a third-alphabet letter. -/
+/-- Exercise the departure theorem with a third letter. -/
 theorem ternary_departure :
     ¬ IsStreamPrefix ([1, 1, 1, 2] : Word (Fin 3)) (periodicStream [1]) := by
   exact periodic_departure_breaks (o := [1]) (l := [1])
@@ -195,7 +195,7 @@ theorem aperiodic_trigger :
   exact ⟨CoreExamples.smallInstance_forcedHeads _ _, by decide +kernel,
     aperiodic_thin, aperiodic_lasso, aperiodic_no_period⟩
 
-/-- The graph reads a genuinely ternary safe spine and retains its endpoint. -/
+/-- The graph reads a ternary safe spine and retains its endpoint. -/
 theorem ternary_preHole_accepted :
     (CoreExamples.ternaryBranch.preHoleGraph {0}).Accepts [1, 2] [] := by
   exact CoreExamples.ternaryBranch.preHoleGraph_complete {0}
@@ -510,12 +510,16 @@ end DeciENSSE.Core.Words.Mortal
 namespace DeciENSSE.Core.Words
 namespace BoundExamples
 
-/-- Apply the full bound to a genuine ternary ForcedHeads instance with a hole. -/
+/-- Apply the full bound, with an empty self guard, to a ternary instance with forced target
+heads and a hole. -/
 theorem ternary_bounded :
     ∃ u t, CoreExamples.ternaryBranch.IsHole u t ∧
-      u.length + t.length ≤ twoWordHoleBound 2 1 1 2 :=
-  shortHoleBound (Fin 3) 2 1 1 2 _
-    CoreExamples.short_hypotheses.1 CoreExamples.short_hypotheses.2
+      u.length + t.length ≤ Self.selfHoleBound 2 1 1 2 := by
+  let I := CoreExamples.ternaryBranch
+  obtain ⟨u, t, ht⟩ := CoreExamples.short_hypotheses.2
+  obtain ⟨v, w, hvw, hlen⟩ := Self.shortHoleBoundSelf (Fin 3) 2 1 1 2 I.toSelf
+    CoreExamples.short_hypotheses.1 ⟨u, t, (I.isHole_toSelf_iff u t).mpr ht⟩
+  exact ⟨v, w, (I.isHole_toSelf_iff v w).mp hvw, hlen⟩
 
 /-- The empty-alphabet branch has actual ForcedHeads/hole inputs. -/
 theorem empty_hypotheses :

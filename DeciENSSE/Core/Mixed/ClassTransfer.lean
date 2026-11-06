@@ -11,7 +11,8 @@ Ground bounds encode the observations as finite comparisons for pinning.
 
 ## Main declarations
 
-- `two_observations_mixed`: two observations retain a failed extension.
+- `two_observations_mixed`: at most two observations retain a failed extension
+  (`lem:tc-two-seeds`).
 - `existsEntailsTIn_iff_of_transfer`: transfer to a class with both obligations.
 - `fin_dispatch_of_transfer`: account for finite satisfiability of both systems.
 - `BoundRealization.observations`: ground bounds supply observation realization.
@@ -44,52 +45,61 @@ private theorem hull_ancestor {X Z : Type*} {c : Fin n → Bool}
   · exact Or.inr ⟨(a, true), ha, fun ρ' σ hp ht =>
       hr.mem_of_closed ((sat_iff_sol _).mp ht).closed hp⟩
 
-/-- Failure of extension is retained by at most two observations (repeat a
-unary witness). Satisfiability excludes obstructions supported only by facts. -/
+/-- **Two seeds** (`lem:tc-two-seeds`). Failure of extension is retained by at
+most two observations that hold in `ρ`: no assignment satisfying them is
+extensible. There is no satisfiability hypothesis on `ψ`; an obstruction
+supported by facts alone (`ψ` unsatisfiable) is retained by no observation. -/
 theorem two_observations_mixed {X Z : Type*} {c : Fin n → Bool}
-    {ψ : List (LitT n (X ⊕ Z))} (hψ : ∃ τ, SatT c τ ψ)
+    {ψ : List (LitT n (X ⊕ Z))}
     (ρ : X → DeciNSSE.Tree n) (hne : ¬ ∃ σ, SatT c (Sum.elim ρ σ) ψ) :
-    ∃ a b : Observation n X, a.Holds c ρ ∧ b.Holds c ρ ∧
-      ∀ ρ', a.Holds c ρ' → b.Holds c ρ' →
-        ¬ ∃ σ, SatT c (Sum.elim ρ' σ) ψ := by
+    ∃ O : List (Observation n X), O.length ≤ 2 ∧ (∀ o ∈ O, o.Holds c ρ) ∧
+      ∀ ρ', (∀ o ∈ O, o.Holds c ρ') → ¬ ∃ σ, SatT c (Sum.elim ρ' σ) ψ := by
   classical
-  obtain ⟨δ, hδ⟩ := hψ
-  have hd := (sat_iff_sol δ).mp hδ
   by_cases hn : Avoids ψ (Hull c ψ (visibleSeeds c ρ))
   · by_cases hc : Consistent (Hull c ψ (visibleSeeds c ρ))
     · have hv : ¬ restrict (Hull c ψ (visibleSeeds c ρ)) ⊆ configSet c ρ :=
         fun hv => hne ((extends_iff_hull ρ ψ).mpr ⟨hn, hc, hv⟩)
       obtain ⟨b, hb, hnb⟩ := Set.not_subset.mp hv
+      have hnb' : Observation.Holds c ρ (b, false) := hnb
       rcases hull_ancestor hb with hf | ⟨a, ha, hp⟩
-      · refine ⟨(b, false), (b, false), hnb, hnb, ?_⟩
-        rintro ρ' hno _ ⟨σ, hs⟩
-        exact hno (hf _ hs)
-      · refine ⟨a, (b, false), ha, hnb, ?_⟩
-        rintro ρ' ha' hno ⟨σ, hs⟩
-        exact hno (hp ρ' σ ha' hs)
+      · refine ⟨[(b, false)], by simp, List.forall_mem_singleton.mpr hnb', ?_⟩
+        rintro ρ' hO ⟨σ, hs⟩
+        exact (hO (b, false) (by simp) : Observation.Holds c ρ' (b, false)) (hf _ hs)
+      · refine ⟨[a, (b, false)], by simp,
+          List.forall_mem_cons.mpr ⟨ha, List.forall_mem_singleton.mpr hnb'⟩, ?_⟩
+        rintro ρ' hO ⟨σ, hs⟩
+        exact (hO (b, false) (by simp) : Observation.Holds c ρ' (b, false))
+          (hp ρ' σ (hO a (by simp)) hs)
     · simp only [Consistent] at hc
       push Not at hc
       obtain ⟨p, q, hpq, hp, hq, _⟩ := hc
       rcases hull_ancestor hp with hf | ⟨a, ha, hpa⟩ <;>
         rcases hull_ancestor hq with hg | ⟨b, hb, hpb⟩
-      · exact (hd.consistent hpq (hf δ hδ) (hg δ hδ)).elim
-      · refine ⟨b, b, hb, hb, ?_⟩
-        rintro ρ' hb' _ ⟨σ, hs⟩
-        exact ((sat_iff_sol _).mp hs).consistent hpq (hf _ hs) (hpb ρ' σ hb' hs)
-      · refine ⟨a, a, ha, ha, ?_⟩
-        rintro ρ' ha' _ ⟨σ, hs⟩
-        exact ((sat_iff_sol _).mp hs).consistent hpq (hpa ρ' σ ha' hs) (hg _ hs)
-      · refine ⟨a, b, ha, hb, ?_⟩
-        rintro ρ' ha' hb' ⟨σ, hs⟩
+      · refine ⟨[], by simp, by simp, ?_⟩
+        rintro ρ' - ⟨σ, hs⟩
+        exact ((sat_iff_sol _).mp hs).consistent hpq (hf _ hs) (hg _ hs)
+      · refine ⟨[b], by simp, List.forall_mem_singleton.mpr hb, ?_⟩
+        rintro ρ' hO ⟨σ, hs⟩
+        exact ((sat_iff_sol _).mp hs).consistent hpq (hf _ hs)
+          (hpb ρ' σ (hO b (by simp)) hs)
+      · refine ⟨[a], by simp, List.forall_mem_singleton.mpr ha, ?_⟩
+        rintro ρ' hO ⟨σ, hs⟩
+        exact ((sat_iff_sol _).mp hs).consistent hpq (hpa ρ' σ (hO a (by simp)) hs)
+          (hg _ hs)
+      · refine ⟨[a, b], by simp,
+          List.forall_mem_cons.mpr ⟨ha, List.forall_mem_singleton.mpr hb⟩, ?_⟩
+        rintro ρ' hO ⟨σ, hs⟩
         exact ((sat_iff_sol _).mp hs).consistent hpq
-          (hpa ρ' σ ha' hs) (hpb ρ' σ hb' hs)
+          (hpa ρ' σ (hO a (by simp)) hs) (hpb ρ' σ (hO b (by simp)) hs)
   · simp only [Avoids, not_forall, not_not] at hn
     obtain ⟨p, hp, hneg⟩ := hn
     rcases hull_ancestor hp with hf | ⟨a, ha, hpa⟩
-    · exact (hd.avoids (hf δ hδ) hneg).elim
-    · refine ⟨a, a, ha, ha, ?_⟩
-      rintro ρ' ha' _ ⟨σ, hs⟩
-      exact ((sat_iff_sol _).mp hs).avoids (hpa ρ' σ ha' hs) hneg
+    · refine ⟨[], by simp, by simp, ?_⟩
+      rintro ρ' - ⟨σ, hs⟩
+      exact ((sat_iff_sol _).mp hs).avoids (hf _ hs) hneg
+    · refine ⟨[a], by simp, List.forall_mem_singleton.mpr ha, ?_⟩
+      rintro ρ' hO ⟨σ, hs⟩
+      exact ((sat_iff_sol _).mp hs).avoids (hpa ρ' σ (hO a (by simp)) hs) hneg
 
 /-- Covariant observation on the positively normalized tree. -/
 def Observation.normalized {V : Type*} (o : Observation n V) : Full.Observation n V :=
@@ -161,17 +171,13 @@ theorem existsEntailsTIn_iff_of_transfer {X Z : Type*}
   classical
   constructor
   · intro he ρ _ hs
-    by_cases hsat : (∃ ρ, SatT c ρ ψ)
-    · by_contra hn
-      have hne : ¬ ∃ σ, SatT c (Sum.elim ρ σ) ψ := by
-        rintro ⟨σ, hσ⟩; exact hn ⟨σ, fun _ => trivial, hσ⟩
-      obtain ⟨a, b, ha, hb, hobs⟩ := two_observations_mixed hsat ρ hne
-      obtain ⟨τ, hc, ht, hp⟩ := hφ ρ hs [a,b] (by simp) (by simp [ha, hb])
-      obtain ⟨σ, _, hσ⟩ := he τ hc ht
-      exact hobs τ (hp a (by simp)) (hp b (by simp)) ⟨σ, hσ⟩
-    · obtain ⟨τ, hc, ht, _⟩ := hφ ρ hs [] (by simp) (by simp)
-      obtain ⟨σ, _, hσ⟩ := he τ hc ht
-      exact (hsat ⟨Sum.elim τ σ, hσ⟩).elim
+    by_contra hn
+    have hne : ¬ ∃ σ, SatT c (Sum.elim ρ σ) ψ := by
+      rintro ⟨σ, hσ⟩; exact hn ⟨σ, fun _ => trivial, hσ⟩
+    obtain ⟨O, hO, hρ, hobs⟩ := two_observations_mixed ρ hne
+    obtain ⟨τ, hc, ht, hp⟩ := hφ ρ hs O hO hρ
+    obtain ⟨σ, _, hσ⟩ := he τ hc ht
+    exact hobs τ hp ⟨σ, hσ⟩
   · intro he ρ hc hs
     obtain ⟨σ, _, hσ⟩ := he ρ (fun _ => trivial) hs
     exact hψ ρ hc ⟨σ, hσ⟩

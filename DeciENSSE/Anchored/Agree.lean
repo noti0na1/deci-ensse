@@ -5,8 +5,9 @@ import DeciNSSE.Holes.Agree
 
 Agreement of two monitors on a support is extended to channels: the monitors agree, the
 monitors carrying `F`, `R` and `S` as target and admissions agree, and `S'` and `Φ` are
-preserved on the labels and letters of the support. Such an agreement preserves positive
-holes over the support, composes, and passes through derivation. It extends the agreement
+preserved on the labels and letters of the support. The two monitors share their core type
+but may have different alphabets. Such an agreement preserves positive holes over the
+support, composes, and passes through derivation. It extends the agreement
 `DeciNSSE.BoundedDepth.Agree` of `DeciNSSE/Holes/Agree.lean`, whose lemmas the proofs use.
 
 ## Main declarations
@@ -21,11 +22,12 @@ The declarations are in the namespace `DeciENSSE.Anchored`.
 
 namespace DeciENSSE.Anchored
 open DeciNSSE.CoAlignment DeciNSSE.LetteredHierarchy DeciNSSE.BoundedDepth
-variable {Γ C : Type*}
+variable {Γ Γ' Γ'' C : Type*}
 
-/-- Agreement of monitors and channels on a support `E` under the letter map `φ`. -/
-structure PosAgree (D D' : Lettered Γ C) (P P' : PosChan Γ C)
-    (φ : Γ → Γ) (E : List Γ) : Prop where
+/-- Agreement of monitors and channels on a support `E` under the letter map `φ`, possibly
+into another alphabet. -/
+structure PosAgree (D : Lettered Γ C) (D' : Lettered Γ' C) (P : PosChan Γ C)
+    (P' : PosChan Γ' C) (φ : Γ → Γ') (E : List Γ) : Prop where
   /-- The monitors agree. -/
   neg : Agree D D' φ E
   /-- The monitors carrying `F`, `R` and `S` agree. -/
@@ -36,8 +38,8 @@ structure PosAgree (D D' : Lettered Γ C) (P P' : PosChan Γ C)
   /-- `Φ` agrees on the letters of the support. -/
   Φ : ∀ a ∈ E, P'.Φ (φ a) ↔ P.Φ a
 
-variable {D D' D'' : Lettered Γ C} {P P' P'' : PosChan Γ C}
-  {φ ψ : Γ → Γ} {E : List Γ}
+variable {D : Lettered Γ C} {D' : Lettered Γ' C} {P : PosChan Γ C} {P' : PosChan Γ' C}
+  {φ : Γ → Γ'} {E : List Γ}
 
 /-- Agreement preserves letter tests on words over the support. -/
 theorem PosAgree.at_map (h : PosAgree D D' P P' φ E) {v : List Γ}
@@ -83,7 +85,8 @@ theorem PosAgree.refl (D : Lettered Γ C) (P : PosChan Γ C) (E : List Γ) :
   Φ _ _ := Iff.rfl
 
 /-- Composition of agreements. -/
-theorem PosAgree.comp (h₁ : PosAgree D D' P P' ψ E)
+theorem PosAgree.comp {D'' : Lettered Γ'' C} {P'' : PosChan Γ'' C} {ψ : Γ → Γ'}
+    {φ : Γ' → Γ''} (h₁ : PosAgree D D' P P' ψ E)
     (h₂ : PosAgree D' D'' P' P'' φ (E.map ψ)) : PosAgree D D'' P P'' (φ ∘ ψ) E where
   neg := h₁.neg.comp h₂.neg
   pos := h₁.pos.comp h₂.pos

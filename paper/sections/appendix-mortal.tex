@@ -44,17 +44,18 @@ it are as follows. For integers $N\ge1$, $d\ge0$, $M\ge1$ and $k\ge0$ put
  \sAsharp(N,d)&=d+1+\sCsharp(N,d),\\
  \Xisharp(N,d)&=6N^2+10N(N+d)(d+1)+7N+3d+4,&
  \sGsharp(N,d)&=2+\sAsharp(N,d)\,3^d,\\
- \scolsharp(M,k)&=M^{(M+1)k}\,2^{4M(M+1)k+2k+k^2+2(M+1)^2k^2},\\
- \Lensharp(N,d)&=3(N+d+1)\,\scolsharp\bigl(N+d+1,\sGsharp(N,d)\bigr)^d.
+ \Pcol(M,k)&=\mathsf{col}(M,k)^2\,2^{2M(M+1)k}\,3^k,\\
+ \Lensharp(N,d)&=3(N+d+1)\,\Pcol\bigl(N+d+1,\sGsharp(N,d)\bigr)^d,
 \end{aligned}
 \end{equation}
-They extend the constants \cref{eq:bg-col} of the plain-entailment proof by the new tables and
-fields: $\sCsharp(N,d)$ bounds the anchored exchange types at one level,
+with $\mathsf{col}$ from \cref{eq:bg-col}. They extend the constants
+\cref{eq:bg-col} of the plain-entailment proof by the new tables and fields:
+$\sCsharp(N,d)$ bounds the anchored exchange types at one level,
 $\sAsharp(N,d)$ the protected and isolated letters of a normal hole at one
-level, $\sGsharp(N,d)$ its dictionaries, $\scolsharp(M,k)$ the positive column
+level, $\sGsharp(N,d)$ its dictionaries, $\Pcol(M,k)$ the positive column
 summaries of $k$ blocks over a monitor with $M$ states, and $\Lensharp(N,d)$ is
 the resulting length bound; $\Xisharp(N,d)$ is the exponent of its closed form.
-All six functions are increasing in each argument, and the alphabet enters none
+The functions are nondecreasing in each argument, and the alphabet enters none
 of them.
 
 \subsection{The Separator Word}\label{app:mo-separator}
@@ -103,11 +104,8 @@ $\sAct(B_e(t),B'_e(t))$ while no earlier cut of $t$ is rejected by $B$, that is,
 for $e\le J(t)$ if $J(t)$ is defined and for all $e$ otherwise; and it is
 $\sDone(B'_e(t),\min(e-J(t),N_A))$ for $e>J(t)$.
 
-(i) Every reachable state occurs in the run of some word. By the description of
-runs, the reachable states of the forms $\sPre(q,q')$ and $\sAct(r,r')$ are
-pairs of states reachable in $A\times A'$ and in $B\times B'$, so there are at
-most $r_I+z_I$ of them; there are $N_{B'}N_A$ states $\sDone(r',k)$ and one
-sink.
+(i) There are $N_AN_{A'}$ states $\sPre(q,q')$, $N_BN_{B'}$ states
+$\sAct(r,r')$, $N_{B'}N_A$ states $\sDone(r',k)$, and one sink.
 
 (iii) and rejection. By the description of runs, the last state of a word is
 rejected iff the word is $u\sep t$ with $u,t\in\Sigma^*$, $u$ is safe, $A(u)$
@@ -281,12 +279,12 @@ most $N^N2^{5N^2+10N(N+d)(d+1)+7N+1}=\sCsharp(N,d)$ types.
 
 \begin{lemma}[Anchored isolated exchange]\label{lem:mo-exchange}
 Let $1\le i<D$, let $a\ne b$ be isolated letters of $w_i$ with the same
-anchored exchange type, let $h$ replace $a$ by $b$ and fix every other letter,
-and let $w'$ be the expansion of $h(w_i)$ with the original lower markers. Then
-$w'$ is a positive hole of $(\mathcal M_0,\Theta_0)$ of depth $D$, with every
-start count unchanged, no dictionary larger than the corresponding one of $w$,
-and level-$i$ dictionary $\mathcal A_i\setminus\{a\}$. If the level-zero
-expansion of $b$ is not longer than that of $a$, then $\len{w'}\le\len w$.
+anchored exchange type, where the level-zero expansion of $b$ is not longer
+than that of $a$, let $h$ replace $a$ by $b$ and fix every other letter, and
+let $w'$ be the expansion of $h(w_i)$ with the original lower markers. Then
+$w'$ is a positive hole of $(\mathcal M_0,\Theta_0)$ of depth $D$, no longer
+than $w$, with every start count unchanged, no dictionary larger than the
+corresponding one of $w$, and level-$i$ dictionary $\mathcal A_i\setminus\{a\}$.
 \end{lemma}
 
 \begin{proof}
@@ -407,12 +405,15 @@ and $y$ for (R), the cut $x$ for (S) and (S$'$), and none for (F); so $W\cup\{0\
 has at most four elements.
 
 Let $i<i'\le m-1$ be cuts with equal states such that no cut of $W$ lies in
-$\{i+1,\ldots,i'\}$. Deleting the letters at the positions $i,\ldots,i'-1$ gives
-$z^{m-(i'-i)}$, a hole by \cref{lem:bg-unary}. Its cuts correspond to the cuts
-$c\le i$ and $c>i'$ of $z^m$, by $c\mapsto c$ and $c\mapsto c-(i'-i)$, an
+$\{i+1,\ldots,i'\}$, and delete the letters at the positions $i,\ldots,i'-1$.
+The cuts of the resulting word $z^{m-(i'-i)}$ correspond to the cuts $c\le i$
+and $c>i'$ of $z^m$, by $c\mapsto c$ and $c\mapsto c-(i'-i)$, an
 order-preserving map that keeps the labels: the state at the new cut $i$ is the
-state at the old cut $i'$. The cuts of $W$ are kept, with their labels and their
-order, and the last cut maps to the last cut. Since every pair of cuts is a
+state at the old cut $i'$. The last cut maps to the last cut. Every pair of
+cuts of a unary word is a comparison, so every comparison of the new word has
+the labels of a comparison of $z^m$, terminal iff that one is, and the final
+label is unchanged; hence the new word is a hole. The cuts of $W$ are kept,
+with their labels and their order, and since every pair of cuts is a
 comparison with continuation letter $z$, the witnessing clause holds for the
 images of its cuts. So the shorter word is again a positive hole, and $W$ maps
 onto the corresponding set of the new witness.
@@ -503,58 +504,54 @@ $\zeta,\zeta'$ range over $\mathcal Q\sqcup\{\star\}$, and final states $\zeta''
 over $\mathcal Q$.
 
 \paragraph{Fields}
-The \emph{positive summary} of $(X_1,\ldots,X_k)$ consists of the four fields
-$\fexit$, $\fterm$, $\feq$ and $\fadm$ of the summary of \cref{app:bg-search} and the
-following fields:
+Let $\mathcal M^\Theta$ be the lettered monitor with the states, start and
+transitions of $\mathcal M$, the final target $F$, and the relations $R$ and $S$
+in place of $\Lambda$ and $\Lfin$. The \emph{positive summary} of
+$(X_1,\ldots,X_k)$ consists of the following fields:
 \begin{center}
 \small
 \begin{tabular}{@{}lp{.7\linewidth}@{}}
 \toprule
 Field & Meaning\\
 \midrule
-$\ftS_a(\zeta,\zeta'')$ & some $g\le\len{X_a}$ has
-  $S(\lab_g(\zeta,X_a),(\zeta'',\ell))$\\
+$\mathit{sum}$ & the summary of \cref{app:bg-search} of $(X_1,\ldots,X_k)$ for $\mathcal M$\\
+$\mathit{sum}^\Theta$ & the summary of \cref{app:bg-search} of $(X_1,\ldots,X_k)$ for $\mathcal M^\Theta$\\
 $\ftSp_a(\zeta,\zeta'')$ & some $g<\len{X_a}$ has
   $S'(\lab_g(\zeta,X_a),(\zeta'',\ell))$ and $X_a[g]\in\Phi$\\
 $\fpend_a(\zeta,\zeta'')$ & $S'(\lab_{\len{X_a}}(\zeta,X_a),(\zeta'',\ell))$\\
-$\fne_a$ & $X_a\ne\eps$\\
-$\fphi_a$ & $X_a\ne\eps$ and $X_a[0]\in\Phi$\\
-$\frel(a,b,\zeta,\zeta')$ & some $X_a=xy$, $X_b=x'y$ has
-  $R(\lab_{\len x}(\zeta,X_a),\lab_{\len{x'}}(\zeta',X_b))$\\
+$\ffst_a$ & $\mathit{none}$ if $X_a=\eps$, and otherwise the bit $[X_a[0]\in\Phi]$\\
 \bottomrule
 \end{tabular}
 \end{center}
-The field $\fpend$ records an $S'$-test at the last position of the shifted
-block, whose letter is not known yet: it is the next letter of the block, or the
-marker if the block ends there. Counting assignments, the positive summary
-takes at most $\scolsharp(M,k)$ values: the four fields of \cref{app:bg-search} give
-$M^{(M+1)k}2^{M(M+1)k+k^2+(M+1)^2k^2}$ (\cref{app:bg-constants}); the fields
-$\ftS$, $\ftSp$ and $\fpend$ give $2^{3M(M+1)k}$; $\fne$ and $\fphi$ give
-$2^{2k}$; and $\frel$ gives $2^{(M+1)^2k^2}$.
+In $\mathit{sum}^\Theta$, the field $\fterm_a(\zeta,\zeta'')$ says that some
+$g\le\len{X_a}$ has $S(\lab_g(\zeta,X_a),(\zeta'',\ell))$, and the field
+$\fadm(a,b,\zeta,\zeta')$ says that some $X_a=xy$, $X_b=x'y$ has
+$R(\lab_{\len x}(\zeta,X_a),\lab_{\len{x'}}(\zeta',X_b))$; its exits and
+equality bits repeat those of $\mathit{sum}$. The field $\fpend$ records an
+$S'$-test at the last position of the shifted block, whose letter is not known
+yet: it is the next letter of the block, or the marker if the block ends there.
+Counting assignments, the positive summary takes at most $\Pcol(M,k)$ values:
+each of the two summaries takes at most $\mathsf{col}(M,k)$ values
+(\cref{app:bg-constants}); the fields $\ftSp$ and $\fpend$ give
+$2^{2M(M+1)k}$, since $a$ ranges over $k$ blocks, $\zeta$ over $M+1$ entry
+states and $\zeta''$ over $M$ states; and $\ffst$ gives $3^k$.
 
 \paragraph{The automaton}
-The tuple of empty blocks has the initial summary of \cref{app:bg-search} and
-\[
- \ftS_a(\zeta,\zeta'')=S(\lab_0(\zeta),(\zeta'',\ell)),\qquad
- \fpend_a(\zeta,\zeta'')=S'(\lab_0(\zeta),(\zeta'',\ell)),
-\]
-$\ftSp_a$, $\fne_a$ and $\fphi_a$ false,
-and $\frel(a,b,\zeta,\zeta')=R(\lab_0(\zeta),\lab_0(\zeta'))$. Reading a column
-$\gamma$ updates the four fields as in \cref{app:bg-search} and the new
-fields as follows, simultaneously and from the old values. If $\gamma_a$ is
-absent, the fields of block $a$ are unchanged. If $\gamma_a=z$, then, with
-$e=\fexit_a(\zeta)$ the old exit,
+The tuple of empty blocks has the initial summaries of \cref{app:bg-search}
+for $\mathcal M$ and for $\mathcal M^\Theta$, $\ftSp_a$ false,
+$\fpend_a(\zeta,\zeta'')=S'(\lab_0(\zeta),(\zeta'',\ell))$, and
+$\ffst_a=\mathit{none}$. Reading a column $\gamma$ updates both summaries as in
+\cref{app:bg-search}, and the other fields as follows, simultaneously and from
+the old values. If $\gamma_a$ is absent, the fields of block $a$ are unchanged.
+If $\gamma_a=z$, then, with $e=\fexit_a(\zeta)$ the old exit,
 \[
 \begin{aligned}
- \ftS'_a(\zeta,\zeta'')&=\ftS_a(\zeta,\zeta'')\lor S((e,z),(\zeta'',\ell)),\\
  \ftSp'_a(\zeta,\zeta'')&=\ftSp_a(\zeta,\zeta'')\lor
-   \bigl(\fpend_a(\zeta,\zeta'')\land z\in\Phi\bigr),\\
- \fpend'_a(\zeta,\zeta'')&=S'((e,z),(\zeta'',\ell)),\\
- \fne'_a&=\mathrm{true},\qquad
- \fphi'_a=\fphi_a\text{ if }\fne_a,\ \text{and }[z\in\Phi]\text{ otherwise}.
+   \bigl(\fpend_a(\zeta,\zeta'')\land z\in\Phi\bigr),\qquad
+ \fpend'_a(\zeta,\zeta'')=S'((e,z),(\zeta'',\ell)),\\
+ \ffst'_a&=\ffst_a\text{ if }\ffst_a\ne\mathit{none},\ \text{and }[z\in\Phi]\text{ otherwise}.
 \end{aligned}
 \]
-The field $\frel$ is updated exactly as $\fadm$, with $R$ in place of $\Lambda$.
 
 \begin{lemma}[Positive summaries]\label{lem:mo-summary}
 \leavevmode
@@ -563,17 +560,18 @@ The field $\frel$ is updated exactly as $\fadm$, with $R$ in place of $\Lambda$.
   for the current tuple.
 \item The final positive summary of $(X_1,\ldots,X_k)$ determines the derived
   channel $\Theta_\ell$ on the letters $X_1,\ldots,X_k$, at every state of
-  $\mathcal M_\ell$. With
+  $\mathcal M_\ell$. With $\fterm^\Theta$ and $\fadm^\Theta$ the fields of
+  $\mathit{sum}^\Theta$ and
   \[
-   T_a(\zeta,\zeta'')=\ftS_a(\zeta,\zeta'')\lor\ftSp_a(\zeta,\zeta'')\lor
+   T_a(\zeta,\zeta'')=\fterm^\Theta_a(\zeta,\zeta'')\lor\ftSp_a(\zeta,\zeta'')\lor
    \bigl(\fpend_a(\zeta,\zeta'')\land\ell\in\Phi\bigr),
   \]
   it is given by
   \[
   \begin{aligned}
-   X_a\in\Phi_\ell&\iff\fphi_a\lor(\neg\fne_a\land\ell\in\Phi),\\
+   X_a\in\Phi_\ell&\iff\ffst_a=1\ \lor\ (\ffst_a=\mathit{none}\land\ell\in\Phi),\\
    R_\ell((\zeta,X_a),(\zeta',X_b))\iff S'_\ell((\zeta,X_a),(\zeta',X_b))
-     &\iff\frel(a,b,\zeta,\zeta'),\\
+     &\iff\fadm^\Theta(a,b,\zeta,\zeta'),\\
    S_\ell((\zeta,X_a),(\zeta',X_b))&\iff T_a(\zeta,\fexit_b(\zeta')),\\
    F_\ell(\zeta,X_a)&\iff F(\fexit_a(\zeta),\ell)\lor
      T_a(\zeta,\fexit_a(\zeta)).
@@ -585,35 +583,34 @@ The field $\frel$ is updated exactly as $\fadm$, with $R$ in place of $\Lambda$.
 \end{lemma}
 
 \begin{proof}
-(1) Induction on the number of columns read. The initial values are the
-meanings for empty blocks: the shifted block of $\eps$ read from $\zeta$ has the
-single label $\lab_0(\zeta)$, no position $g<0$ exists, and the only
-decomposition of two empty blocks is $x=x'=y=\eps$. An absent entry leaves the
-prefix of its track unchanged. Let track $a$ read $z$, so that its prefix $X$
-becomes $Xz$. The labels of the shifted block of $Xz$ are those of $X$ at the
-positions $g\le\len X$, and the new last label
+(1) Induction on the number of columns read. For the two summaries this is
+the correctness of the column automaton of \cref{app:bg-search}, applied to
+$\mathcal M$ and to $\mathcal M^\Theta$. The initial values of the other fields
+are their meanings for empty blocks: the shifted block of $\eps$ read from
+$\zeta$ has the single label $\lab_0(\zeta)$, and no position $g<0$ exists. An
+absent entry leaves the prefix of its track unchanged. Let track $a$ read $z$,
+so that its prefix $X$ becomes $Xz$. The labels of the shifted block of $Xz$
+are those of $X$ at the positions $g\le\len X$, and the new last label
 $\lab_{\len X+1}(\zeta,Xz)=(\fexit_a(\zeta),z)$. The letter at position $\len X$
-of $Xz$ is $z$, and the letters at the positions $g<\len X$ are unchanged. This
-proves the updates of $\ftS$, $\ftSp$ and $\fpend$: the new position $\len X$
-of $\ftSp$ carries the old pending test $\fpend$ and the letter $z$. By
-validity, letters are appended to a track in order, so the first letter of a
-nonempty track is the letter read when $\fne$ changes, which proves the updates
-of $\fne$ and $\fphi$. The field $\frel$ is the defining formula of $R_\ell$
-and is updated as $\fadm$ (\cref{app:bg-search}), by the same argument.
+of $Xz$ is $z$, and the letters at the positions $g<\len X$ are unchanged.
+This proves the updates of $\ftSp$ and $\fpend$: the new position $\len X$ of
+$\ftSp$ carries the old pending test $\fpend$ and the letter $z$. By validity,
+letters are appended to a track in order, so the first letter of a nonempty
+track is the letter read when $\ffst$ leaves $\mathit{none}$.
 
 (2) By~(1), the final fields are their meanings for $(X_1,\ldots,X_k)$. In
 \cref{def:mo-channel-derivative}, $(X_a\ell)[0]$ is $X_a[0]$ if $X_a\ne\eps$ and
-$\ell$ otherwise, which gives $\Phi_\ell$. The field $\frel$ is the defining
-formula of $R_\ell=S'_\ell$. The positive terminal test is
+$\ell$ otherwise, which gives $\Phi_\ell$. The field $\fadm^\Theta$ is the
+defining formula of $R_\ell=S'_\ell$. The positive terminal test is
 $\ptest(\zeta,X_a;\zeta'')=T_a(\zeta,\zeta'')$, because $(X_a\ell)[g]$ is
 $X_a[g]$ for $g<\len{X_a}$ and $\ell$ for $g=\len{X_a}$. Finally
 $\delta_\ell(\zeta',X_b)=\fexit_b(\zeta')$.
 \end{proof}
 
-The four fields of \cref{app:bg-search} alone do not suffice, as \cref{ex:mo-loses} shows.
-We now give the positive fields in that example.
+The summary of $\mathcal M$ alone does not suffice, as \cref{ex:mo-loses} shows.
+We now give the field $\fpend$ in that example.
 
-\begin{example}[\cref{ex:mo-loses} continued: the positive fields]\label{ex:mo-loses-fields}
+\begin{example}[\cref{ex:mo-loses} continued: the pending test]\label{ex:mo-loses-fields}
 In \cref{ex:mo-loses} the top letter $[ab]$ is shortened as the single track
 $ab$ over the level-$1$ monitor $\mathcal M_1$ and channel $\Theta_1$, with the
 marker $c=[\sep1]$. For every state $\zeta''$ of $\mathcal M_1$, the shifted block
@@ -632,16 +629,15 @@ the disjunct $\fpend\land c\in\Phi_1$ of \cref{lem:mo-summary}(2), since the
 expansion of $c$ starts with $\sep$. Hence the positive summaries after $a$ and
 after $ab$ differ, and the column holding $b$ is kept. At level $0$ the tracks
 $\eps$, $1$ and $\sep1$ admit no deletion either: their column word has two
-columns, each of which is the first column of a nonempty track, where $\fne$
-changes. The compression returns $w$ itself.
+columns, each of which is the first column of a nonempty track, where its field
+$\ffst$ changes. The compression returns $w$ itself.
 \end{example}
 
 \begin{lemma}[Positive column shortening]\label{lem:mo-columns}
 Let $\mathcal F=\{X_1,\ldots,X_k\}$ be a set of $k$ distinct blocks avoiding
-$\ell$. There are subsequences $\tau(X_a)$ of the blocks $X_a$, obtained by
-deleting the same set of columns, such that $\len{\tau(X_a)}<\scolsharp(M,k)$
-for every $a$; $\tau(X_a)=\eps$ iff $X_a=\eps$, and $\tau(X_a)[0]=X_a[0]$
-whenever $X_a\ne\eps$; and
+$\ell$. There are subsequences $\tau(X_a)$ of the blocks $X_a$ with
+$\len{\tau(X_a)}<\Pcol(M,k)$ for every $a$, such that $\tau$ is injective on
+$\mathcal F$, the blocks $\tau(X_a)$ avoid $\ell$, and
 \[
  (\mathcal M_\ell,\Theta_\ell)\equiv_{\mathcal F,\tau}(\mathcal M_\ell,\Theta_\ell).
 \]
@@ -649,21 +645,18 @@ whenever $X_a\ne\eps$; and
 
 \begin{proof}
 The new positive summary is a function of the old one and the column, and there
-are at most $\scolsharp(M,k)$ positive summaries. If the column word has at least
-$\scolsharp(M,k)$ columns, two of its cuts carry the same positive summary.
-Deleting the columns between them leaves a valid column word, and the same final
-summary, because the remaining columns are read from the same summary. On each
-track, $\fne$ has the same value at the two cuts, so either the track is still
-empty at the second cut and no letter of it is deleted, or it is already
-nonempty at the first cut and its first letter lies before the deleted columns.
-Repeating, we reach fewer than $\scolsharp(M,k)$ columns. Equal final summaries
-give equal equality bits, so $\tau$ preserves equality and inequality of blocks
-and is injective on $\mathcal F$; by \cref{lem:bg-columns} and
-\cref{app:bg-search}, the four fields of the summary determine $\mathcal M_\ell$ on the
-letters, and by \cref{lem:mo-summary}(2) the positive fields determine
-$\Theta_\ell$ on them, at every state and at labels with letters in $\mathcal F$
-or the start label. Both sides are the same monitor and channel, with the same
-states and start.
+are at most $\Pcol(M,k)$ positive summaries. If the column word has at least
+$\Pcol(M,k)$ columns, two of its cuts carry the same positive summary. Deleting
+the columns between them leaves a valid column word, and the same final
+summary, because the remaining columns are read from the same summary.
+Repeating, we reach fewer than $\Pcol(M,k)$ columns; the tracks are
+subsequences of the blocks and avoid $\ell$. Equal final summaries give equal
+equality bits, so $\tau$ preserves equality and inequality of blocks and is
+injective on $\mathcal F$; by \cref{lem:bg-columns} and \cref{app:bg-search},
+the summary of $\mathcal M$ determines $\mathcal M_\ell$ on the letters, and by
+\cref{lem:mo-summary}(2) the positive summary determines $\Theta_\ell$ on them,
+at every state and at labels with letters in $\mathcal F$ or the start label.
+Both sides are the same monitor and channel, with the same states and start.
 \end{proof}
 
 \subsection{Supported Compression}\label{app:mo-compression}
@@ -678,7 +671,7 @@ expansions $\Exp_{\boldsymbol\ell,j}$ as in \cref{app:bg-search}.
 \begin{lemma}[Supported compression with channels]\label{lem:mo-compression}
 Fix a nonempty word $w$ with hierarchy markers $\boldsymbol\ell$ and dictionaries
 $\mathcal A_h$, and $j\le d$. Suppose $\len{\mathcal A_h}\le g$ for $1\le h\le
-j$, and put $\kappa_\sharp=\scolsharp(N+d+1,g)$. For every set $E_j\subseteq
+j$, and put $\kappa_\sharp=\Pcol(N+d+1,g)$. For every set $E_j\subseteq
 \mathcal A_j$ there are new markers $\widetilde{\boldsymbol\ell}=
 (\widetilde\ell_0,\ldots,\widetilde\ell_{j-1})$ and a map $\rho_j$, injective on
 $E_j$, such that
@@ -702,7 +695,7 @@ $\len{E_{j+1}}\le g$. Put $(\mathcal U,\Theta^{\mathcal U})=(\mathcal
 M^{\boldsymbol\ell}_j,\Theta^{\boldsymbol\ell}_j)$, which has $N+j$ states. The
 blocks in $E_{j+1}$ are distinct words over $\mathcal A_j$ avoiding $\ell_j$.
 \Cref{lem:mo-columns} gives subsequences $\tau(X)$ with
-$\len{\tau(X)}<\scolsharp(N+j,\len{E_{j+1}})\le\kappa_\sharp$, by monotonicity,
+$\len{\tau(X)}<\Pcol(N+j,\len{E_{j+1}})\le\kappa_\sharp$, by monotonicity,
 and $(\mathcal U_{\ell_j},\Theta^{\mathcal U}_{\ell_j})\equiv_{E_{j+1},\tau}
 (\mathcal U_{\ell_j},\Theta^{\mathcal U}_{\ell_j})$. Put
 \[
@@ -737,7 +730,7 @@ positive channel on it, and suppose that $(\mathcal M_0,\Theta_0)$ has a
 positive hole of depth at most $d$. By \cref{lem:mo-dictionary}, it has a
 positive hole $w$ of some depth $D\le d$ with $g_i\le\sGsharp(N,d)$ for $1\le
 i\le D$. Keep $w$, its hierarchy $(w_i,\ell_i)$ and its dictionaries fixed, and
-put $\kappa_\sharp=\scolsharp(N+d+1,\sGsharp(N,d))\ge1$.
+put $\kappa_\sharp=\Pcol(N+d+1,\sGsharp(N,d))\ge1$.
 
 \emph{The top level.} By \cref{cor:mo-tower}, the unary word $w_D=z^m$ is a
 positive hole of $(\mathcal M_D,\Theta_D)$, and $\mathcal M_D$ has $N+D$ states.
@@ -787,7 +780,7 @@ For $N\ge1$ and $d\ge0$, with $\Xisharp=\Xisharp(N,d)$,
 \[
  \sGsharp(N,d)\le2^{\Xisharp}
  \qquad\text{and}\qquad
- \Lensharp(N,d)\le2^{2^{5\Xisharp}} .
+ \Lensharp(N,d)\le2^{2^{5\Xisharp+6}} .
 \]
 \end{lemma}
 
@@ -800,25 +793,25 @@ $\sAsharp(N,d)\le2^{\Xi_0+d+2}$. Using $3^d\le2^{2d}$,
  \sGsharp(N,d)=2+\sAsharp(N,d)\,3^d\le2+2^{\Xi_0+3d+2}\le2^{\Xi_0+3d+3}
  =2^{\Xisharp}.
 \]
-If $d=0$, then $\Lensharp(N,0)=3(N+1)\le2^{N+2}\le2^{\Xisharp}$. Let $d\ge1$,
-so that $\Xisharp\ge\Xisharp(1,1)=60$, and put $M=N+d+1$, $g=\sGsharp(N,d)$ and
-$P=2^{\Xisharp}$. Then $M+1\le\Xisharp\le P$ and $g\le P$. Using $\log_2M\le M$,
+Put $H=\Xisharp$, $M=N+d+1$, $g=\sGsharp(N,d)$ and $P=2^H$. Then $M+1\le H$,
+so $M$, $M+1$ and $d$ are at most $P$, and $g\le P$. Replacing $M$ by $2^M$ in
+the first factor of \cref{eq:bg-col} gives
+$\mathsf{col}(M,g)\le2^{2M(M+1)g+g^2+(M+1)^2g^2}\le2^{4P^4}=2^{2^{4H+2}}$.
+Moreover $2^{M(M+1)g}\le2^{P^3}\le2^{2^{4H+2}}$ and
+$3^g\le2^{2g}\le2^{2^{4H+2}}$. Hence the five factors of
+$\Pcol(M,g)=\mathsf{col}(M,g)^2\,(2^{M(M+1)g})^2\,3^g$ give
+$\Pcol(M,g)\le2^{5\cdot2^{4H+2}}\le2^{2^{4H+5}}$. Finally $3M\le2^{H+2}$ and
+$d\le2^H$, so
 \[
- \log_2\scolsharp(M,g)\le(M+1)Mg+4M(M+1)g+2g+g^2+2(M+1)^2g^2
- \le5P^3+2P+P^2+2P^4\le3P^4\le2^{4\Xisharp+2}.
-\]
-Therefore, since $d\le\Xisharp\le2^{\Xisharp-3}$ and $\log_2(3M)\le2M\le
-2^{5\Xisharp-1}$,
-\[
- \log_2\Lensharp(N,d)=\log_2(3M)+d\log_2\scolsharp(M,g)
- \le2^{5\Xisharp-1}+2^{\Xisharp-3}\,2^{4\Xisharp+2}\le2^{5\Xisharp}. \qedhere
+ \Lensharp(N,d)=3M\,\Pcol(M,g)^d\le2^{H+2+d\,2^{4H+5}}\le
+ 2^{2^{5H+5}+2^{5H+5}}=2^{2^{5H+6}}. \qedhere
 \]
 \end{proof}
 
 \begin{proof}[Proof of \cref{lem:mo-estimate}]
 Put $N_0=2^\alpha$ and $D_0=2^{\alpha+\beta+1}$. Then $\Nbar\le N_0$ and
 $d_I=2\Nbar N_A-1<D_0$, so, by monotonicity and \cref{lem:mo-closed-form},
-$\Lensharp_I\le\Lensharp(N_0,D_0)\le2^{2^{5\Xisharp(N_0,D_0)}}$. Since
+$\Lensharp_I\le\Lensharp(N_0,D_0)\le2^{2^{5\Xisharp(N_0,D_0)+6}}$. Since
 $\alpha\ge3$ and $\beta\ge0$, we have $N_0\ge8$, $D_0\ge16$ and $N_0\le D_0/2$.
 Hence $10N_0(N_0+D_0)(D_0+1)\le10N_0\cdot\frac32D_0\cdot\frac{17}{16}D_0<16N_0D_0^2$,
 $6N_0^2\le3N_0D_0\le\frac3{16}N_0D_0^2$, and
@@ -826,14 +819,14 @@ $7N_0+3D_0+4\le N_0D_0\le\frac1{16}N_0D_0^2$, so that
 \[
  \Xisharp(N_0,D_0)\le17N_0D_0^2=17\cdot2^{3\alpha+2\beta+2}
  \qquad\text{and}\qquad
- 5\Xisharp(N_0,D_0)<2^{3\alpha+2\beta+9}.
+ 5\Xisharp(N_0,D_0)+6\le340\cdot2^{3\alpha+2\beta}+6<2^{3\alpha+2\beta+9}.
 \]
 Therefore $\Lensharp_I\le2^{2^{2^{3\alpha+2\beta+9}}}=E_3(3\alpha+2\beta+9)$.
 \end{proof}
 
 \begin{proof}[Proof of \cref{cor:mo-decidable}]
 Compute $\Lensharp_I$, and test every pair $(u,t)$ of words over $\Sigma$ with
-$\len u+\len t<\Lensharp_I$: check conditions (a)--(e) of \cref{def:ex-ss2self}
+$\len u+1+\len t\le\Lensharp_I$: check conditions (a)--(e) of \cref{def:ex-ss2self}
 over the finitely many cuts, decide whether $A(u)$ is mortal by reachability in
 the safe graph, and check $\len t-J(t)<N_A$. A pair that passes all tests is a
 mortal hole. If a mortal hole exists, \cref{thm:mo-short} supplies one among the

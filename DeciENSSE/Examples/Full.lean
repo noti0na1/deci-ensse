@@ -1,5 +1,4 @@
 import DeciENSSE.Core.Full.AC
-import DeciENSSE.Core.Full.Bridge
 import DeciENSSE.Core.Full.Observations
 import DeciENSSE.Core.Full.Classes
 import DeciENSSE.Core.Full.ACPins
@@ -28,8 +27,8 @@ namespace ACExamples
 /-- The third child is observed directly, without a binary path encoding. -/
 theorem ternary_third_child :
     aobs (DeciNSSE.Tree.node ![DeciNSSE.Tree.bot, DeciNSSE.Tree.bot, DeciNSSE.Tree.top]) [2] ∧
-      [2] ∈ (cobs (DeciNSSE.Tree.node ![DeciNSSE.Tree.bot, DeciNSSE.Tree.bot, DeciNSSE.Tree.top])).K
-        := by
+      [2] ∈ (cobs (DeciNSSE.Tree.node
+        ![DeciNSSE.Tree.bot, DeciNSSE.Tree.bot, DeciNSSE.Tree.top])).carrier := by
   constructor
   · simp [aobs, Safety.hasLabel_node_cons _ _ _ Sym.top (by decide)]
   · simp
@@ -37,44 +36,6 @@ theorem ternary_third_child :
 end ACExamples
 
 end DeciENSSE.Core.Full.AC
-
-namespace DeciENSSE.Core.Full
-open DeciNSSE
-
-variable {n : ℕ}
-
-namespace BridgeExamples
-
-/-- Constructor transport preserves every child at arity three. -/
-theorem ternary_node (a b c : BFTree 3) :
-    toTree (BFTree.node ![a, b, c]) = DeciNSSE.Tree.node ![toTree a, toTree b, toTree c] := by
-  rw [toTree_node]
-  congr 1
-  funext i
-  fin_cases i <;> rfl
-
-/-- Class correspondence includes the nullary constructor as well. -/
-theorem nullary_constructor_finite :
-    IsFiniteTree (BFTree.node (Fin.elim0 : Fin 0 → BFTree 0)) := by
-  apply (finite_iff _).mpr
-  refine ⟨FTree.node Fin.elim0, ?_⟩
-  rw [FTree.toTree_node, toTree_node]
-  congr 1
-  funext i
-  exact Fin.elim0 i
-
-/-- A ternary bottom constraint entails a visible reflexive inequality. -/
-theorem ternary_entails :
-    ExistsEntailsTopFree
-      (([.bot ()] : List (Lit 3 Unit)).map ofLit)
-      (([.le (.inl ()) (.inl ())] : List (Lit 3 (Unit ⊕ Unit))).map ofLit) := by
-  apply (existsEntails_topFree_iff _ _).mp
-  intro ρ _ _
-  exact ⟨fun _ => BFTree.bot, fun _ => trivial, by simp [DeciENSSE.Core.Sat, Lit.Holds]⟩
-
-end BridgeExamples
-
-end DeciENSSE.Core.Full
 
 namespace DeciENSSE.Core.Full
 open DeciNSSE
@@ -117,7 +78,7 @@ theorem regular_top : RegularTop (DeciNSSE.Tree.top : DeciNSSE.Tree n) := by
   exact Characterization.subtrees_finite_of_domain_finite _
     (Characterization.domain_toTree_finite FTree.top)
 
-/-- a satisfiable ternary system meets the exact finite pinning premise. -/
+/-- A satisfiable ternary system meets the finite pinning premise. -/
 theorem finite_pinning_nonvacuous :
     SatisfiableIn FiniteTop (fun _ => false) ([.top ()] : List (LitT 3 Unit)) ∧
       FiniteBoundPinning ([.top ()] : List (LitT 3 Unit)) := by

@@ -2,10 +2,13 @@ import DeciENSSE.Core.Mixed.Extract
 import DeciENSSE.Core.Mixed.CondI0
 import DeciENSSE.Core.Mixed.Units
 
-/-! # Conditional decision of n-ary mixed existential entailment
+/-! # Deciding existential entailment from a short-hole bound
 
-Combine satisfiability, unit conditions, and a finite self-aware hole search.
-The only mathematical premise is a uniform short-hole bound.
+Given a uniform bound on shortest holes of two-word instances with self events, existential
+entailment over arbitrary trees, at every arity and variance, is decided by testing the
+satisfiability of both systems and conditions (I0) and (U), and then searching every
+extracted instance for a hole within the bound. The bound is the only premise;
+`Core.Mixed.Final` supplies it.
 
 ## Main declarations
 
@@ -23,7 +26,8 @@ variable {SA SB SC SD : Type*}
   [Fintype SA] [Fintype SB] [Fintype SC] [Fintype SD]
   [DecidableEq SA] [DecidableEq SB] [DecidableEq SC] [DecidableEq SD]
 
-/-- Finite enumeration of two words over a finite alphabet with total length at most L. -/
+/-- A hole of total length at most `L`, with the two words enumerated as tuples over a finite
+alphabet. -/
 def BoundedHole (I : SelfTwoWordInstance α SA SB SC SD) (L : ℕ) : Prop :=
   ∃ n : Fin (L + 1), ∃ m : Fin (L + 1), n.val + m.val ≤ L ∧
     ∃ u : Fin n.val → α, ∃ t : Fin m.val → α,

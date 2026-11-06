@@ -4,6 +4,7 @@
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
+\usepackage{xurl}
 \usepackage{placeins}
 \usepackage{enumitem}
 \usepackage{listings}
@@ -41,11 +42,19 @@
 \crefname{proposition}{Proposition}{Propositions}
 \crefname{appendix}{Appendix}{Appendices}
 
-%% Lean identifiers: typewriter, breakable at dots and underscores --------
+%% Lean identifiers: typewriter, with URL-style line breaking ------------
 \DeclareUrlCommand\lean{\urlstyle{tt}}
 \makeatletter
 \g@addto@macro\UrlBreaks{\do\_\do\.}
 \makeatother
+
+%% Unicode in generated contract notes (kept verbatim by the generator).
+\DeclareUnicodeCharacter{03B1}{\ensuremath{\alpha}}
+\DeclareUnicodeCharacter{03B8}{\ensuremath{\theta}}
+\DeclareUnicodeCharacter{03BB}{\ensuremath{\lambda}}
+\DeclareUnicodeCharacter{03BE}{\ensuremath{\xi}}
+\DeclareUnicodeCharacter{03C9}{\ensuremath{\omega}}
+\DeclareUnicodeCharacter{2264}{\ensuremath{\le}}
 
 %% Lean listings (pdflatex: map the Unicode characters used) ---------------
 \lstdefinelanguage{lean}{
@@ -187,6 +196,7 @@
 \newcommand{\sAsharp}{\mathsf{A}^{\sharp}}
 \newcommand{\sGsharp}{\mathsf{G}^{\sharp}}
 \newcommand{\scolsharp}{\mathsf{col}^{\sharp}}
+\newcommand{\Pcol}{\mathsf{pcol}}             % states of the positive column automaton
 
 %% Macros of the general-theorem sections.
 

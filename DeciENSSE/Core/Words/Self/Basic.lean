@@ -55,7 +55,7 @@ instance instDecidableNoSelf (t : Word α) : Decidable (I.NoSelf t) := by
 /-- A hole whose target has no self events. -/
 def IsHole (u t : Word α) : Prop := I.toTwoWordInstance.IsHole u t ∧ I.NoSelf t
 
-/-- The self-aware hole predicate is decidable on a fixed word pair. -/
+/-- The hole predicate with self events is decidable on a fixed word pair. -/
 instance instDecidableIsHole (u t : Word α) : Decidable (I.IsHole u t) := by
   unfold IsHole
   infer_instance
@@ -68,7 +68,7 @@ def IsMortalHole (u t : Word α) : Prop :=
   I.IsHole u t ∧ I.Mortal (I.A.run u) ∧
     ∃ j ∈ I.J t, t.length - j < Fintype.card SA
 
-/-- The mortal self-aware hole predicate is decidable. -/
+/-- The mortal-hole predicate with self events is decidable. -/
 instance instDecidableIsMortalHole (u t : Word α) : Decidable (I.IsMortalHole u t) := by
   unfold IsMortalHole
   infer_instance
@@ -135,7 +135,8 @@ instance instDecidableCompletesSelf (t θ : Word α) : Decidable (I.CompletesSel
   exact decidable_of_iff _ (I.completesSelf_iff t θ).symm
 
 omit [Fintype α] [DecidableEq α] in
-/-- A mortal self-aware hole is an ordinary mortal hole without self events. -/
+/-- A mortal hole of an instance with self events is a mortal hole of the underlying instance
+without self events. -/
 theorem isMortalHole_iff (u t : Word α) :
     I.IsMortalHole u t ↔ I.toTwoWordInstance.IsMortalHole u t ∧ I.NoSelf t := by
   simp only [IsMortalHole, IsHole, TwoWordInstance.IsMortalHole]
@@ -148,31 +149,32 @@ def ShortHoleBoundSelf (α : Type*) [Fintype α] [DecidableEq α] (B : HoleBound
   ∀ a b c d, ∀ I : SelfTwoWordInstance α (Fin a) (Fin b) (Fin c) (Fin d),
     I.ForcedHeads → I.HasHole → ∃ u t, I.IsHole u t ∧ u.length + t.length ≤ B a b c d
 
-/-- A state-count bound for holes arising from the non-mortal self-aware case. -/
+/-- A state-count bound for the holes of the non-mortal cases, with self events.
+Condition (FH) is not needed (`thm:nm-three-cases`). -/
 def NonMortalShortHoleBoundSelf (α : Type*) [Fintype α] [DecidableEq α] (B : HoleBound) : Prop :=
   ∀ a b c d, ∀ I : SelfTwoWordInstance α (Fin a) (Fin b) (Fin c) (Fin d),
-    I.ForcedHeads → I.NonMortalCase → ∃ u t, I.IsHole u t ∧ u.length + t.length ≤ B a b c d
+    I.NonMortalCase → ∃ u t, I.IsHole u t ∧ u.length + t.length ≤ B a b c d
 
-/-- A state-count bound for mortal holes with target self guards. -/
+/-- A state-count bound for mortal holes with target self guards. Condition
+(FH) is not needed (`thm:mo-short`). -/
 def MortalShortHoleBoundSelf (α : Type*) [Fintype α] [DecidableEq α] (B : HoleBound) : Prop :=
   ∀ a b c d, ∀ I : SelfTwoWordInstance α (Fin a) (Fin b) (Fin c) (Fin d),
-    I.ForcedHeads → I.HasMortalHole →
-      ∃ u t, I.IsMortalHole u t ∧ u.length + t.length ≤ B a b c d
+    I.HasMortalHole → ∃ u t, I.IsMortalHole u t ∧ u.length + t.length ≤ B a b c d
 
 /-- The three-case decomposition for instances with target self guards. -/
 def ThreeCasesSelf (α : Type*) [Fintype α] [DecidableEq α] : Prop :=
   ∀ a b c d, ∀ I : SelfTwoWordInstance α (Fin a) (Fin b) (Fin c) (Fin d),
     I.ForcedHeads → (I.HasHole ↔ I.NonMortalCase ∨ I.HasMortalHole)
 
-/-- The maximum of non-mortal and mortal bounds bounds every self-aware hole. -/
+/-- The maximum of a non-mortal and a mortal bound bounds the holes with self events. -/
 theorem shortHoleBoundSelf_of_split {B₁ B₂ : HoleBound} (hc : ThreeCasesSelf α)
     (hn : NonMortalShortHoleBoundSelf α B₁) (hm : MortalShortHoleBoundSelf α B₂) :
     ShortHoleBoundSelf α (fun a b c d => max (B₁ a b c d) (B₂ a b c d)) := by
   intro a b c d I hfh hh
   rcases (hc a b c d I hfh).mp hh with h | h
-  · obtain ⟨u, t, hu, hb⟩ := hn a b c d I hfh h
+  · obtain ⟨u, t, hu, hb⟩ := hn a b c d I h
     exact ⟨u, t, hu, hb.trans (le_max_left _ _)⟩
-  · obtain ⟨u, t, hu, hb⟩ := hm a b c d I hfh h
+  · obtain ⟨u, t, hu, hb⟩ := hm a b c d I h
     exact ⟨u, t, hu.1, hb.trans (le_max_right _ _)⟩
 
 end DeciENSSE.Core.Words.Self
@@ -246,18 +248,18 @@ omit [Fintype α] [DecidableEq α] in
   simp only [NoSelf, rename_selfEvent]
 
 omit [Fintype α] [DecidableEq α] in
-/-- State renaming preserves self-aware holes. -/
+/-- State renaming preserves holes with self events. -/
 @[simp] theorem rename_isHole (u t : Word α) :
     (I.rename a b c d).IsHole u t ↔ I.IsHole u t := by
   exact and_congr (I.toTwoWordInstance.rename_isHole a b c d u t) (I.rename_noSelf a b c d t)
 
 omit [Fintype α] [DecidableEq α] in
-/-- State renaming preserves self-aware hole existence. -/
+/-- State renaming preserves the existence of holes with self events. -/
 @[simp] theorem rename_hasHole : (I.rename a b c d).HasHole ↔ I.HasHole := by
   simp only [HasHole, rename_isHole]
 
 omit [Fintype α] [DecidableEq α] in
-/-- State renaming preserves bounded self-aware holes. -/
+/-- State renaming preserves bounded holes with self events. -/
 theorem rename_boundedHole (L : ℕ) :
     (∃ u t, (I.rename a b c d).IsHole u t ∧ u.length + t.length ≤ L) ↔
       ∃ u t, I.IsHole u t ∧ u.length + t.length ≤ L := by simp
@@ -277,14 +279,14 @@ omit [Fintype α] [DecidableEq α] in
   exact and_congr (I.toTwoWordInstance.rename_safeFrom a b c d I.A.start u) Iff.rfl
 
 omit [Fintype α] [DecidableEq α] in
-/-- State renaming preserves mortal self-aware holes. -/
+/-- State renaming preserves mortal holes with self events. -/
 @[simp] theorem rename_isMortalHole (u t : Word α) :
     (I.rename a b c d).IsMortalHole u t ↔ I.IsMortalHole u t := by
   rw [isMortalHole_iff, isMortalHole_iff]
   exact and_congr (I.toTwoWordInstance.rename_isMortalHole a b c d u t) (I.rename_noSelf a b c d t)
 
 omit [Fintype α] [DecidableEq α] in
-/-- State renaming preserves mortal self-aware hole existence. -/
+/-- State renaming preserves the existence of mortal holes with self events. -/
 @[simp] theorem rename_hasMortalHole :
     (I.rename a b c d).HasMortalHole ↔ I.HasMortalHole := by
   simp only [HasMortalHole, rename_isMortalHole]

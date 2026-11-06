@@ -33,7 +33,7 @@ structure Observation (n : ℕ) (X : Type*) where
 /-- Interpret the observation on a tree assignment. -/
 def Observation.Holds {X : Type*} (ρ : X → DeciNSSE.Tree n) (o : Observation n X) : Prop :=
   let t := if o.dual then DeciNSSE.Tree.dual (ρ o.var) else ρ o.var
-  if o.value then o.word ∈ (AC.cobs t).K else o.word ∉ (AC.cobs t).K
+  if o.value then o.word ∈ (AC.cobs t).carrier else o.word ∉ (AC.cobs t).carrier
 
 /-- A finite lower or upper bound on one variable. -/
 structure GroundBound (n : ℕ) (V : Type*) where

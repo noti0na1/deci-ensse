@@ -131,31 +131,23 @@ theorem cl_subset {S : Set (Config n V)} {a : Config n V}
     (hS : Sol c χ S) (ha : a ∈ S) : Cl c χ a ⊆ S :=
   hull_least hS.closed hS.facts (Set.singleton_subset_iff.mpr ha)
 
-/-- No satisfiability assumption is needed for this least-model test. -/
+/-- An atom is live iff its closure is consistent: `lem:lf-closure`(2) for a
+single seed. No satisfiability assumption is needed. -/
 theorem live_iff {a : Config n V} :
     Live c χ a ↔ Avoids χ (Cl c χ a) ∧ Consistent (Cl c χ a) := by
-  constructor
-  · rintro ⟨S, hS, ha⟩
-    have hsub := cl_subset hS ha
-    exact ⟨fun {_} hp => hS.avoids (hsub hp),
-      fun {_ _} h hp hq => hS.consistent h (hsub hp) (hsub hq)⟩
-  · rintro ⟨hn, hd⟩
-    exact ⟨Cl c χ a, ⟨hull_closed _, (fun {_} => hull_facts _), hn, hd⟩,
-      subset_hull _ (Set.mem_singleton a)⟩
+  rw [Cl, ← exists_sol_superset_iff]
+  simp only [Live, Set.singleton_subset_iff]
 
-/-- Satisfiability is avoidance and consistency of unit closure. -/
+/-- Satisfiability is avoidance and consistency of unit closure:
+`lem:lf-closure`(2) for the empty seed set. -/
 theorem sat_iff_mu :
     (∃ ρ, SatT c ρ χ) ↔ Avoids χ (Mu c χ) ∧ Consistent (Mu c χ) := by
+  rw [Mu, ← exists_sol_superset_iff]
   constructor
   · rintro ⟨ρ, hρ⟩
-    have hS := (sat_iff_sol ρ).mp hρ
-    have hsub := mu_subset hS
-    exact ⟨fun {_} hp => hS.avoids (hsub hp),
-      fun {_ _} h hp hq => hS.consistent h (hsub hp) (hsub hq)⟩
-  · rintro ⟨hn, hd⟩
-    obtain ⟨ρ, hρ, _⟩ := sol_iff_assignment.mp
-      (show Sol c χ (Mu c χ) from
-        ⟨hull_closed _, (fun {_} => hull_facts _), hn, hd⟩)
+    exact ⟨_, (sat_iff_sol ρ).mp hρ, Set.empty_subset _⟩
+  · rintro ⟨S, hS, -⟩
+    obtain ⟨ρ, hρ, _⟩ := sol_iff_assignment.mp hS
     exact ⟨ρ, hρ⟩
 
 /-- Liveness persists under right extensions. -/
@@ -186,7 +178,8 @@ theorem Consistent.not_flip {S : Set (Config n V)} (hc : Consistent S)
   | false => exact hc (.pair v w) hp hm
   | true => exact hc (.pair v w) hm hp
 
-/-- The three and only three causes of singleton deadness in a satisfiable system. -/
+/-- In a satisfiable system a single seed is dead exactly when one of three causes applies
+(`cor:lf-dead`). -/
 theorem dead_iff (hsat : Avoids χ (Mu c χ) ∧ Consistent (Mu c χ))
     {p : V} {s : Bool} {u : List (Fin n)} :
     ¬ Live c χ (p, s, u) ↔

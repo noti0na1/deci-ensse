@@ -136,7 +136,7 @@ theorem pending_forcedHeads : pending.ForcedHeads := by
 
 /-- The concrete word pair satisfies the pre-hole conditions. -/
 theorem pending_preHole : pending.IsPreHole [false] [false] := by decide +kernel
-/-- The extended word pair is a self-aware hole. -/
+/-- The extended word pair is a hole with self events. -/
 theorem pending_completed : pending.IsHole [false, true] [false, true] := by decide +kernel
 
 /-- The initial state has two distinct safe continuations. -/

@@ -1,6 +1,6 @@
 import DeciENSSE.Core.Full.Signed
 import DeciENSSE.Core.Mixed.LeafHorn
-import DeciENSSE.Core.Automata
+import DeciENSSE.Core.Automata.Moves
 
 /-! # Covariant automata for signed leaf moves
 
@@ -137,12 +137,11 @@ def flipEmb : (V × Bool) ↪ (V × Bool) :=
 /-- The sign-flip embedding acts by Boolean negation. -/
 @[simp] theorem flipEmb_apply (p : V × Bool) : flipEmb p = flipV p := rfl
 
-/-- The bot case makes this total; signed systems never contain bot. -/
+/-- Reverse a rule and flip the signs of its variables. -/
 def dualLit : Lit n (V × Bool) → Lit n (V × Bool)
   | .le x y => .le (flipV y) (flipV x)
   | .fle a u => .lef (flipV u) (fun i => flipV (a i))
   | .lef u a => .fle (fun i => flipV (a i)) (flipV u)
-  | .bot u => .bot (flipV u)
 
 /-- Signed paths reverse under sign flip. -/
 theorem signed_dual {l : Lit n (V × Bool)} (h : l ∈ signedSys c χ) :

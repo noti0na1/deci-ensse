@@ -140,7 +140,7 @@ theorem mixed_no_parity : ¬ ∃ s : Bool → Bool, ∀ i : Fin 3,
   have h := h0.symm.trans h1
   cases hy : s false <;> simp [hy] at h
 
-/-- The empty antecedent cannot repair the consequent's parity equations. -/
+/-- The parity equations stay unsolvable on the carrier `Bool ⊕ Unit`, with one more variable. -/
 theorem mixed_no_joint : ¬ ∃ s : Bool ⊕ Unit → Bool, ∀ i : Fin 3,
     s (.inl true) = Bool.xor (s (.inl false)) (ternaryVariance i) := by
   rintro ⟨s, hs⟩

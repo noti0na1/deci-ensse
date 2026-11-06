@@ -1,3 +1,4 @@
+import DeciENSSE.Core.Full.Classes
 import DeciENSSE.Core.Full.Signed
 import DeciENSSE.Core.Mixed.Leaf
 import DeciENSSE.Support.Median
@@ -9,15 +10,18 @@ import DeciNSSE.Semantics.Tree
 
 /-! # Finite signed symmetrization
 
-The finite median of a signed assignment, its dual, and a normalized finite
-solution yields a finite assignment fixed by sign duality. The third input is
-a finite tree, which is essential for finite realization.
+The median of a signed assignment, its dual, and a normalized solution is an
+assignment fixed by sign duality. It is finite when the three inputs are
+(`lem:tc-median`(3)); a finite third input is essential for this.
 
 ## Main declarations
 
 - `FinitePinning.symmetrize`
 - `FinitePinning.symmetrize_fixed`
 - `FinitePinning.symmetrize_sat`
+- `FinitePinning.symmetrize_finite`
+- `FinitePinning.normalize_class_iff`, `FinitePinning.decode_class`: the signed
+  correspondence preserves tree classes
 -/
 
 namespace DeciENSSE.Core.Mixed.FinitePinning
@@ -57,6 +61,22 @@ theorem normalize_decode (c : Fin n → Bool) {A : V × Bool → DeciNSSE.Tree n
   · simp [normalize, decode]
   · have hh := congrFun h (v, true)
     simpa [normalize, decode, signDual] using hh
+
+/-- **Signed correspondence**, preservation of tree classes (`lem:bg-signed`):
+`ρ ↦ ρ^±` preserves and reflects every class that normalization preserves and
+reflects, among them `FiniteTop` and `RegularTop` (`Full.finiteTop_normalize_iff`,
+`Full.regularTop_normalize_iff`). -/
+theorem normalize_class_iff {c : Fin n → Bool} {C : DeciNSSE.Tree n → Prop}
+    (hC : ∀ s t, C (DeciNSSE.Tree.normalize c s t) ↔ C t) (ρ : V → DeciNSSE.Tree n) :
+    (∀ z, C (normalize c ρ z)) ↔ ∀ v, C (ρ v) :=
+  ⟨fun h v => (hC false _).mp (h (v, false)), fun h z => (hC z.2 _).mpr (h z.1)⟩
+
+/-- **Signed correspondence**, preservation of tree classes (`lem:bg-signed`): the
+inverse map `decode` preserves every class that normalization preserves. -/
+theorem decode_class {c : Fin n → Bool} {C : DeciNSSE.Tree n → Prop}
+    (hC : ∀ s t, C (DeciNSSE.Tree.normalize c s t) ↔ C t) {A : V × Bool → DeciNSSE.Tree n}
+    (hA : ∀ z, C (A z)) (v : V) : C (decode c A v) :=
+  (hC false _).mpr (hA (v, false))
 
 /-- Signed satisfaction is characterized by the original signed literal clauses. -/
 @[simp] theorem sat_signed_iff (c : Fin n → Bool) (A : V × Bool → DeciNSSE.Tree n)
@@ -134,37 +154,36 @@ theorem sat_median {A B D : V → DeciNSSE.Tree n} {χ : List (LitT n V)}
     change B u = DeciNSSE.Tree.top at h₂
     simp [h₁, h₂]
 
-/-- A finite third input is essential: the all-constructor tree cannot be used. -/
-def symmetrize (c : Fin n → Bool) (A : V × Bool → FTree n)
-    (D : V → FTree n) (z : V × Bool) : FTree n :=
-  Support.Median.finiteMedian (A z) (Support.Median.finD (A (z.1, !z.2))) (FTree.normalize c z.2
-    (D z.1))
+/-- The median of a signed assignment, its sign dual, and a normalized
+assignment. -/
+noncomputable def symmetrize (c : Fin n → Bool) (A : V × Bool → DeciNSSE.Tree n)
+    (D : V → DeciNSSE.Tree n) (z : V × Bool) : DeciNSSE.Tree n :=
+  Support.Median.treeMedian (A z) (signDual A z) (normalize c D z)
 
-/-- Finite symmetrization presents the median of the three tree assignments. -/
-@[simp] theorem symmetrize_toTree (c : Fin n → Bool) (A : V × Bool → FTree n)
-    (D : V → FTree n) (z : V × Bool) :
-    (symmetrize c A D z).toTree =
-      Support.Median.treeMedian (A z).toTree (signDual (FTree.toTree ∘ A) z)
-        (normalize c (FTree.toTree ∘ D) z) := by
-  simp [symmetrize, signDual, normalize]
-
-/-- Finite median symmetrization is fixed by sign duality. -/
-theorem symmetrize_fixed (c : Fin n → Bool) (A : V × Bool → FTree n)
-    (D : V → FTree n) :
-    signDual (FTree.toTree ∘ symmetrize c A D) =
-      FTree.toTree ∘ symmetrize c A D := by
+/-- Median symmetrization is fixed by sign duality. -/
+theorem symmetrize_fixed (c : Fin n → Bool) (A : V × Bool → DeciNSSE.Tree n)
+    (D : V → DeciNSSE.Tree n) : signDual (symmetrize c A D) = symmetrize c A D := by
   funext ⟨v, s⟩
-  simp only [signDual, Function.comp_apply, symmetrize_toTree, normalize,
-    Support.Median.d_treeMedian, DeciNSSE.dual_involutive, Bool.not_not, DeciNSSE.normalize_not]
+  simp only [signDual, symmetrize, normalize, Support.Median.d_treeMedian,
+    DeciNSSE.dual_involutive, Bool.not_not, DeciNSSE.normalize_not]
   rw [Support.Median.treeMedian_swap]
 
-/-- Finite median symmetrization preserves satisfaction of the signed constraints. -/
-theorem symmetrize_sat {c : Fin n → Bool} {A : V × Bool → FTree n}
-    {D : V → FTree n} {χ : List (LitT n V)}
-    (ha : SatT (fun _ => false) (FTree.toTree ∘ A) (Full.signed c χ))
-    (hd : SatT c (FTree.toTree ∘ D) χ) :
-    SatT (fun _ => false) (FTree.toTree ∘ symmetrize c A D) (Full.signed c χ) := by
-  have hh := sat_median ha (sat_signDual ha) ((sat_normalize_iff c _ χ).mpr hd)
-  simpa only [Function.comp_def, symmetrize_toTree] using hh
+/-- Median symmetrization preserves satisfaction of the signed constraints. -/
+theorem symmetrize_sat {c : Fin n → Bool} {A : V × Bool → DeciNSSE.Tree n}
+    {D : V → DeciNSSE.Tree n} {χ : List (LitT n V)}
+    (ha : SatT (fun _ => false) A (Full.signed c χ)) (hd : SatT c D χ) :
+    SatT (fun _ => false) (symmetrize c A D) (Full.signed c χ) :=
+  sat_median ha (sat_signDual ha) ((sat_normalize_iff c _ χ).mpr hd)
+
+/-- Median symmetrization of finite assignments is finite (`lem:tc-median`(3)). -/
+theorem symmetrize_finite (c : Fin n → Bool) {A : V × Bool → DeciNSSE.Tree n}
+    {D : V → DeciNSSE.Tree n} (hA : ∀ z, Full.FiniteTop (A z))
+    (hD : ∀ v, Full.FiniteTop (D v)) (z : V × Bool) :
+    Full.FiniteTop (symmetrize c A D z) := by
+  obtain ⟨a, ha⟩ := hA z
+  obtain ⟨a', ha'⟩ := (Full.finiteTop_dual_iff _).mpr (hA (z.1, !z.2))
+  obtain ⟨d, hd⟩ := (Full.finiteTop_normalize_iff c z.2 _).mpr (hD z.1)
+  obtain ⟨m, hm⟩ := Support.Median.exists_ftree_treeMedian a a' d
+  exact ⟨m, by rw [hm, ha, ha', hd]; rfl⟩
 
 end DeciENSSE.Core.Mixed.FinitePinning

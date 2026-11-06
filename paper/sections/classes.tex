@@ -1,23 +1,37 @@
-%% classes -- tree classes: two seeds, observation pins, finite-bound pinning
-%% for every variance, regular and finite transfer, the top-freeness gadget
-%% for {bot,f}, and arities zero and one.
+%% classes -- tree classes and the signature {bot,f}, placed right after the
+%% characterization: two seeds, observation pins, bound pinning for regular
+%% trees (graph equations) and for finite trees (every variance), regular and
+%% finite transfer, the top-freeness gadget for {bot,f}, and arities zero and
+%% one. Nothing here uses the hole sections; from sec:sm on the paper works
+%% over BFT and arbitrary trees.
 
-\section{Tree Classes}\label{sec:tc}\label{sec:classes}
+\section{Tree Classes and the Signature without Top}\label{sec:tc}\label{sec:classes}
 
-The preceding sections decide existential entailment over arbitrary trees.
-This section transfers the decision to regular and to finite trees, for every
-arity $n\ge0$ and every variance $c$, and it reduces the signature $\BF$ with
-$f$ covariant to $\BFT$. Regular trees are handled by the least closures of
-\cref{sec:lf}, whose slices are regular for regular seeds by
-\cref{lem:sm-regular-closure}; a failed extension is caused by at most two
-seeds (\cref{lem:tc-two-seeds}), so $\Ereg=\Eall$ (\cref{thm:tc-regular}).
-Finite trees need a different argument. Least closures describe trees with as
-few leaves as possible, and these are infinite in general: the empty system has the empty least model, which
-assigns $\Omega$ to every variable. Instead we express observations by finite
-ground bounds (\cref{lem:tc-pins}) and show that adding finite ground bounds
-preserves finite satisfiability, for every variance (\cref{thm:tc-pinning}).
-This gives the dispatch \cref{eq:tc-finite} of \cref{thm:tc-finite}. Proofs
-not given here are in \cref{app:tc}.
+The characterization of \cref{sec:ch} concerns arbitrary trees over $\BFT$.
+This section shows that this one setting suffices: the problem in the other
+tree classes, for every arity $n\ge0$ and every variance $c$, and over the
+signature $\BF$ with $f$ covariant, reduces to it. Regular trees give the same
+answer as arbitrary trees, $\Ereg=\Eall$ (\cref{thm:tc-regular}); finite trees
+give the same answer when both systems have finite solutions, and otherwise
+finite satisfiability alone decides (\cref{thm:tc-finite}); and a gadget on
+every variable reduces $\BF$ to $\BFT$ in each tree class
+(\cref{thm:tc-gadget}). Nothing in this section depends on the later
+sections. In \cref{sec:sm,sec:un,sec:ex,sec:nm,sec:mo}, therefore, all trees
+are over $\BFT$ and assignments range over arbitrary trees, and \cref{sec:as}
+puts the pieces together.
+
+The transfers to regular and to finite trees follow one pattern. A failed
+extension is caused by at most two seeds (\cref{lem:tc-two-seeds}), and the
+corresponding observations are expressed by finite ground bounds
+(\cref{lem:tc-pins}). It then suffices that
+adding ground bounds to a system preserves the existence of solutions in the
+tree class: for regular trees and regular bounds by the graph equations of the
+bounds (\cref{lem:tc-pinning-regular}), and for finite trees and finite bounds
+by a median argument, for every variance (\cref{thm:tc-pinning}). Least
+closures do not suffice for finite trees: they describe trees with as few
+leaves as possible, and these are infinite in general; the empty system has
+the empty least model, which assigns $\Omega$ to every variable. Proofs not
+given here are in \cref{app:tc}.
 
 Throughout, trees are over $\BFT$ and ordered by $\le_c$ unless stated
 otherwise, $\varphi$ and $\psi$ are as in \cref{def:bg-existential}, we use
@@ -103,23 +117,21 @@ For every covariant tree $t$ and every word $w$,
  w\notin L^1_t&\iff\emb_\Bot(w,f(\Bot^n))\le t,
 \end{aligned}
 \end{equation}
-and each of these four trees has at most $1+n(\len w+1)$ positions.
 Consequently, for every variance $c$, every visible observation with variable
 $x$ and word $w$ is equivalent, for all assignments $\rho$ of $X$, to a single
 inequality $g\le_c\rho(x)$ or $\rho(x)\le_cg$, where $g$ is a finite ground
-tree with at most $1+n(\len w+1)$ positions.
+tree.
 \end{lemma}
 
-For $n\ge1$ the bound is attained by the two trees with a constructor at the
-end of the pin path; for $n=0$ the only word is $\eps$, and the four trees are
-$\Top$, $f()$, $\Bot$ and $f()$.
+For $n=0$ the only word is $\eps$, and the four trees are $\Top$, $f()$,
+$\Bot$ and $f()$.
 
-\subsection{Finite-Bound Pinning}\label{sec:tc-pinning}
+\subsection{Bound Pinning}\label{sec:tc-pinning}
 
 \paragraph{Intersection of leaf cones}
-Over arbitrary and regular trees, extensions can be intersected; over finite
-trees they cannot (item (3) below), which is why the transfer to finite trees
-pins observations by finite ground bounds instead. For trees $t$ and $u$, let
+Over arbitrary trees, extensions can be intersected; over finite trees they
+cannot (item (2) below), which is why the transfer to finite trees pins
+observations by finite ground bounds instead. For trees $t$ and $u$, let
 $t\leafmeet u$ be the tree with the leaf pair
 $(L^0_t\cap L^0_u,\ L^1_t\cap L^1_u)$, which exists by
 \cref{thm:lf-representation}(1); its signed leaf cones contain exactly the
@@ -133,37 +145,62 @@ observations common to $t$ and $u$. For assignments, $\leafmeet$ acts variablewi
   projected family $\mathcal F_\psi$ (\cref{eq:ch-models}) belongs to
   $\mathcal F_\psi$. In particular, the solutions of $\chi$ and the assignments of $X$ that extend
   to solutions of $\psi$ are closed under $\leafmeet$.
-\item The operation $\leafmeet$ is commutative, associative, idempotent and
-  monotone for $\le_c$, and
-  $f(t_i)_i\leafmeet f(u_i)_i=f(t_i\leafmeet u_i)_i$. Moreover,
-  $t\leafmeet u$ is the median of $t$, $u$ and $\Omega$ in the lattice of
-  trees ordered by $\le_c$.
-\item If $t$ and $u$ are regular, then so is $t\leafmeet u$. For $n\ge1$,
-  $\Bot\leafmeet\Top=\Omega$ is infinite, so the finite trees are not
-  closed under $\leafmeet$.
+\item For $n\ge1$, $\Bot\leafmeet\Top=\Omega$ is infinite, so the finite trees
+  are not closed under $\leafmeet$.
 \end{enumerate}
 \end{proposition}
 
 The proof is in \cref{app:tc}. By (1), the model $H_\psi(S)$ of
 \cref{lem:lf-closure}(5) is the intersection of all models $T$ of $\psi$ with
-$T|_X=S$, the least extension of $S$. By (1) and commutativity, a relation
-that is the projection of the solutions of a system over arbitrary trees, or
-over regular trees, and contains two pairs $(a,b)$ and $(b,a)$ also contains
-the diagonal pair $(a\leafmeet b,a\leafmeet b)$. So no such relation is
-nonempty, symmetric and irreflexive; in particular, over arbitrary or regular
-trees no system with hidden variables defines the disequality of two trees.
-The decision procedure does not use \cref{prop:ch-meet}.
+$T|_X=S$, the least extension of $S$. Informally, $\leafmeet$ is an
+information meet: it keeps the observations common to its arguments, it
+commutes with the constructor, and it is the median of $t$, $u$ and $\Omega$.
+So, over arbitrary trees, a relation that is the projection of the
+solutions of a system and contains two pairs $(a,b)$ and $(b,a)$ also contains
+$(a\leafmeet b,a\leafmeet b)$, and no system with hidden variables defines the
+disequality of two trees. The decision procedure does not use
+\cref{prop:ch-meet}.
 
 \paragraph{Ground bounds}
 A \emph{ground bound} on a variable $x$ is an inequality $g\le_cx$, a
-\emph{lower} bound, or $x\le_cg$, an \emph{upper} bound, where $g$ is a finite
-ground tree. The following theorem extends
+\emph{lower} bound, or $x\le_cg$, an \emph{upper} bound, where $g$ is a ground
+tree; it is \emph{finite} or \emph{regular} if $g$ is. We first treat regular
+trees.
+
+\begin{lemma}[Regular-bound pinning]\label{lem:tc-pinning-regular}
+Let $\chi$ be a system over a finite set $V$ of variables, with any variance, and let
+$B$ be a finite set of regular ground bounds on variables of $V$. If
+$\chi\cup B$ has a solution, then it has a regular solution.
+\end{lemma}
+
+\begin{proof}
+Each tree $g$ of a bound is the unfolding of a finite graph $G_g$ whose
+constructor nodes have $n$ ordered successors (\cref{sec:bg-trees}). Give every
+node $\nu$ of every such graph a fresh variable $y_\nu$, and let $E$ consist of
+the literals $y_\nu\le f(y_{\nu_i})_i$ and $f(y_{\nu_i})_i\le y_\nu$ for every
+constructor node $\nu$ with successors $\nu_i$, and of $y_\nu=\Bot$ or
+$\Top\le y_\nu$ for every leaf $\nu$ labeled $\Bot$ or $\Top$. By antisymmetry of
+$\le_c$, a solution $\sigma$ of $E$ has $\sigma(y_\nu)=f(\sigma(y_{\nu_i}))_i$
+at constructor nodes, so by induction on the length of a word $w$, $w$ is a
+position of $\sigma(y_\nu)$ iff it is a position of the unfolding of $G_g$
+from $\nu$, with the same label: the graph equations $E$ have exactly one
+solution, the unfoldings. Replace each bound $g\le_cx$ by the copy literal
+$y_{r_g}\le x$, where $r_g$ is the root of $G_g$, and each bound $x\le_cg$ by
+$x\le y_{r_g}$; call the result $B'$. A solution of $\chi\cup B$, extended by
+the unfoldings, solves $\chi\cup E\cup B'$, so by \cref{thm:bg-nsse}(1) this
+system has a regular solution $\tau$. By uniqueness, $\tau(y_{r_g})=g$ for
+every bound, so the restriction of $\tau$ to $V$ is a regular solution of
+$\chi\cup B$.
+\end{proof}
+
+For finite trees, the following theorem extends
 \nssecite{Theorem ``Finite countermodel transfer''} from the pin paths of a
-single word to arbitrary finite bounds.
+single word to arbitrary finite bounds; it needs a finite solution of the
+system without the bounds.
 
 \begin{theorem}[Finite-bound pinning]\label{thm:tc-pinning}
 Let $\chi$ be a system over a set $V$ of variables, with any variance, that
-has a finite solution, and let $B$ be a finite set of ground bounds on
+has a finite solution, and let $B$ be a finite set of finite ground bounds on
 variables of $V$. If $\chi\cup B$ has a solution, then it has a finite
 solution.
 \end{theorem}
@@ -188,7 +225,8 @@ The literals of \cref{tab:bg-signed} that contain $\Bot$ or $\Top$ belong to
 $\chi^\pm$; the proof needs them (\cref{rem:tc-extreme}).
 
 \begin{lemma}[Signed bounds]\label{lem:tc-signed}
-Let $\chi$ be a system over $V$ and $B$ a finite set of ground bounds on $V$.
+Let $\chi$ be a system over $V$ and $B$ a finite set of finite ground bounds on
+$V$.
 \begin{enumerate}[leftmargin=*]
 \item An assignment $\rho$ of $V$ solves $\chi\cup B$ iff $\rho^\pm$ solves
   $\chi^\pm\cup B^\pm$.
@@ -210,15 +248,15 @@ corresponding cones of at least two of the three trees: for both signs,
 It exists by \cref{thm:lf-representation}(1): the sets on the right are
 extension closed, and they are disjoint, since a word in two of the cones
 $L^0_{t_j}$ and in two of the cones $L^1_{t_j}$ lies in both cones of one
-$t_j$. The median of assignments is taken variablewise. It is the lattice
-median $(t_1\wedge t_2)\vee(t_1\wedge t_3)\vee(t_2\wedge t_3)$ of the
-covariant order, but we use only the following properties.
+$t_j$. The median of assignments is taken variablewise. Informally, the median
+takes a majority vote of the three trees at every word; we use only the
+following properties.
 
 \begin{lemma}[Median]\label{lem:tc-median}
 \leavevmode
 \begin{enumerate}[leftmargin=*]
-\item The median is symmetric and monotone in each argument, and
-  $\tcmed(t,t,u)=t$.
+\item The median is symmetric in its first two arguments and monotone in each
+  argument, and $\tcmed(t,t,u)=t$.
 \item $\tcmed(f(a^1_i)_i,f(a^2_i)_i,f(a^3_i)_i)=f(\tcmed(a^1_i,a^2_i,a^3_i))_i$
   and $\tcmed(t_1,t_2,t_3)^\partial=\tcmed(t_1^\partial,t_2^\partial,t_3^\partial)$.
   In particular $\iota$ commutes with medians of assignments of signed
@@ -233,12 +271,15 @@ The covariant case of \cref{thm:tc-pinning} is proved directly from the
 finite-satisfiability criterion of \citet{Zhao26}
 (\cref{thm:bg-nsse-sat}), in \cref{app:tc-covariant}. By that
 criterion, a system has a finite solution iff it has neither a label clash nor
-a cycle clash. The proof encodes each ground bound by fresh variables, one for
-each position of the bound; since a path through fresh variables strictly
-increases the length of the position they stand for, every cycle clash of the
-encoded system lies among the original variables, where the finite solution
-of $\chi$ excludes it, and the solution of $\chi\cup B$ excludes label
-clashes.
+a cycle clash. A finite ground bound is equivalent to finitely many covariant
+observations, the \emph{path pins} at its positions, and each path pin is a
+bound by one of the four trees of \cref{lem:tc-pins}, which a chain of fresh
+variables along its word expresses. The fresh variables of a chain have ranks
+that strictly increase along the chain, so, by the ranked extensions of
+\citet{Zhao26}, every cycle clash of the extended system lies among the
+original variables, where the finite solution of $\chi$ excludes it, and the
+solution of $\chi\cup B$ excludes label clashes. The pins are added one at a
+time.
 
 \begin{lemma}[Covariant finite-bound pinning]\label{lem:tc-pinning-covariant}
 \Cref{thm:tc-pinning} holds when $f$ is covariant.
@@ -275,7 +316,7 @@ By \cref{lem:tc-signed}(3), $\tcmed(\alpha,\iota\alpha,\delta^\pm)=\tau^\pm$ for
 a finite assignment $\tau$ of $V$, which solves $\chi\cup B$ by \cref{lem:tc-signed}(1).
 \end{proof}
 
-\begin{remark}[The extreme literals are needed]\label{rem:tc-extreme}
+\begin{example}[The extreme literals are needed]\label{rem:tc-extreme}
 The signed literals of $u=\Bot$ and $\Top\le u$ in \cref{tab:bg-signed} cannot
 be dropped from $\chi^\pm$, although they contribute no rules on leaf cones,
 only facts (\cref{tab:lf-clauses}). Let $n\ge1$, $\chi=\{\Top\le x\}$,
@@ -287,13 +328,13 @@ violates $\chi$. The third argument of the median must also be a finite
 solution of the unpinned system: $\Omega$ in every coordinate is fixed by
 $\iota$ and solves every signed system without extreme literals, but the
 median with it is infinite in general.
-\end{remark}
+\end{example}
 
 \subsection{Regular and Finite Trees}\label{sec:tc-transfer}
 
 \begin{theorem}[Regular trees]\label{thm:tc-regular}
 For every arity $n\ge0$, every variance $c$, and all systems $\varphi$ over
-$X$ and $\psi$ over $X\cup Z$:
+a finite set $X$ and $\psi$ over the finite set $X\cup Z$:
 \begin{enumerate}[leftmargin=*]
 \item a system is satisfiable iff it has a regular solution;
 \item every regular extensible assignment of $X$ has a regular extension;
@@ -304,23 +345,23 @@ Consequently $\Ereg(\varphi,\psi)\iff\Eall(\varphi,\psi)$.
 \end{theorem}
 
 \begin{proof}
-(1) This restates \cref{thm:bg-nsse}(1) and \cref{lem:bg-signed-sat}.
+(1) This restates \cref{thm:bg-nsse}(1).
 
-(2) Let $\rho$ be regular and extensible. By \cref{lem:tc-extension},
-$H_\psi(S_\rho)$ decodes to an extension of $\rho$. The cones of $\rho$ are
-regular by \cref{thm:lf-representation}(4), hence so are those of
-$H_\psi(S_\rho)$ by \cref{lem:sm-regular-closure}, and the extension is
-regular by \cref{thm:lf-representation}(4).
+(2) Let $\rho$ be regular and extensible, with an extension $\rho'$ that solves
+$\psi$. Let $B$ consist of the regular ground bounds $\rho(x)\le_cx$ and
+$x\le_c\rho(x)$ for $x\in X$. Then $\rho'$ solves $\psi\cup B$, so by
+\cref{lem:tc-pinning-regular} the system $\psi\cup B$ has a regular solution
+$\tau$. By antisymmetry of $\le_c$, $\tau$ agrees with $\rho$ on $X$, so it is a
+regular extension of $\rho$.
 
-(3) Let $\rho$ be a solution of $\varphi$ that is not extensible, and take $A$
-and $C$ from \cref{lem:tc-two-seeds}. The model $S_\rho$ of $\varphi$ contains
-$A$, so by \cref{lem:lf-closure}(2) the set $H_\varphi(A)$ is the least model
-of $\varphi$ that contains $A$, and $H_\varphi(A)\subseteq S_\rho$. It decodes
-to a solution $\rho_0$ of $\varphi$, which is regular by
-\cref{lem:sm-regular-closure} and \cref{thm:lf-representation}(4), since $A$
-is finite. Its atom set contains
-$A$ and, being contained in $S_\rho$, is disjoint from $C$. By
-\cref{lem:tc-two-seeds}, $\rho_0$ is not extensible.
+(3) Let $\rho$ be a solution of $\varphi$ that is not extensible. By
+\cref{lem:tc-two-seeds}, at most two visible observations hold in $\rho$ and
+hold together in no extensible assignment. By \cref{lem:tc-pins}, each of them
+is equivalent to a ground bound on a visible variable by a finite, hence
+regular, tree; let $B$ be the set of these bounds. Then $\rho$ solves
+$\varphi\cup B$, so \cref{lem:tc-pinning-regular} gives a regular solution
+$\rho_1$ of $\varphi\cup B$. The observations hold in $\rho_1$, so $\rho_1$ is
+not extensible.
 
 For the consequence, if $\Eall$ holds, every regular solution of $\varphi$ is
 extensible and has a regular extension by (2); if $\Eall$ fails, (3) gives a
@@ -367,16 +408,15 @@ has no finite extension, and both sides fail. If both have finite solutions,
 (1) and (2) give $\Efin(\varphi,\psi)\iff\Eall(\varphi,\psi)$.
 \end{proof}
 
-The bounds in the proof of (1) concern at most two visible variables, and each
-has at most $1+n(\len w+1)$ positions, where $w$ is the word of its
-observation. The proofs of \cref{thm:tc-regular,thm:tc-finite} use no
-satisfiability hypothesis and no condition on the variance.
+The bounds in the proof of (1) concern at most two visible variables. The
+proofs of \cref{thm:tc-regular,thm:tc-finite} use no satisfiability hypothesis
+and no condition on the variance.
 
 \begin{corollary}[Decisions for regular and finite trees]\label{cor:tc-decidable}
 For fixed $n$ and $c$, if existential entailment over $\BFT$ is decidable over
 arbitrary trees, then it is decidable over regular trees and over finite
 trees: $\Ereg=\Eall$, and $\Efin$ is decided by \cref{eq:tc-finite}, whose
-two finite-satisfiability tests are decidable by \cref{thm:bg-nsse}(1).
+two finite-satisfiability tests are decidable by \cref{thm:bg-nsse}(2).
 \end{corollary}
 
 \begin{remark}[Both finite-satisfiability tests are needed]\label{rem:tc-examples}
@@ -387,7 +427,7 @@ over finite trees, since $\psi$ has no finite solution. For
 $\varphi=\{x\le f(x^n),\ f(x^n)\le x\}$ and $\psi=\{x=\Bot\}$, the entailment
 fails over arbitrary and regular trees, at $x=\Omega$, and holds vacuously
 over finite trees. Least models are not finite countermodels in general, and
-by \cref{prop:ch-meet}(3) the finite trees are not closed under intersection
+by \cref{prop:ch-meet}(2) the finite trees are not closed under intersection
 of leaf cones; this is why \cref{thm:tc-finite} pins observations instead.
 \end{remark}
 
@@ -506,7 +546,7 @@ witness $T_{h(t)+1}$ can be large, but it is used only in the proof; the
 reduction introduces variables and literals, not ground trees. Both
 requirements on the gadget are necessary.
 
-\begin{remark}[Every visible variable, and covariance]\label{rem:tc-gadget-needed}
+\begin{example}[Every visible variable, and covariance]\label{rem:tc-gadget-needed}
 The gadget cannot be omitted on a visible variable that does not occur in
 $\varphi$: with $X=\{x\}$, the entailment
 $\mathrm{true}\models^{\BF}_{\mathcal D}\exists\bar z\ x\le f(z_i)_i$ holds in
@@ -520,31 +560,25 @@ $y=\Top\to\Bot$ satisfies $y\le_c y\to y$. We do not treat $\BF$ with a
 contravariant argument. That problem is not obtained from $\BFT$ by omitting
 the literals $\Top\le u$: for every variance, the entailment above holds over
 $\BF$ but fails over $\BFT$ at $x=\Top$.
-\end{remark}
+\end{example}
 
 \subsection{Arities Zero and One}\label{sec:tc-small}
 
 \begin{remark}[Arity zero]\label{rem:tc-nullary}
 Let $n=0$. By \cref{rem:bg-nullary}, all three tree classes coincide at arity
 zero, so $\Efin=\Ereg=\Eall$, and existential entailment is decidable by
-finite enumeration; each of the $3^s$ assignments is checked in time linear in
-$\len\varphi+\len\psi$. The route of \cref{sec:lf,sec:ch} also applies, with
+finite enumeration of the $3^s$ assignments. The route of \cref{sec:lf,sec:ch} also applies, with
 no nonempty words, but the enumeration is simpler. Copy literals cannot be
 eliminated at arity zero (\cref{lem:bg-sandwich} needs $n\ge1$), which is why
 the proof of \cref{thm:tc-pinning} treats $n=0$ separately.
 \end{remark}
 
 \begin{remark}[Arity one]\label{rem:tc-unary}
-Let $n=1$. Every tree is $f^k(\Bot)$ or $f^k(\Top)$ for some $k\ge0$, or
-$\Omega$, so every tree is regular and \cref{thm:tc-regular} is immediate.
-Finite and arbitrary trees still differ: the system
-$\{x\le f(x),\ f(x)\le x\}$ has the unique solution $\Omega$. The variance
-$c(0)=1$ is allowed, and then mixed polarity already occurs: for
-$\{x\le f(x)\}$ there is no parity assignment $\pi$ as in
-\cref{rem:ch-parity}, since the condition $\pi(a)=\pi(u)\oplus c(i)$ for a
-constructor literal with root $u$ and child $a$ at argument $i$ would require
-$\pi(x)=\pi(x)\oplus1$. The spine automaton of \cref{sec:nm} runs over
-$\Sigma=\{0\}$, so no state has two distinct safe direction letters. Hence its
-branching case does not occur, and every infinite direction word is $0^\omega$.
-The general argument applies without change.
+Informally, for $n=1$ every tree is $f^k(\Bot)$, $f^k(\Top)$ or $\Omega$, so
+every tree is regular, while finite and arbitrary trees still differ, as the
+system $\{x\le f(x),\ f(x)\le x\}$ shows. The variance $c(0)=1$ is allowed,
+and then mixed polarity already occurs: $\{x\le f(x)\}$ has no parity
+assignment (\cref{rem:ch-parity}). Later, the spine automaton of the two-word
+hole problem runs over $\Sigma=\{0\}$, so the branching case of \cref{sec:nm}
+does not occur. The general argument applies without change.
 \end{remark}

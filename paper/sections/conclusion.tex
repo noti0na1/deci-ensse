@@ -22,7 +22,8 @@ singly exponential. Mortal holes are packed around a separator into one word of
 bounded depth, and a compression that carries a positive channel up the
 hierarchy keeps the anchored comparison that a mortal hole must contain. The
 transfers to regular and finite trees hold for every variance, and a gadget
-reduces covariant $\BF$ to $\BFT$.
+reduces covariant $\BF$ to $\BFT$; both come before the hole problems, which
+are therefore solved in a single setting.
 
 \paragraph{The Signature without Top and a Contravariant Argument}
 We do not know whether existential entailment over $\BF$ is decidable when $f$
@@ -36,21 +37,22 @@ trees without $\Top$, in which every leaf is $\Bot$ but its sign still depends
 on the polarity of its path.
 
 \paragraph{Complexity}
-The problem is PSPACE-hard for every fixed arity $n\ge2$ with $f$ covariant,
-and in 2-EXPSPACE (\cref{thm:cx-hard,thm:cx-upper}). For $n\le1$ it is in
-PSPACE (\cref{thm:cx-unary,rem:cx-nullary}), but we know no lower bound for
+By the results of the part that is not mechanized (\cref{sec:cx}), the problem
+is PSPACE-hard for every fixed arity $n\ge2$ with $f$ covariant, and in
+2-EXPSPACE (\cref{thm:cx-hard,thm:cx-upper}). For $n\le1$ it is in PSPACE
+(\cref{thm:cx-unary,rem:cx-nullary}), but we know no lower bound for
 $n=1$: the reductions of \cref{thm:cx-hard} need two independent directions,
 and a unary constructor offers only one. Closing the gap between PSPACE and
 2-EXPSPACE for $n\ge2$ is open, as is the complexity for a fixed variance with
 a contravariant argument, for which we claim no lower bound.
 
 \paragraph{Witness Lengths}
-Shortest counterexample words can be exponentially long
-(\cref{prop:cx-length}), and they are at most triply exponential
-(\cref{thm:as-main}). Words for \CondI\ and holes that are not mortal are
-singly exponential, and the words for \CondU\ stay below the mortal bound
-(\cref{thm:un-decidable}), so the bound of \cref{thm:as-main} is that of the
-mortal holes. Whether mortal holes have a doubly exponential bound is open.
+Shortest counterexample words are at most triply exponential
+(\cref{thm:as-main}), and they can be exponentially long
+(\cref{prop:cx-length}, not mechanized). Words for \CondI\ and holes that are not mortal are
+singly exponential, and the closed form for \CondU\ is at most the mortal
+closed form (\cref{prop:as-bounds}), which therefore gives the uniform bound
+of \cref{thm:as-main}. Whether mortal holes have a doubly exponential bound is open.
 The length bound of anchored compression is exponential in the depth and in
 the square of the dictionary size, and the dictionaries are exponential in
 the number of states and the depth; dictionaries of polynomial size would give
@@ -72,22 +74,22 @@ a Horn clause, and the single-seed characterization of \cref{sec:ch} rests on
 the Horn form.
 
 \paragraph{Mechanization}
-The mechanized proof covers decidability on flat input in all six cases, with
-anchored compression and all search bounds as explicit functions of automaton
-state counts (\cref{sec:mechanization}). Mechanizing the flattening of
-\cref{lem:bg-flattening}, the bounds of \cref{prop:as-bounds} in terms of the
-number of variables, the countermodels of \cref{lem:as-countermodel}, and the
-summary search of \cref{prop:cx-search} would make the quantitative and
-certifying statements machine checked as well.
+The mechanized proof follows the paper's routes and covers every numbered
+result before \cref{sec:cx}, including flattening, the bounds in the number
+of variables, countermodels, and the applications. Its decision procedures
+are computable definitions, and the paper--Lean contract checks the
+correspondence (\cref{sec:mechanization,app:lean}). Mechanizing
+\cref{sec:cx}, in particular the smaller unit reader of
+\cref{sec:un-smaller}, the summary search of \cref{prop:cx-search} and the
+reductions of \cref{thm:cx-hard}, would make the complexity bounds machine
+checked as well.
 
 \paragraph{Implementation in Type Inference}
 The procedure of \cref{thm:as-main} is not meant to be run as stated. A
-practical subsumption or simplification checker could first apply the classes
-of \cref{sec:ap-plain}, which reduce to plain entailment, then test
-satisfiability and condition \CondI, both in polynomial space, and then search
-for short holes of the unit readers and of the extracted instances. Each
-counterexample found can be checked directly and yields a regular countermodel
-(\cref{lem:as-countermodel}); only the absence of counterexamples depends on
-the bounds. Which of these cases arise in the constrained types produced by
+practical subsumption or simplification checker could test satisfiability and
+condition \CondI\ by bounded searches, and then search for short holes of the
+unit readers and of the extracted instances. Each counterexample found can be
+checked directly and yields a countermodel (\cref{lem:as-countermodel}); only
+the absence of counterexamples depends on the bounds. Which of these cases arise in the constrained types produced by
 inference, and how often mortal holes or long words for \CondU\ are needed, are
 empirical questions that we leave open.

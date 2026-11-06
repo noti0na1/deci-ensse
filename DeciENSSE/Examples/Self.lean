@@ -19,7 +19,7 @@ theorem pending_event : pending.SelfEvent [false] 0 1 := by decide +kernel
 /-- The pending example is a hole when self guards are ignored. -/
 theorem pending_underlying_hole : pending.toTwoWordInstance.IsHole [false] [false] := by
   decide +kernel
-/-- The pending self event blocks the self-aware hole. -/
+/-- The pending self event blocks the hole. -/
 theorem pending_blocked : ¬ pending.IsHole [false] [false] := by decide +kernel
 
 /-- Appending the other letter breaks the pending self event. -/
@@ -215,7 +215,7 @@ theorem mortal_nonvacuous :
   obtain ⟨hf, hm⟩ := mortal_hypotheses
   exact ⟨hf, hm, (CoreExamples.ternaryMortal.toSelf.three_cases hf).mpr (Or.inr hm)⟩
 
-/-- Both the branching premise and a genuine self obstruction occur. -/
+/-- Both the branching premise and a self obstruction occur. -/
 theorem ternary_pending_hypotheses :
     ternaryPending.ForcedHeads ∧ ternaryPending.IsPreHole [1] [1] ∧
       ternaryPending.SelfEvent [1] 0 1 ∧ ¬ ternaryPending.IsHole [1] [1] ∧
@@ -232,7 +232,7 @@ theorem ternary_breakerM (M : ℕ) :
   simpa only [Fintype.card_fin] using
     ternaryPending.breakerM CoreExamples.ternary_branching M
 
-/-- The self-aware branching bound applies with a nonempty ternary self guard. -/
+/-- The branching bound with self events applies with a nonempty ternary self guard. -/
 theorem ternary_short_branching_hole :
     ∃ u t, ternaryPending.IsHole u t ∧ u.length + t.length ≤ 780 := by
   simpa using ternaryPending.short_branching_hole
@@ -270,13 +270,14 @@ theorem periodicGuard_long (k : ℕ) :
   simp only [List.length_nil] at hj
   omega
 
-/-- An inhabited thin, purely periodic input shortens with the unchanged capacity 68. -/
+/-- An inhabited thin, purely periodic input shortens below the capacity
+`Pcap(3, 1, 1, 2) = 29`. -/
 theorem periodicGuard_long_short (k : ℕ) :
     ∃ u t, NonMortalExamples.periodicGuardInstance.toSelf.IsPreHole u t ∧
       NonMortalExamples.periodicGuardInstance.A.run u = 1 ∧
       NonMortalExamples.periodicGuardInstance.toSelf.SurvivorFree u t (fun _ => false) ∧
       NonMortalExamples.periodicGuardInstance.toSelf.SelfSurvivorFree t (fun _ => false) ∧
-      u.length < 68 ∧ t.length < 68 := by
+      u.length < 29 ∧ t.length < 29 := by
   let I := NonMortalExamples.periodicGuardInstance.toSelf
   obtain ⟨hph, hsf, hself⟩ := (I.pumpGood_iff _ _ _).mp (periodicGuard_long k)
   have hrun : I.A.run (true :: List.replicate k false) = 1 := by
@@ -287,7 +288,7 @@ theorem periodicGuard_long_short (k : ℕ) :
     ⟨1, by decide, fun _ => rfl⟩ ⟨_, _, hph, hrun, hsf, hself⟩
   simpa [I, TwoWordInstance.toSelf, pumpCapacity] using h
 
-/-- The ternary pump family also satisfies the self-aware invariant. -/
+/-- The ternary pump family also satisfies the invariant with self events. -/
 theorem ternaryPump_long (k : ℕ) :
     NonMortalExamples.ternaryPumpInstance.toSelf.PumpGood (fun _ => 1)
       (2 :: List.replicate k 1) [] := by
@@ -296,27 +297,26 @@ theorem ternaryPump_long (k : ℕ) :
   simp only [List.length_nil] at hj
   omega
 
-/-- Arbitrarily long ternary inputs shorten with both survivor conditions and
-the capacity 68 supplied by `TwoWordInstance.pumpSize_le`. -/
+/-- Arbitrarily long ternary inputs shorten with both survivor conditions
+below the pump bound `pumpBound 3 1 1 2 1 = 21` at the period `1`. -/
 theorem ternaryPump_long_short (k : ℕ) :
     ∃ u t, NonMortalExamples.ternaryPumpInstance.toSelf.IsPreHole u t ∧
       NonMortalExamples.ternaryPumpInstance.A.run u = 1 ∧
       NonMortalExamples.ternaryPumpInstance.toSelf.SurvivorFree u t (fun _ => 1) ∧
       NonMortalExamples.ternaryPumpInstance.toSelf.SelfSurvivorFree t (fun _ => 1) ∧
-      u.length < 68 ∧ t.length < 68 := by
+      u.length < 21 ∧ t.length < 21 := by
   let I := NonMortalExamples.ternaryPumpInstance.toSelf
   have hp : LeastStreamPeriod (fun _ => (1 : Fin 3)) 1 :=
     ⟨by decide, fun _ => rfl, fun _ hq _ => hq⟩
-  have hsize := TwoWordInstance.pumpSize_le (SA := Fin 3) (SB := Fin 1)
-    (SA' := Fin 1) (SB' := Fin 2) (p := 1) (by decide)
-  obtain ⟨u, t, hg, hrun, hu, ht⟩ := I.pumpGood_short hp hsize _ _ _
+  obtain ⟨u, t, hg, hrun, hu, ht⟩ := I.pumpGood_short hp _ _ _
     le_rfl (ternaryPump_long k)
   obtain ⟨hph, hsf, hself⟩ := (I.pumpGood_iff _ _ _).mp hg
   have hend : I.A.run (2 :: List.replicate k 1) = 1 := by
     have h := NonMortalExamples.ternaryPump_atCut k (k + 1) (by omega)
     rwa [LDFA.atCut, List.take_of_length_le (by simp)] at h
   exact ⟨u, t, hph, hrun.trans hend, hsf, hself,
-    by simpa [pumpCapacity] using hu, by simpa [pumpCapacity] using ht⟩
+    by simpa [I, TwoWordInstance.toSelf, pumpBound] using hu,
+    by simpa [I, TwoWordInstance.toSelf, pumpBound] using ht⟩
 
 /-- Exercise the exact max-form endpoint at a ternary alphabet. -/
 theorem ternary_max_capacity :
@@ -346,7 +346,7 @@ theorem small_selfGuard_nonempty : small.SelfGuard.Nonempty := by decide +kernel
 /-- The mortal witness target has no self events. -/
 theorem small_noSelf : small.NoSelf [true] := by decide +kernel
 
-/-- The concrete binary word pair is a mortal self-aware hole. -/
+/-- The binary word pair is a mortal hole with self events. -/
 theorem mortal_01_1 : small.IsMortalHole [false, true] [true] :=
   (small.isMortalHole_iff _ _).mpr
     ⟨DeciENSSE.Core.Words.Mortal.Examples.mortal_01_1, small_noSelf⟩
@@ -358,7 +358,7 @@ theorem small_forcedHeads : small.ForcedHeads := by
   have hn := (DeciENSSE.Core.Words.CoreExamples.emptyHead_run_eq_zero γ).mp (hγ.trans hq)
   simp [hn] at hi
 
-/-- This instance has forced target heads and a mortal self-aware hole. -/
+/-- This instance has forced target heads and a mortal hole with self events. -/
 theorem small_hypotheses : small.ForcedHeads ∧ small.HasMortalHole :=
   ⟨small_forcedHeads, _, _, mortal_01_1⟩
 
@@ -375,7 +375,7 @@ theorem compression_input :
   simpa only [card_state, Fintype.card_fin] using
     mortal_compression_input small mortal_01_1
 
-/-- Apply the complete theorem, without evaluating its astronomical bound. -/
+/-- Apply the complete theorem, without evaluating its bound. -/
 theorem mortal_compressed :
     ∃ u t, small.IsMortalHole u t ∧
       u.length + t.length + 1 ≤ mortalHoleBound 4 2 2 2 := by
@@ -410,7 +410,7 @@ def ternarySmall : SelfTwoWordInstance (Fin 3) (Fin 4) (Fin 2) (Fin 2) (Fin 2) w
   toTwoWordInstance := Mortal.Examples.ternarySmall
   SelfGuard := {(1, 0)}
 
-/-- The ternary word pair is a mortal self-aware hole. -/
+/-- The ternary word pair is a mortal hole with self events. -/
 theorem ternary_mortal : ternarySmall.IsMortalHole [0, 2] [2] :=
   (ternarySmall.isMortalHole_iff _ _).mpr
     ⟨ternary_mortal_02_2, by decide +kernel⟩
@@ -424,7 +424,7 @@ theorem ternary_hypotheses : ternarySmall.SelfGuard.Nonempty ∧
   have hn := (CoreExamples.emptyHead_run_eq_zero γ).mp (hγ.trans hq)
   simp [hn] at hi
 
-/-- Elementary compression shortens the concrete mortal self-aware hole. -/
+/-- Elementary compression shortens the mortal hole with self events. -/
 theorem ternary_compressed :
     ∃ u t, ternarySmall.IsMortalHole u t ∧
       u.length + t.length + 1 ≤ mortalHoleBound 4 2 2 2 := by
@@ -451,8 +451,7 @@ open DeciENSSE.Core.Words.Mortal
 theorem Examples.ternary_public_bound :
     ∃ u t, ternarySmall.IsMortalHole u t ∧
       u.length + t.length ≤ mortalHoleBound 4 2 2 2 :=
-  mortalShortHoleBoundSelf 4 2 2 2 ternarySmall
-    ternary_hypotheses.2.1 ternary_hypotheses.2.2
+  mortalShortHoleBoundSelf 4 2 2 2 ternarySmall ternary_hypotheses.2.2
 
 end DeciENSSE.Core.Words.Self
 
@@ -460,7 +459,7 @@ namespace DeciENSSE.Core.Words.Self
 
 namespace BoundExamples
 
-/-- A genuine ternary hole with nonempty self guard exercises the assembled bound. -/
+/-- A ternary hole with a nonempty self guard exercises the assembled bound. -/
 theorem ternary_bounded :
     ∃ u t, NonMortalExamples.ternaryPending.IsHole u t ∧
       u.length + t.length ≤ selfHoleBound 2 2 2 2 :=

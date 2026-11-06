@@ -1,402 +1,92 @@
-%% appendix-lean -- the public statement and interface of the Lean development,
-%% the module layout, the correspondence between the results of the paper and
-%% the formal declarations, and the differences between the two.
-
 \section{The Mechanized Proof}
 \label{app:lean}
 
-This appendix gives the formal statement, the module layout, and the
-correspondence between the results of this paper and the declarations that
-prove them (\cref{sec:mechanization}). Names are relative to the namespace
-\texttt{DeciENSSE}; names that begin with \texttt{DeciNSSE} belong to the
-library shared with the artifact of \citet{Zhao26}. Listings open both
-namespaces and suppress proof bodies and implicit arguments. Paths are lists
-over \texttt{Fin n}, and \texttt{V k} abbreviates \texttt{Fin k}.
+This appendix records the representation conventions, module layout, and
+generated correspondence with the paper. The scope, trusted statements, and
+commands for checking the development are given in \cref{sec:mechanization}.
 
-\subsection{Statement and Public Interface}
-\label{app:lean-statement}
+\paragraph{Conventions}
+Variable carriers are finite: the public interface uses finite initial
+segments, and the core separates visible and hidden variables with the sum
+type $X\oplus Z$. Systems are lists of literals, interpreted conjunctively;
+ordering and repeated literals do not affect satisfaction. Regular trees are
+unfoldings of finite graphs, and finite trees are interpretations of finite
+terms. Subtrees are optional: a path outside the domain returns
+\lean{none}, so subtree identities can quantify over all paths. A default
+letter supplies an inhabited alphabet where a total canonical hierarchy or a
+periodic stream requires one; the periodic stream of a nonempty word is
+independent of that choice. Bounded searches are the executable form of the
+decision procedures. A decidability claim is a computable definition that
+returns a \lean{Decidable} instance built from these searches; a
+conditional claim is a computable function from decision procedures to
+decision procedures. The checker rejects entries that are not computable.
+These conventions recur in the
+\texttt{Form:} notes of \lean{DeciENSSE/Paper/*.lean}.
 
-Trees, the variance order, finite terms, and regular graphs are those of
-\citet{Zhao26}: \lean{DeciNSSE.Tree} labels the paths of a tree by
-\lean{DeciNSSE.Sym}, \lean{DeciNSSE.Tree.Le} compares the labels at every common
-path, reversed at odd \lean{DeciNSSE.polarity}, and \lean{DeciNSSE.RGraph.unfold}
-and \lean{DeciNSSE.FTree.toTree} interpret regular graphs and finite terms.
-\lean{DeciNSSE.Characterization.treeLe_eq_gfp} identifies the order with the
-greatest fixed point of the constructor rule, and
-\lean{DeciNSSE.Characterization.unfold_range_iff} and
-\lean{DeciNSSE.Characterization.toTree_range_iff} show that the two
-interpretations have as images the trees with finitely many subtrees and the
-trees with finite domain. The flat literals of \cref{sec:bg-constraints} and
-existential entailment over arbitrary trees are
-\begin{lstlisting}
-inductive ELit (n k : ℕ) where
-  | le (x y : V k)
-  | leF (x : V k) (a : Fin n → V k)
-  | fLe (a : Fin n → V k) (x : V k)
-  | eqBot (x : V k)
-  | eqTop (x : V k)
-
-def ELit.holds (c : Fin n → Bool) (ρ : V k → Tree n) : ELit n k → Prop
-  | .le x y => Tree.Le c (ρ x) (ρ y)
-  | .leF x a => Tree.Le c (ρ x) (Tree.node (ρ ∘ a))
-  | .fLe a x => Tree.Le c (Tree.node (ρ ∘ a)) (ρ x)
-  | .eqBot x => ρ x = Tree.bot
-  | .eqTop x => ρ x = Tree.top
-
-def ExistsEntails (c : Fin n → Bool)
-    (φ : EConstraint n k) (ψ : EConstraint n (k + h)) : Prop :=
-  ∀ ρ, ESat c ρ φ → ∃ σ : V h → Tree n, ESat c (join ρ σ) ψ
-\end{lstlisting}
-where \lean{EConstraint} is a list of literals, \lean{ESat} requires every
-literal to hold, and \lean{join} assigns the visible variables first and the
-$h$ hidden ones after them. The literal $\Top\le u$ of the paper is
-\texttt{eqTop}. In \lean{ExistsEntailsReg} and \lean{ExistsEntailsFin} both
-assignments range over regular graphs and finite terms, composed with their
-interpretations. Over $\BF$ the literals \lean{BFLit} omit \texttt{eqTop},
-\lean{BFSat} reads them covariantly through \lean{BFLit.toELit}, and
-\begin{lstlisting}
-def TopFree (t : Tree n) : Prop := ∀ w, t.fn w ≠ some Sym.top
-
-def ExistsEntailsTopFree
-    (φ : BFConstraint n k) (ψ : BFConstraint n (k + h)) : Prop :=
-  ∀ ρ, (∀ x, TopFree (ρ x)) → BFSat ρ φ →
-    ∃ σ : V h → Tree n, (∀ z, TopFree (σ z)) ∧ BFSat (join ρ σ) ψ
-\end{lstlisting}
-with the regular and finite versions \lean{ExistsEntailsTopFreeReg} and
-\lean{ExistsEntailsTopFreeFin}. These definitions, together with those of
-\citet{Zhao26} that they use, form the trusted statement.
-
-Importing \texttt{DeciENSSE} exposes the six procedures
-\begin{lstlisting}
-def decideExistsEntails (c : Fin n → Bool)
-    (φ : EConstraint n k) (ψ : EConstraint n (k + h)) :
-    Decidable (ExistsEntails c φ ψ)
-def decideExistsEntailsTopFree
-    (φ : BFConstraint n k) (ψ : BFConstraint n (k + h)) :
-    Decidable (ExistsEntailsTopFree φ ψ)
-
-theorem decideExistsEntails_correct (c : Fin n → Bool)
-    (φ : EConstraint n k) (ψ : EConstraint n (k + h)) :
-    @decide _ (decideExistsEntails c φ ψ) = true ↔ ExistsEntails c φ ψ
-\end{lstlisting}
-and \lean{decideExistsEntailsReg}, \lean{decideExistsEntailsFin},
-\lean{decideExistsEntailsTopFreeReg}, and \lean{decideExistsEntailsTopFreeFin},
-of the same types for the other relations. Each has a correctness theorem of
-the same form, named by appending \texttt{\_correct}, without premises. The
-procedures are definitions rather than instances, since several of them decide
-related propositions. The plain-entailment relations \lean{DeciNSSE.Entails},
-\lean{DeciNSSE.EntailsReg}, and \lean{DeciNSSE.EntailsFin} of \citet{Zhao26}
-take a list \lean{DeciNSSE.Constraint} of literals without copy literals. With
-\lean{liftConstraint} embedding it and \lean{query} the consequent $x\le y$,
-\begin{lstlisting}
-theorem nsse_iff_ensse (c : Fin n → Bool)
-    (φ : Constraint n k) (x y : V k) :
-    Entails c φ x y ↔
-      ExistsEntails (h := 0) c (liftConstraint φ) (query x y)
-\end{lstlisting}
-and its regular and finite versions, \lean{nsseReg_iff_ensseReg} and
-\lean{nsseFin_iff_ensseFin}, give the procedures \lean{decideEntails}, \lean{decideEntailsReg}, and
-\lean{decideEntailsFin}. They have the same types as the procedures of
-\citet{Zhao26}, and their correctness theorems are named by appending
-\texttt{\_correct} as well. With the consequent \lean{bfQuery}, the reduction
-\lean{topFree_nsse_iff_ensse} and its versions give
-\lean{decideEntailsTopFree} and its two versions, which decide covariant plain
-entailment over $\BF$.
-
-The files \texttt{lean-toolchain} and \texttt{lakefile.toml} pin Lean and
-Mathlib to \texttt{v4.35.0}. The commands
-\begin{lstlisting}
-lake exe cache get
-lake build
-\end{lstlisting}
-download compiled dependencies and check both libraries. The axioms of the
-twelve correctness theorems, of the six existential procedures and the six
-plain ones, can be listed with \texttt{\#print axioms}; they are
-\texttt{propext}, \texttt{Classical.choice}, and \texttt{Quot.sound}.
-
-\subsection{Module Overview}
+\subsection{Module Map}
 \label{app:lean-modules}
 
-The existential proof has 86 files under \texttt{DeciENSSE/}, and the shared
-library 54 files under \texttt{DeciNSSE/}. Below the public interface the
-procedures work over arbitrary finite types \texttt{X} of visible and
-\texttt{X}~$\oplus$~\texttt{Z} of all variables; \lean{toCoreFull},
-\lean{splitFull}, \lean{toCoreBF}, and \lean{splitBF} translate the public
-syntax, and \lean{existsEntails_iff_core}, \lean{existsEntailsTopFree_iff_core},
-and their versions transfer the semantics.
+Paths in \cref{tab:lean-modules} are relative to \lean{DeciENSSE/}, except
+for the shared library \lean{DeciNSSE/}. A module name denotes its
+\texttt{.lean} file.
 
-\begin{center}\small
-\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.29\linewidth}>{\raggedright\arraybackslash}p{0.44\linewidth}>{\raggedright\arraybackslash}p{0.19\linewidth}@{}}
+\begin{table}[htbp]
+\caption{Module map of the library.}
+\label{tab:lean-modules}
+\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.34\linewidth}>{\raggedright\arraybackslash}p{\dimexpr0.66\linewidth-2\tabcolsep\relax}@{}}
 \toprule
-Module group & Contents & Paper\\\midrule
-\texttt{Semantics}, \texttt{Main}, \texttt{NSSE} & public syntax and relations, the six procedures, plain entailment & \cref{sec:bg-constraints,sec:as}\\
-\texttt{Core/Main}, \texttt{Core/Nullary} & the arity dispatch; enumeration of root labels at arity zero & \cref{rem:tc-nullary}\\
-\texttt{Core/Full} & syntax over arbitrary carriers, signed systems, sandwich elimination, observations and ground bounds, path pins, graph equations, $\Top$-free trees & \cref{sec:bg-constraints,sec:tc}\\
-\texttt{Core/Mixed}: Leaf, LeafHorn, Duality, Conditions & leaf cones, clauses, least closures, duality, collision return, deadness, the three conditions & \cref{sec:lf,sec:ch}\\
-\texttt{Core/Mixed}: Signed, Membership, Sat, CondI0, Units & summaries, closure membership, self events, satisfiability, \CondI, \CondU & \cref{sec:sm,sec:un}\\
-\texttt{Core/Mixed}: Extract, Decide, Final & extracted instances, bounded search, arbitrary trees & \cref{sec:ex,sec:as-procedure}\\
-\texttt{Core/Mixed}: ClassTransfer, Regular, Finite, FinitePinning*; \texttt{Support} & two observations, regular and finite transfer, signed bounds, medians, ranked chains & \cref{sec:tc}\\
-\texttt{Core/Words} & automata over finite alphabets, infinite words, two-word instances, kinds of state, lassos, the pre-hole graph, deletions & \cref{sec:ex-problem,sec:nm}\\
-\texttt{Core/Words/Self} & self events, three cases, the pump, mortal holes, the short-hole theorem & \cref{sec:nm,sec:mo-short}\\
-\texttt{Core/Words/Mortal} & separator words, the $\Pi$-reader, its depth, the mortal bound & \cref{sec:mo-separator,sec:mo-depth}\\
-\texttt{Anchored} & positive channels and towers, agreement, the positive column automaton, positive unary words, anchored normal forms, the bounds & \cref{sec:mo-channels,sec:mo-compression,app:mo}\\
-\texttt{Core}: Basic, Horn, Automata*, Reduction, Decide, Final, Classes* & the direct core for $\BF$ with $f$ covariant & \cref{sec:tc-gadget}$^\dagger$\\
-\texttt{Examples} & small proved and evaluated instances & \\
-\texttt{DeciNSSE/*} & trees, order, representations, characterization, readers and holes, hierarchy, bounded-depth compression, hole search & \cref{sec:bg,app:bg}\\\bottomrule
+Folder or module & Content\\
+\midrule
+\lean{Semantics}, \lean{Main}, \lean{NSSE}, \lean{Plain} & Public syntax, entailment relations, existential deciders, and plain entailment.\\
+\lean{Terms}, \lean{Flattening}, \lean{Subsumption}, \lean{TopFree} & Type expressions, flattening, constrained types and subsumption, and the gadget for the signature without top.\\
+\lean{Core/Main}, \lean{Core/Nullary}, \lean{Core/Basic} & Core deciders with the arity dispatch, root-label enumeration at arity zero, prefix sets, and covariant pushdown rules.\\
+\lean{Core/Full/} & Full-signature systems, signed translation, sandwich elimination, observations, ground bounds, and graph equations.\\
+\lean{Core/Mixed/} & Leaf cones, Horn closure, the three conditions, summaries, unit readers, extraction, tree-class transfers, and decision procedures.\\
+\lean{Core/Automata/} & Automaton moves, saturation, and powerset constructions.\\
+\lean{Core/Words/}, \lean{Core/Words/Self/} & Two-word instances, streams, periodicity, pre-holes, lassos, pumps, self events, and the combined hole bound.\\
+\lean{Core/Words/Mortal/} & Separator words, the $\Pi$-reader, depth, and the mortal bound.\\
+\lean{Anchored/} & Positive channels, exchange types, dictionaries, column summaries, anchored compression, and its closed form.\\
+\lean{Bounds}, \lean{Bounds/}, \lean{Certificate}, \lean{Counterexamples} & State counts, closed forms, counterexample words, and countermodels.\\
+\lean{Support/}, \lean{Examples/} & Auxiliary tree and graph constructions and interfaces to the shared library; proved and evaluated examples.\\
+\lean{Paper}, \lean{Paper/} & Contract declarations for the numbered results.\\
+\lean{DeciNSSE/} & Shared tree semantics, satisfiability, readers, hierarchies, and bounded hole search.\\
+\bottomrule
 \end{tabular}
-\end{center}
-
-At positive arity the full signature follows the steps of
-\cref{sec:as-procedure}. The procedure for arbitrary trees,
-\lean{Core.Mixed.decideExistsEntails}, decides satisfiability of both systems,
-\CondI, and \CondU, and then searches every extracted instance for a hole
-whose length is bounded by \lean{Core.Words.Self.selfHoleBound}. The theorem
-\lean{Core.Mixed.existsEntailsT_iff_boundedSelf} proves this search exact; it
-combines \cref{thm:ch-characterization,cor:ex-entailment,thm:mo-decide}. The
-procedures for regular and finite trees apply the transfers of
-\cref{thm:tc-regular,thm:tc-finite}. The covariant core is described in
-\cref{app:lean-diff}. At arity zero the procedures of \texttt{Core/Main}
-dispatch to an enumeration of root labels
-(\lean{Core.Nullary.existsEntailsT_iff_labels}), which the kernel evaluates
-(\lean{Examples.nullary_yes}, \lean{Examples.nullary_no}); the general
-procedures are correct at arity zero as well
-(\lean{Core.Mixed.decideExistsEntails_nullary_agrees}).
+\end{table}
 
 \subsection{Correspondence}
 \label{app:lean-map}
 
+The following table is generated from the contract declarations. Regenerate
+its rows from the repository root with:
+\begin{lstlisting}
+python3 scripts/contract.py --table paper/sections/lean-table.tex
+\end{lstlisting}
+The first column identifies the result and, where applicable, its numbered
+item; the second gives the fully qualified Lean declaration. The last column
+reproduces its \texttt{Form:} note, including local statement packaging beyond
+the global conventions above. For example, consistency separates avoidance
+of forbidden roots from the absence of exclusion pairs; self comparisons
+specialize cross comparisons to equal words; and conjunctions or structures
+collect claims made together in the paper. These are statement-form
+conventions, not alternative proof routes. Only existing contract entries
+produce rows; coverage is checked by the strict command in
+\cref{sec:mechanization}.
+
 {\small
-\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.31\linewidth}>{\raggedright\arraybackslash}p{0.65\linewidth}@{}}
-\caption{Selected declarations supporting the indicated results of the paper.
-Where a declaration covers only part of a result, the left cell names that
-part. A dagger marks a difference in the form of the statement or of the
-proof, explained in \cref{app:lean-diff}.}\label{tab:lean}\\
+\setlength{\tabcolsep}{4pt}
+\setlength{\emergencystretch}{2em}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.30\linewidth}>{\raggedright\arraybackslash}p{\dimexpr0.53\linewidth-4\tabcolsep\relax}@{}}
+\caption{Generated paper--Lean correspondence. Statement-form notes are
+reproduced from the contract.}\label{tab:lean}\\
 \toprule
-Paper result & Formal counterpart\\\midrule\endfirsthead
-\toprule Paper result & Formal counterpart\\\midrule\endhead
+Result & Lean declaration & Form note\\
+\midrule\endfirsthead
+\toprule
+Result & Lean declaration & Form note\\
+\midrule\endhead
 \bottomrule\endfoot
-Systems, \cref{def:bg-existential}$^\dagger$ & \lean{ELit}, \lean{ExistsEntails}, \lean{ExistsEntailsTopFree}, and their versions; \lean{Core.Full.ExistsEntailsT}, \lean{Core.Full.ExistsEntailsTReg}, \lean{Core.Full.ExistsEntailsTFin}\\
-Normalization, first equivalence of \cref{lem:bg-normalization}(2) & \lean{DeciNSSE.treeLe_iff_normalize}\\
-Order over $\BF$, \cref{lem:bg-bf-order} & \lean{Core.Full.le_of_constructor_subset}, \lean{Core.Full.constructor_subset_of_le}\\
-Signed correspondence, \cref{lem:bg-signed}, except the preservation of tree classes & \lean{Core.Full.signed}, \lean{Core.Mixed.FinitePinning.sat_normalize_iff}, \lean{Core.Mixed.FinitePinning.normalize_fixed}, \lean{Core.Mixed.FinitePinning.normalize_decode}, \lean{Core.Mixed.FinitePinning.sat_decode}\\
-Sandwich elimination, \cref{lem:bg-sandwich}$^\dagger$ & \lean{Core.Full.Flatten.sandwich_iff}, \lean{Core.Full.Flatten.forward}, \lean{Core.Full.Flatten.backward}, \lean{Core.Full.Flatten.finite_iff}, \lean{Core.Full.satisfiable_regular}\\
-Satisfiability and regular-model existence, \cref{thm:bg-nsse}(1)$^\dagger$ & \lean{Core.Mixed.decideSatMixed}, \lean{Core.Mixed.satisfiable_regular}, \lean{Core.Mixed.decideSatFin}\\
-Plain entailment, \cref{thm:bg-nsse}(2)$^\dagger$ & \lean{nsse_iff_ensse}, \lean{decideEntails}, \lean{decideEntailsReg}, \lean{decideEntailsFin}\\
-Tail, return gap, depth, \cref{thm:bg-brt,lem:bg-return-gap,thm:bg-depth} & \lean{DeciNSSE.RejectedTail.boundedRejectedTail_of_rejectedPath}, \lean{DeciNSSE.RejectedTail.return_gap}, \lean{DeciNSSE.RejectedTail.rejected_depth}\\
-Hole search, \cref{thm:bg-search,cor:bg-hole-decision} & \lean{DeciNSSE.ElementaryBound.exists_short_hole}, \lean{DeciNSSE.RejectedTail.hole_iff_bounded_length}, \lean{DeciNSSE.RejectedTail.holeLengthBound_le}, \lean{DeciNSSE.RejectedTail.decideHole}\\
-Alignment, desubstitution, \cref{lem:bg-alignment,lem:bg-desub} & \lean{DeciNSSE.LetteredHierarchy.alignment}, \lean{DeciNSSE.LetteredHierarchy.isHole_der_iff}, \lean{DeciNSSE.LetteredHierarchy.isHole_hierOf_iff}, \lean{DeciNSSE.BoundedDepth.card_cores}\\\midrule
-Leaf representation, \cref{thm:lf-representation}(1), (2), and (3) except the duality of cones & \lean{Core.Mixed.leaf}, \lean{Core.Mixed.leaf_disjoint}, \lean{Core.Mixed.leaf_extension}, \lean{Core.Mixed.decode}, \lean{Core.Mixed.leaf_decode}, \lean{Core.Mixed.leaf_injective}, \lean{Core.Mixed.treeLe_iff_leaf}, \lean{Core.Mixed.leaf_bot}, \lean{Core.Mixed.leaf_top}, \lean{Core.Mixed.leaf_node_nil}, \lean{Core.Mixed.leaf_node_cons}, \lean{Core.Mixed.leaf_root_plus}, \lean{Core.Mixed.leaf_root_minus}\\
-Clause form, \cref{lem:lf-clauses} & \lean{Core.Mixed.sat_iff_sol}, \lean{Core.Mixed.sol_iff_assignment}\\
-Least closures, \cref{lem:lf-closure}(1) and (4); (2) for $A=\varnothing$ and for single seeds; (5) for the atom sets $S_\rho$ of assignments & \lean{Core.Mixed.Hull}, \lean{Core.Mixed.hull_closed}, \lean{Core.Mixed.hull_facts}, \lean{Core.Mixed.subset_hull}, \lean{Core.Mixed.hull_least}, \lean{Core.Mixed.mu_subset}, \lean{Core.Mixed.cl_subset}, \lean{Core.Mixed.reach_extend}, \lean{Core.Mixed.cl_extend_subset}, \lean{Core.Mixed.live_extend}, \lean{Core.Mixed.sat_iff_mu}, \lean{Core.Mixed.live_iff}, \lean{Core.Mixed.extends_iff_hull}, \lean{Core.Mixed.least_extension}\\
-Duality, extensions first, collision return, \cref{lem:lf-duality,lem:lf-ext-first,lem:lf-collision} & \lean{Core.Mixed.move_dual}, \lean{Core.Mixed.moves_dual}, \lean{Core.Mixed.reach_iff_moves}, \lean{Core.Mixed.collision_return}\\
-Deadness, \cref{cor:lf-dead} & \lean{Core.Mixed.dead_iff}\\
-Characterization, \cref{thm:ch-characterization} & \lean{Core.Mixed.existsEntailsT_of_unsat}, \lean{Core.Mixed.not_existsEntailsT_of_unsat}, \lean{Core.Mixed.three_conditions_mixed}\\
-Pure forms, \cref{lem:ch-pure} & \lean{Core.Mixed.condU_iff}, \lean{Core.Mixed.deadU_iff_reach_neg}, \lean{Core.Mixed.condII_iff_moves}\\\midrule
-Summaries, lowest point, \cref{lem:sm-summaries,lem:sm-lowest-point} & \lean{Core.Mixed.signedSys}, \lean{Core.Mixed.moves_iff_signed}, \lean{Core.Automata.summaries_D}, \lean{Core.Automata.summaries_P}, \lean{Core.Automata.summaries_Q}, \lean{Core.Mixed.mem_P_iff_moves}, \lean{Core.Mixed.lowest_point_leaf}\\
-Duality and sign coherence, \cref{lem:sm-duality} & \lean{Core.Mixed.D_dual}, \lean{Core.Mixed.Q_flip}, \lean{Core.Mixed.sign_coherent}\\
-Least-closure membership, \cref{lem:sm-mu}$^\dagger$ & \lean{Core.Mixed.PF}, \lean{Core.Mixed.mem_PF}, \lean{Core.Mixed.mu_membership}\\
-Roots and the pop bound, \cref{lem:sm-roots} & \lean{Core.Mixed.popRoot}, \lean{Core.Mixed.P_proper_prefix_neg}, \lean{Core.Mixed.deadU_iff_state}, \lean{Core.Mixed.deadU_prefix}\\
-Deadness from states, \cref{lem:sm-dead-states}(1--4)$^\dagger$ & \lean{Core.Mixed.deadU_iff_state}, \lean{Core.Mixed.mu_flip_membership}, \lean{Core.Mixed.deadT_iff_state}, \lean{Core.Mixed.deadT_prefix}\\
-Deadness, \cref{thm:sm-dead} & \lean{Core.Mixed.dead_iff_unit_or_self}, \lean{Core.Mixed.selfEv_return}, \lean{Core.Mixed.return_selfEv_of_not_deadT}\\
-Closure membership, head prefixes, \cref{lem:sm-membership,lem:sm-head-prefix} & \lean{Core.Mixed.cl_membership_live}, \lean{Core.Mixed.head_prefix_deadU}\\
-Satisfiability and \CondI, \cref{prop:sm-decide}$^\dagger$ & \lean{Core.Mixed.avoids_mu_iff}, \lean{Core.Mixed.consistent_mu_iff}, \lean{Core.Mixed.decideSatMixed}, \lean{Core.Mixed.not_condI0_iff}, \lean{Core.Mixed.condI0_bounded}, \lean{Core.Mixed.decideCondI0}\\\midrule
-Source automaton, \cref{lem:un-source} & \lean{Core.Mixed.targetDFA}, \lean{Core.Mixed.targetDFA_run}, \lean{Core.Mixed.targetDFA_deadT}, \lean{Core.Mixed.targetDFA_deadU}, \lean{Core.Mixed.deadT_prefix}, \lean{Core.Mixed.deadU_prefix}, \lean{Core.Mixed.unit_selfEv_iff}\\
-Unit readers, \cref{lem:un-dead,lem:un-holes,lem:un-rejected-path} & \lean{Core.Mixed.condU_iff}, \lean{Core.Mixed.unitReader}, \lean{Core.Mixed.unit_absHole_iff}, \lean{Core.Mixed.condU_iff_no_unit_holes}, \lean{Core.Mixed.unit_between}, \lean{Core.Mixed.unit_cone}\\
-Condition \CondU, \cref{thm:un-decidable}$^\dagger$ & \lean{Core.Mixed.decideCondU}, \lean{DeciNSSE.RejectedTail.decideHole}\\
-Two-word problem, \cref{def:ex-ss2self,def:ex-fh} & \lean{Core.Words.Self.SelfTwoWordInstance}, \lean{Core.Words.Self.SelfTwoWordInstance.IsHole}, \lean{Core.Words.TwoWordInstance.ForcedHeads}\\
-Heads, \cref{lem:ex-head-before-J,lem:ex-fh} & \lean{Core.Words.TwoWordInstance.head_cut_le_J}, \lean{Core.Mixed.extractSelf}, \lean{Core.Mixed.extractSelf_forcedHeads}\\
-Holes and \CondII, \cref{thm:ex-reduction} except (2), \cref{cor:ex-entailment} & \lean{Core.Mixed.extractSelf_isHoleS_iff}, \lean{Core.Mixed.condII_iff_no_holes}, \lean{Core.Mixed.mixed_reduction}\\\midrule
-Continuation, decomposition, \cref{lem:nm-continuation,lem:nm-decomposition} & \lean{Core.Words.LDFA.atCut_append}, \lean{Core.Words.TwoWordInstance.J_append}, \lean{Core.Words.TwoWordInstance.cross_append_iff}, \lean{Core.Words.TwoWordInstance.event_append_iff}, \lean{Core.Words.Self.SelfTwoWordInstance.selfEvent_append_iff}, \lean{Core.Words.periodic_prefix_iff}, \lean{Core.Words.TwoWordInstance.aligned_keeps}, \lean{Core.Words.Self.SelfTwoWordInstance.preHole_complete}, \lean{Core.Words.Self.SelfTwoWordInstance.hole_decomposition}\\
-Kinds of state, \cref{def:nm-kinds,lem:nm-thin} & \lean{Core.Words.TwoWordInstance.mortal_iff}, \lean{Core.Words.TwoWordInstance.state_kinds}, \lean{Core.Words.TwoWordInstance.mortal_safe_word}, \lean{Core.Words.TwoWordInstance.thin_cyclic_letter}, \lean{Core.Words.TwoWordInstance.thin_lasso_iff}, \lean{Core.Words.TwoWordInstance.thin_mortal_endpoint_short}\\
-Breaker, survival, lassos, \cref{lem:nm-breaker,lem:nm-survival,cor:nm-lasso-completion,lem:nm-aperiodic} & \lean{Core.Words.Self.SelfTwoWordInstance.breakerM}, \lean{Core.Words.Self.SelfTwoWordInstance.preHole_breaker}, \lean{Core.Words.TwoWordInstance.survives_iff_periodic}, \lean{Core.Words.TwoWordInstance.aligned_survives}, \lean{Core.Words.TwoWordInstance.survives_iff_prepend_eq}, \lean{Core.Words.TwoWordInstance.lasso_breaking_prefix}, \lean{Core.Words.Self.SelfTwoWordInstance.lasso_completes}, \lean{Core.Words.TwoWordInstance.aperiodic_survivorFree}, \lean{Core.Words.Self.SelfTwoWordInstance.aperiodic_selfSurvivorFree}\\
-Short pre-holes, \cref{prop:nm-short-prehole} & \lean{Core.Words.TwoWordInstance.preHoleGraph_correct}, \lean{Core.Words.TwoTapeGraph.short_accepts}, \lean{Core.Words.TwoWordInstance.short_preHole}\\
-Pump, \cref{thm:nm-pump}$^\dagger$ & \lean{Core.Words.Self.SelfTwoWordInstance.pumpGood_short}, \lean{Core.Words.Self.purelyPeriodicShortPreHole_capacity}, \lean{Core.Words.pumpCapacity}\\
-Three cases, \cref{thm:nm-three-cases,cor:nm-short-holes}$^\dagger$ & \lean{Core.Words.Self.three_cases_self}, \lean{Core.Words.Self.nonMortalShortHoleBoundSelf}, \lean{Core.Words.pumpHoleBound}\\\midrule
-Separator word, \cref{lem:mo-sep} & \lean{Core.Words.Mortal.sepWord}, \lean{Core.Words.Mortal.no_pre_comparison}, \lean{Core.Words.Mortal.cross_comparison_iff}, \lean{Core.Words.Self.target_comparison_iff}, \lean{Core.Words.Mortal.anchored_iff}\\
-$\Pi$-reader and depth, \cref{lem:mo-pi-reader,lem:mo-depth}$^\dagger$ & \lean{Core.Words.Mortal.reader}, \lean{Core.Words.Mortal.card_state}, \lean{Core.Words.Mortal.first_rejected_cut}, \lean{Core.Words.Self.piReader_iff}, \lean{Core.Words.Self.mortal_depth}\\
-Channels, \cref{def:mo-channel,lem:mo-base} & \lean{Anchored.PosChan}, \lean{Anchored.PosHole}, \lean{Anchored.baseChan}, \lean{Anchored.pos_base_iff_comparison}, \lean{Anchored.pos_base_iff_anchored}\\
-Desubstitution, towers, \cref{lem:mo-desub,cor:mo-tower} & \lean{Anchored.posDer}, \lean{Anchored.pos_der_iff}, \lean{Anchored.posHole_der_iff}, \lean{Anchored.pos_tower_iff}, \lean{Anchored.pos_hierOf_iff}\\
-Anchored exchange types and non-length-increasing isolated exchange, \cref{lem:mo-types,lem:mo-exchange}$^\dagger$ & \lean{Anchored.anchoredType}, \lean{Anchored.card_posRows}, \lean{Anchored.anchoredTypeBound}, \lean{Anchored.posIsolated_merge_spec}\\
-Normal form, dictionaries, \cref{lem:mo-dictionary} & \lean{Anchored.exists_posNormal_form}, \lean{Anchored.posNormalAt_alphCard_le}, \lean{Anchored.boundary_count_le_of_allowance}, \lean{Anchored.alphCard_le_of_allowance}, \lean{DeciNSSE.ElementaryBound.alphCard_depth_le_one}, \lean{Anchored.exists_bounded_dictionary_posHole}, \lean{Anchored.anchoredDictionaryBound}\\
-Positive unary words, \cref{lem:mo-unary}, with $m'\le m$ in addition & \lean{Anchored.unary_posHole_shorten}\\
-Agreement, \cref{lem:mo-agreement} & \lean{Anchored.PosAgree}, \lean{Anchored.PosAgree.posHole_iff}, \lean{Anchored.PosAgree.derive}\\
-Positive summaries, columns, \cref{lem:mo-summary,lem:mo-columns}$^\dagger$ & \lean{Anchored.pcolDFA}, \lean{Anchored.pcolDFA_eval}, \lean{Anchored.pos_type_of_psumm}, \lean{Anchored.card_posColumnState}, \lean{Anchored.exists_short_pos_tuple}, \lean{Anchored.exists_short_pos_letters}\\
-Supported compression, \cref{lem:mo-compression}$^\dagger$ & \lean{Anchored.shorten_pos_level_supported}, \lean{Anchored.exists_short_posHole_of_dictionary}\\
-Anchored compression, \cref{thm:mo-anchored,lem:mo-closed-form}$^\dagger$ & \lean{Anchored.exists_short_posHole_elementary}, \lean{Anchored.anchoredLengthBound}, \lean{Anchored.anchoredExponent}, \lean{Anchored.anchoredDictionaryBound_le}, \lean{Anchored.anchoredLengthBound_le}\\
-Short holes, \cref{thm:mo-short,thm:mo-decide}$^\dagger$ & \lean{Core.Words.Self.exists_short_mortalHole}, \lean{Core.Words.Mortal.mortalHoleBound}, \lean{Core.Words.Self.mortalShortHoleBoundSelf}, \lean{Core.Words.Self.shortHoleBoundSelf}\\\midrule
-Extensions, two seeds, \cref{lem:tc-extension,lem:tc-two-seeds}$^\dagger$ & \lean{Core.Mixed.extends_iff_hull}, \lean{Core.Mixed.two_observations_mixed}\\
-Observation pins, \cref{lem:tc-pins}, without the bound on the number of positions & \lean{Core.Full.observation_bound}, \lean{Core.Mixed.observation_bound_mixed}\\
-Intersection, \cref{prop:ch-meet}(1) and the second claim of (3) & \lean{Core.Mixed.sol_sInter}, \lean{Core.Mixed.projected_sInter}, \lean{Core.Mixed.sat_infoInter}, \lean{Core.Mixed.infoInter_bot_top}, \lean{Core.Mixed.allF_not_finite}\\
-Finite-bound pinning, \cref{thm:tc-pinning} & \lean{Core.Mixed.finite_bound_realization} (every arity), from \lean{Core.Mixed.exists_finite_sat_groundBounds} (positive arity); \lean{Core.Mixed.FinitePinning.symmetrize}, \lean{Core.Mixed.FinitePinning.symmetrize_fixed}, \lean{Core.Mixed.FinitePinning.symmetrize_sat}, \lean{Core.Mixed.FinitePinning.symmetrize_pins}\\
-Signed bounds, \cref{lem:tc-signed}(1), (2), and the first claim of (3) & \lean{Core.Mixed.FinitePinning.sat_normalize_iff}, \lean{Core.Mixed.FinitePinning.pins_normalize_iff}, \lean{Core.Mixed.FinitePinning.signDual_involutive}, \lean{Core.Mixed.FinitePinning.sat_signDual}, \lean{Core.Mixed.FinitePinning.pins_signDual}, \lean{Core.Mixed.FinitePinning.normalize_fixed}, \lean{Core.Mixed.FinitePinning.normalize_decode}, \lean{Core.Mixed.FinitePinning.sat_decode}, \lean{Core.Mixed.FinitePinning.pins_decode}\\
-Median, \cref{lem:tc-median}, with symmetry in the first two arguments only & \lean{Support.Median.treeMedian}, \lean{Support.Median.treeMedian_swap}, \lean{Support.Median.treeMedian_self}, \lean{Support.Median.treeMedian_mono}, \lean{Support.Median.treeMedian_node}, \lean{Support.Median.d_treeMedian}, \lean{Support.Median.finiteMedian}, \lean{Support.Median.finiteMedian_toTree}, \lean{Core.Mixed.FinitePinning.sat_median}, \lean{Core.Mixed.FinitePinning.bound_median}\\
-Covariant pinning, \cref{lem:tc-pinning-covariant}$^\dagger$ & \lean{Core.Full.finiteBoundPinning}, \lean{Core.Full.Pinning.groundPins_iff}, \lean{Core.Full.Pinning.realize_pins}, \lean{Support.RankedExtension.extension_satFin_iff}\\
-Regular trees, \cref{thm:tc-regular}$^\dagger$ & \lean{Core.Mixed.satisfiable_regular}, \lean{Core.Mixed.regular_bound_realization}, \lean{Core.Mixed.regular_class_extension}, \lean{Core.Full.TopGraphs.regularize}, \lean{Core.Mixed.existsEntailsTReg_iff_mixed}\\
-Finite trees, \cref{thm:tc-finite,cor:tc-decidable} & \lean{Core.Mixed.finite_bound_realization}, \lean{Core.Mixed.finite_class_extension}, \lean{Core.Mixed.existsEntailsTFin_iff_mixed}, \lean{Core.Mixed.decideSatFin}\\
-The signature $\BF$, \cref{thm:tc-gadget,cor:tc-bf}$^\dagger$ & replaced by \lean{Core.three_conditions}, \lean{Core.ss2_reduction}, \lean{Core.existsEntails_iff_bounded}, \lean{Core.existsEntailsReg_iff}, \lean{Core.existsEntailsFin_iff}, \lean{Core.Full.existsEntailsIn_bridge}\\
-Main theorem, \cref{thm:as-main}(1,2) & the six procedures of \cref{app:lean-statement} and their correctness theorems\\
-\Cref{ex:intro-shift}, $\varphi_1$ and $\varphi_2$ over $\BFT$; \cref{rem:tc-examples}, first system at $n=1$ & \lean{Examples.subtree_entails}, \lean{Examples.subtree_not_entails}, \lean{Examples.unaryCycle_classes}\\
+\input{sections/lean-table}
 \end{longtable}
 }
-
-The examples state the claims of \cref{ex:intro-shift} for $\varphi_1$ and
-$\varphi_2$ over $\BFT$ with $f$ covariant, where the witness and the
-countermodel are $\Top$-free, and the claims of \cref{rem:tc-examples} for its
-first system at $n=1$, for either variance. Not mechanized are
-\cref{lem:bg-flattening}; item (4) and the duality of cones in item (3) of
-\cref{thm:lf-representation}; the signed equivalence of
-\cref{lem:bg-signed-sat}; the polynomial-time claims of
-\cref{lem:sm-mu,lem:sm-dead-states}, whose summary sets the formalization
-computes by finite searches; \cref{lem:sm-regular-closure,lem:un-reduced,lem:un-clock};
-the gadget of \cref{lem:tc-gadget,thm:tc-gadget}; the bounds in terms of $s$
-(\cref{thm:as-main}(3,4), \cref{prop:as-bounds,lem:mo-estimate,cor:mo-extracted},
-and the closed form in \cref{thm:un-decidable}); the counterexample words and
-countermodels of \cref{def:as-certificate,lem:as-countermodel}, including the
-non-extensible least model of \cref{thm:ex-reduction}(2); the results of
-\cref{sec:ap,app:ap}; and the complexity results of \cref{sec:cx}.
-
-\subsection{Paper and Formalization}
-\label{app:lean-diff}
-
-\begin{itemize}[leftmargin=*]
-\item \emph{Carriers and syntax.} The paper uses sets $X$ and $Z$ of
-  variables. The public statement uses \texttt{Fin k} for the visible
-  variables and \texttt{Fin (k + h)} for all variables, visible first; the
-  core uses finite types \texttt{X} and \texttt{X}~$\oplus$~\texttt{Z}. Literals
-  are flat, as in \cref{sec:bg-constraints}, with \texttt{eqTop} for
-  $\Top\le u$. Plain entailment uses the flat literals of \citet{Zhao26}, which
-  have no copy literals; \lean{liftConstraint} embeds them. The public
-  deciders use root-label enumeration at arity zero; the class-transfer proofs
-  use the fact that every nullary tree has a finite and regular presentation.
-\item \emph{Sandwich elimination.} The translation
-  \lean{Core.Full.Flatten.flatten} requires positive arity. For $u\le v$ it
-  uses one fresh witness per ordered pair $(u,v)$ of variables in place of the
-  fresh $y$, and the variable $u$ itself as the filler in the arguments
-  $1,\ldots,n-1$ in place of the fresh $o=\Bot$; \lean{Core.Full.Flatten.sandwich_iff}
-  shows that this sandwich still expresses $u\le_c v$. The transfer of
-  solutions is stated over arbitrary trees (\lean{Core.Full.Flatten.forward},
-  \lean{Core.Full.Flatten.backward}), and the preservation of the tree classes
-  for satisfiability in each class (\lean{Core.Full.Flatten.finite_iff},
-  \lean{Core.Full.satisfiable_regular}).
-\item \emph{Satisfiability and \CondI.} Satisfiability over arbitrary trees
-  is decided by the criterion of \cref{prop:sm-decide}(1). Regular solutions
-  and finite satisfiability are obtained through sandwich elimination and the
-  results of \citet{Zhao26} for systems without copy literals
-  (\lean{Core.Full.satisfiable_regular}, \lean{Core.Full.decideSatFin}); the
-  formalization does not state the signed equivalence of
-  \cref{lem:bg-signed-sat}.
-  \Cref{prop:sm-decide} decides satisfiability and \CondI\ in polynomial space;
-  the formal tests are finite searches without a space bound. Forbidden roots
-  are tested on the lower summaries, and the consistency of $\mu_\chi$ and
-  condition \CondI\ by words shorter than the number of states of a product of
-  two automata for least closures (\lean{Core.Mixed.consistent_mu_iff},
-  \lean{Core.Mixed.condI0_bounded}).
-\item \emph{Plain entailment.} \Cref{thm:bg-nsse}(2) is a result of
-  \citet{Zhao26}. Here the procedures for plain entailment are obtained from the
-  existential ones (\lean{nsse_iff_ensse}), and the equations of
-  \cref{thm:bg-nsse}(2) for regular and finite trees follow from
-  \cref{thm:tc-regular,thm:tc-finite}.
-\item \emph{Summary sets.} The set $\Fup\chi$ of \cref{lem:sm-mu} is
-  \lean{Core.Mixed.PF}, defined as the set of signed variables in the upper
-  summaries of the facts along words of bounded length, and
-  \lean{Core.Mixed.mem_PF} extends this description to words of every length;
-  the least-set description of $\Fup\chi$ is not stated. The root-deadness tests of
-  \cref{lem:sm-dead-states} are likewise finite searches over words of bounded
-  length. The polynomial-time claims of \cref{lem:sm-mu,lem:sm-dead-states}
-  are not mechanized.
-\item \emph{Condition \CondU.} The procedure \lean{Core.Mixed.decideCondU}
-  applies the hole search \lean{DeciNSSE.RejectedTail.decideHole} of
-  \citet{Zhao26} to the unit readers \lean{Core.Mixed.unitReader}. They run the
-  source automaton of \cref{lem:un-source} with all its $N_{\mathrm U}$ states,
-  so the search bound is $\holeBound(N_{\mathrm U},d_{N_{\mathrm U}})$ in the
-  notation of \cref{cor:bg-hole-decision}. The reduced reader and the rejection clock of
-  \cref{lem:un-reduced,lem:un-clock}, which give the sharper bound of
-  \cref{thm:un-decidable}, are not needed for decidability.
-\item \emph{Words.} Alphabets are arbitrary finite types $\alpha$. The final
-  short-hole theorem includes the empty alphabet by handling it separately; the
-  non-mortal intermediate results use an inhabited alphabet. The spine is the first and the target
-  the second word of a hole, as in the paper; the statement of
-  \lean{Core.Mixed.extractSelf_isHoleS_iff} names them $t$ and $u$. A
-  separator word is a word over \texttt{Option}~$\alpha$, with \texttt{none}
-  as $\sep$. The short-hole statements give $\len u+\len t\le B$ where
-  \cref{thm:nm-three-cases,thm:mo-decide} give $\len u+\len t<B$.
-\item \emph{The pump.} The formal pump
-  (\lean{Core.Words.Self.SelfTwoWordInstance.pumpGood_short}) counts its
-  deletion signatures in six product types of states, residues modulo the
-  period, and flags. With a period of at most $a$ this gives the capacity
-  \lean{Core.Words.pumpCapacity}, which at $(a,b,a',b')$ is
-  $2a^2ba'b'+a^2a'+abb'+2aba'b'+aa'+bb'\ge\Pcap(a,b,a',b')$. The non-mortal
-  bound \lean{Core.Words.pumpHoleBound} is $4\max(12aba'b',K)+6a$ for this
-  capacity $K$, as $\Lnm$ is for $\Pcap$, and is again bounded by a polynomial
-  of degree five.
-\item \emph{The $\Pi$-reader.} The formal reader keeps all states of its
-  product types, reachable or not, so it has exactly
-  $1+N_AN_{A'}+N_BN_{B'}+N_AN_{B'}\ge\Nbar$ states
-  (\lean{Core.Words.Mortal.card_state}). Its depth bound
-  (\lean{Core.Words.Self.mortal_depth}) and the mortal bound
-  \lean{Core.Words.Mortal.mortalHoleBound} use this count in place of $\Nbar$.
-\item \emph{Isolated exchange.} The formal isolated-exchange theorem
-  (\lean{Anchored.posIsolated_merge_spec}) assumes that the replacement letter
-  has no greater expanded length. This is the specialization used to obtain
-  the normal form.
-\item \emph{Anchored constants.} The constants $\sCsharp$, $\sAsharp$,
-  $\sGsharp$, and $\Xisharp$ of \cref{eq:mo-constants} are, in this order,
-  \lean{Anchored.anchoredTypeBound}, \lean{Anchored.anchoredAllowance},
-  \lean{Anchored.anchoredDictionaryBound}, and
-  \lean{Anchored.anchoredExponent}. The positive column state
-  stores the column summary of the monitor and a second complete column
-  summary of the monitor that carries $F$, $R$, and $S$ as its target and
-  admissions, where the paper adds only the fields of \cref{lem:mo-summary};
-  it records the channel test of the first letter of each block, not the
-  letter itself. The stated formal shortening result
-  (\lean{Anchored.exists_short_pos_letters}) supplies subsequences and the
-  agreement of the derived monitors and channels; it does not expose the
-  common deletion of columns and the preservation of first letters stated in
-  \cref{lem:mo-columns}. Its number of states, \lean{Anchored.pcolBound}, is
-  $P(M,k)=\mathsf{col}(M,k)^2\,2^{2M(M+1)k}\,3^k\ge\scolsharp(M,k)$ for a
-  monitor with $M$ states and $k$ tracks, with $\mathsf{col}$ from
-  \cref{eq:bg-col}. Supported compression
-  (\lean{Anchored.shorten_pos_level_supported}) expands each letter to at most
-  $P(N+d+1,g)^j$ letters, in place of $\kappa_\sharp^j$ in
-  \cref{lem:mo-compression}. Hence \lean{Anchored.anchoredLengthBound} is
-  $3(N+d+1)\,P(N+d+1,\sGsharp(N,d))^d\ge\Lensharp(N,d)$, and
-  \lean{Anchored.anchoredLengthBound_le} proves the bound
-  $2^{2^{5\Xisharp(N,d)+6}}$ instead of $2^{2^{5\Xisharp(N,d)}}$.
-\item \emph{The signature $\BF$.} The formal proof does not reduce covariant
-  $\BF$ to $\BFT$. Its core represents a tree by the prefix-closed set of its
-  constructor positions (\lean{Core.BFTree}), so that the order is inclusion
-  (\cref{lem:bg-bf-order}), and proves the analog of
-  \cref{thm:ch-characterization} with the conditions \lean{Core.CondI0},
-  \lean{Core.CondLive}, and \lean{Core.CondII} (\lean{Core.three_conditions}).
-  Here a seed is live iff its closure avoids the forbidden roots, which takes the
-  place of \CondU, and no self events occur. \lean{Core.ss2_reduction} reduces
-  \lean{Core.CondII} to two-word holes of instances built from four powerset
-  automata (\lean{Core.extract}), and \lean{Core.Words.shortHoleBound}, the case
-  of \lean{Core.Words.Self.shortHoleBoundSelf} with an empty self guard, bounds
-  them. Regular and finite trees follow from regular Horn hulls and finite least
-  solutions (\lean{Core.existsEntailsReg_iff}, \lean{Core.existsEntailsFin_iff}),
-  and \lean{Core.Full.existsEntailsIn_bridge} identifies constructor sets with
-  $\Top$-free trees in each tree class.
-\item \emph{Two seeds.} The formal two-observation lemma
-  (\lean{Core.Mixed.two_observations_mixed}) assumes that the consequent is
-  satisfiable and returns two observations, possibly equal. Unsatisfiable
-  consequents are handled separately in the transfer proofs; the paper
-  includes that case by allowing an empty observation set.
-\item \emph{Regular transfer.} The paper proves (2) and (3) of
-  \cref{thm:tc-regular} with regular least closures
-  (\cref{lem:sm-regular-closure}). The formal proof follows the finite
-  transfer instead, through the common
-  \lean{Core.Mixed.existsEntailsTIn_iff_of_transfer}. The two observations of
-  \lean{Core.Mixed.two_observations_mixed} become ground bounds
-  (\lean{Core.Mixed.observation_bound_mixed}), and
-  \lean{Core.Full.TopGraphs.regularize} keeps finitely many bounds by regular
-  trees while passing to a regular solution, by adding the graph equations of
-  their presentations, whose solution is unique
-  (\lean{Core.Full.TopGraphs.model_unique}), and applying (1). The same
-  argument with both bounds $\rho(x)\le x\le\rho(x)$ gives (2).
-\item \emph{Covariant pinning.} The paper encodes a ground bound by one fresh
-  variable per position. The formal proof splits each bound into path pins
-  (\lean{Core.Full.Pinning.groundPins_iff}) and encodes each pin by a ranked
-  chain of fresh variables (\lean{Core.Full.Pinning.PathPin.extension}), whose cycles reflect
-  into the original system (\lean{Support.RankedExtension.extension_cycleClash_iff}).
-\end{itemize}

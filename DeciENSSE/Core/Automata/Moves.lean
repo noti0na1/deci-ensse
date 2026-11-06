@@ -1,20 +1,20 @@
 import DeciENSSE.Core.Automata.Powerset
 
-/-! # Move paths, truncation, and common suffixes
+/-! # Move paths and common suffixes
 
-Horn derivations combine stack moves with truncation of the last letter.
-`truncation` postpones all truncations to the end. `lowest_point` then factors
-a move path at a common suffix: the upper automaton consumes the source prefix,
-and the lower automaton produces the target prefix.
+A move path of a covariant system is a sequence of pushdown moves (`Move`). `lowest_point`
+factors a move path at its lowest stack height, a common suffix of the source and target
+stacks: the upper automaton consumes the source prefix, and the lower automaton produces the
+target prefix.
 
 The summary characterizations describe paths above a protected suffix:
 `summaries_D` characterizes balanced paths, `summaries_P` prefix consumption,
-and `summaries_Q` prefix production. Together these give the reachability step
-needed to express covariant Horn closures as two-word comparisons.
+and `summaries_Q` prefix production (the summaries of the pushdown leaf moves in the variance
+proof).
 
 ## Main declarations
 
-- `Automata.Moves`, `Automata.truncation`: move paths and postponed truncations.
+- `Automata.Moves`, `Automata.Above`: move paths, and move paths above a suffix.
 - `Automata.summaries_D`, `Automata.summaries_P`, `Automata.summaries_Q`:
   saturation and automaton summaries as paths above a common suffix.
 - `Automata.lowest_point`: the two-cut characterization of move reachability.
@@ -25,7 +25,7 @@ open DeciENSSE.Core.Words
 namespace Automata
 variable {n : ℕ} {V : Type*} [Fintype V] [DecidableEq V]
 
-/-- Move-only derivations; no facts and no truncations are included. -/
+/-- Move paths: finite sequences of pushdown moves. -/
 inductive Moves (χ : List (Lit n V)) (a : Config n V) : Config n V → Prop
   | refl : Moves χ a a
   | step {b c} : Moves χ a b → Move χ b c → Moves χ a c
@@ -38,13 +38,6 @@ theorem trans (h : Moves χ a b) (h' : Moves χ b c) : Moves χ a c := by
   induction h' with
   | refl => exact h
   | step _ hm ih => exact .step ih hm
-
-omit [Fintype V] [DecidableEq V] in
-/-- A move derivation is a Horn reachability derivation. -/
-theorem reach (h : Moves χ a b) : Reach χ a b := by
-  induction h with
-  | refl => exact .refl
-  | step _ hm ih => exact .step ih (.move hm)
 
 omit [Fintype V] [DecidableEq V] in
 /-- A move derivation preserves a common appended suffix. -/
@@ -75,38 +68,6 @@ theorem above_iff {χ : List (Lit n V)} {a b : V} {u v σ : List (Fin n)} :
     have hv' : v = v' := List.append_cancel_right hv
     simpa [hu', hv'] using h
   · intro h; exact ⟨u, v, rfl, rfl, h⟩
-
-omit [Fintype V] [DecidableEq V] in
-/-- A reachable stack can be truncated by any final suffix. -/
-theorem reach_truncate {χ : List (Lit n V)} (y : V) (u v : List (Fin n)) :
-    Reach χ (y, u ++ v) (y, u) := by
-  induction v using List.reverseRecOn with
-  | nil => simpa using (Reach.refl (χ := χ) (a := (y, u)))
-  | append_singleton v c ih =>
-    exact (Reach.step .refl (by
-      simpa [List.append_assoc] using (Clause.trunc (χ := χ) y (u ++ v) c))).trans ih
-
-omit [Fintype V] [DecidableEq V] in
-/-- Replay the same moves while retaining each deleted suffix. -/
-theorem truncation {χ : List (Lit n V)} {a b : Config n V} :
-    Reach χ a b ↔ ∃ W, Moves χ a (b.1, W) ∧ b.2.IsPrefix W := by
-  constructor
-  · intro h
-    induction h with
-    | refl => exact ⟨a.2, .refl, List.prefix_refl _⟩
-    | @step b c _ hc ih =>
-      obtain ⟨W, hm, v, hv⟩ := ih
-      subst W
-      cases hc with
-      | trunc y w c =>
-        exact ⟨(w ++ [c]) ++ v, hm, [c] ++ v, by simp [List.append_assoc]⟩
-      | move h =>
-        cases h with
-        | copy hl => exact ⟨_ , .step hm (.copy hl), v, rfl⟩
-        | push c hl => exact ⟨_ , .step hm (.push c hl), v, rfl⟩
-        | pop c hl => exact ⟨_ , .step hm (.pop c hl), v, rfl⟩
-  · rintro ⟨W, h, v, rfl⟩
-    exact h.reach.trans (reach_truncate b.1 b.2 v)
 
 /-- Balanced saturation consequences act at every unchanged suffix. -/
 theorem d_moves {χ : List (Lit n V)} {a b : V} (h : (a, b) ∈ D χ) (w : List (Fin n)) :

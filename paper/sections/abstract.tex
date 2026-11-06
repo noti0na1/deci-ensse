@@ -25,7 +25,8 @@ automata and a pumping argument give singly exponential holes. In the hard
 case, the mortal holes, we write the two words as one word around a separator, bound its
 hierarchical depth, and extend the bounded-depth compression from the decision
 procedure for plain entailment so that it preserves a comparison anchored at the
-separator. A search over compression summaries decides the problem in
-2-EXPSPACE, and in PSPACE for a unary constructor. Shortest counterexamples can
-be exponentially long, and for a covariant constructor the problem is
-PSPACE-hard for every fixed arity at least two.
+separator. The decidability proof is mechanized in Lean~4. In a separate part
+that is not mechanized, we show that a search over compression summaries
+decides the problem in 2-EXPSPACE, and in PSPACE for a unary constructor, that
+shortest counterexamples can be exponentially long, and that for a covariant
+constructor the problem is PSPACE-hard for every fixed arity at least two.

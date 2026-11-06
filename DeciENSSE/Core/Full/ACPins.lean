@@ -12,10 +12,10 @@ Finite spine trees translate path observations into upper or lower ground bounds
 
 ## Main declarations
 
-- `ACPins.lower`
-- `Support.Median.finD`
-- `Observation.bound`
-- `observation_bound`
+- `ACPins.lower`: the finite spine tree along a path.
+- `ACPins.le_dual_iff`: duality reverses a comparison with a finite ground tree
+  (`Support.Median.finD`).
+- `Observation.bound`, `observation_bound`: the ground bound of an observation.
 -/
 
 namespace DeciENSSE.Core.Full
@@ -57,7 +57,7 @@ theorem node_bot_le_iff (t : DeciNSSE.Tree n) :
 
 /-- A constructor endpoint tests membership in the constructor observation. -/
 theorem lower_c_iff (t : DeciNSSE.Tree n) (w : List (Fin n)) :
-    (lower w (.node (fun _ => .bot))).toTree ≤ t ↔ w ∈ (AC.cobs t).K := by
+    (lower w (.node (fun _ => .bot))).toTree ≤ t ↔ w ∈ (AC.cobs t).carrier := by
   rw [lower_le_iff w _ (by simp), FTree.toTree_node, FTree.toTree_bot,
     node_bot_le_iff]
   simp only [ne_eq, Safety.trace_eq_bot_iff]

@@ -324,7 +324,7 @@ theorem nonMortalShortHoleBoundSelf_of_periodic [Fintype α] [DecidableEq α] [I
     (hper : ∀ a b c d, ∀ I : SelfTwoWordInstance α (Fin a) (Fin b) (Fin c) (Fin d),
       I.PurelyPeriodicShortPreHole (max (12 * a * b * c * d) (pumpCapacity a b c d))) :
     NonMortalShortHoleBoundSelf α pumpHoleBound := by
-  intro a b c d I _ hcase
+  intro a b c d I hcase
   obtain ⟨u, t, hp, hb | ⟨hthin, ξ, hs, hf, hg⟩⟩ := hcase
   · obtain ⟨v, w, hv, hlen⟩ := I.short_branching_hole hp hb
     refine ⟨v, w, hv, ?_⟩

@@ -31,6 +31,7 @@ word.
 - `TwoWordInstance.Branching`, `TwoWordInstance.Thin`, `TwoWordInstance.IsMortalHole`,
   `TwoWordInstance.NonMortalCase`: kinds of states,
   mortal holes, and the non-mortal cases.
+- `HoleBound`: a length bound as a function of the four state counts.
 
 The declarations are in the namespace `DeciENSSE.Core.Words`.
 -/
@@ -249,5 +250,8 @@ def NonMortalCase : Prop := ∃ u t, I.IsPreHole u t ∧
     ∃ ξ, I.InfiniteSafe (I.A.run u) ξ ∧ I.SurvivorFree u t ξ))
 
 end TwoWordInstance
+
+/-- A length bound in terms of the state counts of `A`, `B`, `A'` and `B'`. -/
+abbrev HoleBound := ℕ → ℕ → ℕ → ℕ → ℕ
 
 end DeciENSSE.Core.Words

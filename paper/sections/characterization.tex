@@ -1,7 +1,8 @@
 %% characterization -- existential entailment as (I0) and (U) and (II), with
 %% the satisfiability dispatch; the arrow example; remarks on covariant and
 %% joint-parity instances and on the one-sign case {bot,f}; pure forms of (U)
-%% and (II). Closure under intersection (prop:ch-meet) is in classes.tex.
+%% and (II). Closure under intersection (prop:ch-meet) is in classes.tex, the
+%% next section.
 
 \section{The Characterization}\label{sec:ch}
 
@@ -221,92 +222,50 @@ $\varphi_1\models\exists z\,\psi$; indeed $z=x$ is a witness.
 
 \subsection{Special Cases}\label{sec:ch-remarks}
 
+The two remarks of this subsection are informal readings of the
+characterization in special cases; nothing later depends on them.
+
 \begin{remark}[Covariant and joint-parity instances]\label{rem:ch-parity}
 A \emph{parity assignment} of a system $\chi$ is a map $\pi:V\to\{0,1\}$ with
 $\pi(u)=\pi(v)$ for every literal $u\le v$ and $\pi(a_i)=\pi(u)\oplus c(i)$
 for every $i$ and every literal $f(a_i)_i\le u$ or $u\le f(a_i)_i$ of $\chi$.
-By \cref{tab:lf-clauses}, every rule of $\chi$ then preserves the bit
-$\kappa(v^s,w)=s\oplus\pi(v)$ of an atom; for instance, $\mathrm{push}_i$ of
-$f(a_i)_i\le u$ leads from $\kappa=c(i)\oplus\pi(a_i)=\pi(u)$ to
-$\kappa=\pi(u)$. Opposite atoms have different bits. Hence no derivation
-leads from an atom to the opposite of one of its extensions: self-collisions,
-cause (c) of \cref{cor:lf-dead}, do not occur, and in a satisfiable system
-every dead atom is dead by support. Likewise, in \cref{lem:lf-collision}
-the two colliding seeds have different bits, so in the proof of
-\cref{thm:ch-characterization} two branches from the same seed never collide.
-
-More is true. Rename every atom $(v^s,w)$ to $(v^{s\oplus\pi(v)},w)$. By
-\cref{tab:lf-clauses}, this maps the rules, facts and forbidden
-roots of $\chi$ onto those of the following system $\chi^\pi$ for the
-covariant variance $c=0$: $\chi^\pi$ keeps every literal of $\chi$ whose root
-has $\pi=0$ and reverses every other one, where the root of $u\le v$, $u=\Bot$
-and $\Top\le u$ is $u$. Reversal turns $u\le v$ into $v\le u$, a lower
-constructor literal into the upper one with the same variables and
-conversely, and exchanges $u=\Bot$ and $\Top\le u$. On trees the renaming is
-$\rho(v)\mapsto\nu_{\pi(v)}\rho(v)$, read covariantly: the covariant leaf
-cone of sign $s\oplus\pi(v)$ of $\nu_{\pi(v)}\rho(v)$ is the cone $L^s$ of
-$\rho(v)$, because $(\nu_rt)^\partial=\nu_{1\oplus r}t$ by
-\cref{lem:bg-normalization}(1). So $\rho$ solves
-$\chi$ iff this assignment solves $\chi^\pi$, by \cref{lem:lf-clauses}. If
-$\varphi\wedge\psi$ has a \emph{joint} parity assignment, one renaming serves
-both systems and keeps visibility, and the instance is equivalent to a
-covariant instance of the same size, in every tree class, since $\nu_r$ is an
-involution that preserves finiteness and regularity
-(\cref{lem:bg-normalization}). The covariant case itself is $\pi=0$, where
-every rule keeps the sign and the rules of sign $1$ are the duals of the
-rules of sign $0$.
-
-\Cref{thm:ch-characterization} needs no parity assignment, and the system
-$x\le x\to x$ has none, since it would require $\pi(x)=\pi(x)\oplus c(0)$. Its
-self-collision $(x^0,00)\to(x^1,0)$ (\cref{ex:lf-least}) is exactly what a
-parity assignment excludes.
+Intuitively, the rules of such a system preserve the bit
+$s\oplus\pi(v)$ of an atom $(v^s,w)$, which differs between opposite atoms;
+so self-collisions, cause (c) of \cref{cor:lf-dead}, do not arise, and renaming
+every atom $(v^s,w)$ to $(v^{s\oplus\pi(v)},w)$ turns the system into a
+covariant one. The covariant case itself is $\pi=0$. The system $x\le x\to x$
+has no parity assignment, since it would require $\pi(x)=\pi(x)\oplus c(0)$,
+and its self-collision $(x^0,00)\to(x^1,0)$ (\cref{ex:lf-least}) is exactly
+what a parity assignment rules out. \Cref{thm:ch-characterization} needs no
+parity assignment.
 \end{remark}
 
 \begin{remark}[One sign: the signature $\BF$]\label{rem:ch-one-sign}
 Let $f$ be covariant, and consider trees over $\BF$ and systems without
 literals $\Top\le u$ (\cref{sec:bg-trees}). Every leaf of such a tree has
 sign $1$, so $L^0_t=\varnothing$, and $L^1_t$ is the complement of the set
-$\Kpos(t)$ of positions labeled $f$ (\cref{thm:lf-representation}(4)). The
-trees over $\BF$ thus correspond to the extension-closed sets of negative
-atoms. All facts of such a system come from literals $u=\Bot$ and are
-negative atoms, and every rule keeps the sign, so the closure of a set of negative atoms consists of
-negative atoms, and an exclusion pair never arises. The models over $\BF$ are
-therefore the sets of negative atoms that contain the facts, are
-closed under the rules, and avoid the forbidden roots $(u^1,\eps)$ of the
-lower constructor literals $f(a_i)_i\le u$. \Cref{lem:lf-closure} and
-\cref{thm:ch-characterization} hold over $\BF$, with satisfiability over
-$\BF$, by the same proofs, in which the exclusion case is void, once every
-set of atoms is taken in the universe
-$\Conf^-_V=\{v^1:v\in V\}\times\Sigma^*$ of negative atoms: the seed sets,
-the visible sets, the models, the closures, liveness, and the atoms
-quantified in the three conditions are all negative. (Without this
-restriction the statement fails: for the empty system the closure of
-$(x^0,\eps)$ is consistent, but no $\Top$-free assignment contains it.)
-
-Read through complements, a negative atom $(v^1,w)$ says $w\notin\Kpos(v)$,
-and each rule on negative atoms is the contrapositive of a clause on
-constructor positions: $u\le v$ says $\Kpos(u)\subseteq\Kpos(v)$,
-$f(a_i)_i\le u$ says $\eps\in\Kpos(u)$ and $i\Kpos(a_i)\subseteq\Kpos(u)$,
-$u\le f(a_i)_i$ says that $iw\in\Kpos(u)$ implies $w\in\Kpos(a_i)$, $u=\Bot$
-says $\eps\notin\Kpos(u)$, and extensions say that $\Kpos(v)$ is prefix closed.
-In these terms, \CondI\ says that every visible position that some solution
-of $\varphi$ puts into a variable is put there by some solution of $\psi$;
-\CondU\ says that every visible position that every solution of $\psi$ puts
-into a variable is put there by every solution of $\varphi$; and \CondII,
-read contrapositively, says that every solution of $\varphi$ is closed under
-the visible consequences of the clauses of $\psi$. Over $\BF$ the three
-conditions therefore compare, respectively, the unions of all solutions, the
-least solutions, and the closures of single positions, for $\varphi$ and for
-the projection of $\psi$. In this picture the solution sets are closed under
-nonempty unions and intersections of constructor positions, no exclusions
-and no self-collisions occur, and the only obstructions are single seeds. The
-decision procedure of this paper does not treat $\BF$ separately; it reduces
-$\BF$ to $\BFT$ (\cref{sec:tc}).
+$\Kpos(t)$ of positions labeled $f$. Read through complements, a negative atom
+$(v^1,w)$ says $w\notin\Kpos(v)$, and each rule on negative atoms is the
+contrapositive of a clause on constructor positions: $u\le v$ says
+$\Kpos(u)\subseteq\Kpos(v)$, $f(a_i)_i\le u$ says $\eps\in\Kpos(u)$ and
+$i\Kpos(a_i)\subseteq\Kpos(u)$, $u\le f(a_i)_i$ says that $iw\in\Kpos(u)$
+implies $w\in\Kpos(a_i)$, $u=\Bot$ says $\eps\notin\Kpos(u)$, and extensions
+say that $\Kpos(v)$ is prefix closed. Informally, over $\BF$ the three
+conditions then compare, for $\varphi$ and for the projection of $\psi$, the
+unions of all solutions, the least solutions, and the closures of single
+positions, and no exclusions or self-collisions occur. The decision procedure
+does not treat $\BF$ separately; the next section reduces $\BF$ to $\BFT$
+(\cref{thm:tc-gadget}).
 \end{remark}
 
 A forbidden root has the empty word, so the pure derivations in
 \cref{lem:ch-pure}(1) end with an empty stack. A failure of \CondII\ with a
 live seed $a$ and a consequence $b$ is thus witnessed by a pure derivation of
 $\psi$ from a live extension of $a$ to $b$, with $b$ outside the least model
-of $\varphi$ that contains that extension. \Cref{sec:sm,sec:un,sec:ex} turn the satisfiability tests, \CondI,
-\CondU\ and this form of \CondII\ into problems about finite automata.
+of $\varphi$ that contains that extension.
+
+The characterization concerns arbitrary trees over $\BFT$. \Cref{sec:tc}
+shows next that this setting suffices for the other tree classes and for the
+signature $\BF$ with $f$ covariant. \Cref{sec:sm,sec:un,sec:ex} then turn the
+satisfiability tests, \CondI, \CondU\ and this form of \CondII\ into problems
+about finite automata.

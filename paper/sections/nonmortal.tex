@@ -199,7 +199,7 @@ $\theta$ is no longer than the common suffix and can be split off both words,
 and (K1) and (K2) show that $\theta$ breaks every obligation of $(u_0,t_0)$ and
 that $(u_0,t_0)$ has no aligned event. The proof is in
 \cref{app:nm-continuation}. Condition (FH) cannot be dropped
-(\cref{rem:nm-fh}).
+(\cref{ex:nm-fh}).
 
 \begin{example}[Shift closure: decomposition]\label{ex:nm-running}
 In the instance $I_{y^1x^1}$ of \cref{ex:ex-running}, every target $t$ has
@@ -248,9 +248,9 @@ Branching asks only for two distinct safe letters at a reachable cyclic state;
 the states they lead to may coincide, and the letter that leaves the cycle
 need not admit any further safe continuation, since the breaker stops right
 after it. Requiring all letters, or two specific letters, to be safe would
-misclassify states over larger alphabets. For arity $n\le1$ no state has two
-distinct safe letters, so none is branching (\cref{rem:tc-unary}); for $n=0$
-there are no letters at all, and every safe state is mortal.
+misclassify states over larger alphabets. For instance, for arity $n\le1$ no
+state has two distinct safe letters, and for $n=0$ there are no letters at
+all.
 
 \subsection{The Breaker}\label{sec:nm-breaker}
 
@@ -578,11 +578,11 @@ deletion inside the periodic end of $t$ is needed, and in particular no
 factors of both periodic ends are deleted together.
 
 \begin{remark}[An automaton instead of the pump]
-One could instead recognize the survivor-free pre-holes of a periodic lasso by
-a two-tape automaton that records a set of spine states for every residue
-class of end distances modulo the period. Such an automaton has a number of
-states exponential in $N_A^2$, whereas the pump needs no automaton and gives a
-polynomial bound.
+Informally, one could instead recognize the survivor-free pre-holes of a
+periodic lasso by a two-tape automaton that records a set of spine states for
+every residue class of end distances modulo the period. Such an automaton
+would have exponentially many states, whereas the pump needs no automaton and
+gives a polynomial bound.
 \end{remark}
 
 \subsection{The Three Cases}\label{sec:nm-three-cases}
@@ -613,8 +613,8 @@ More precisely, let $(u,t)=(u_0\theta,t_0\theta)$ be a hole decomposed as in
 \textup{(1)}. If $A(u_0)$ is thin and $A(u)$ is not mortal, then $(u_0,t_0)$
 satisfies \textup{(2)} with an infinite word that begins with $\theta$.
 Otherwise $(u,t)$ is a mortal hole. Moreover, if \textup{(1)} or \textup{(2)}
-holds, then $I$ has a hole $(u,t)$ with $\len u+\len t<\Lnm(a,b,a',b')$; this part
-does not need \textup{(FH)}.
+holds, then $I$ has a hole $(u,t)$ with $\len u+\len t\le\Lnm(a,b,a',b')$; this
+part does not need \textup{(FH)}.
 \end{theorem}
 
 A pre-hole as in (1) is shortened by \cref{prop:nm-short-prehole}, keeping its
@@ -635,13 +635,13 @@ in \cref{app:nm-three-cases}.
 
 \begin{corollary}[Short holes outside the mortal case]\label{cor:nm-short-holes}
 Let $I$ satisfy \textup{(FH)}. Then $I$ has a hole if and only if it has a
-hole $(u,t)$ with $\len u+\len t<\Lnm(a,b,a',b')$ or it has a mortal hole.
+hole $(u,t)$ with $\len u+\len t\le\Lnm(a,b,a',b')$ or it has a mortal hole.
 \end{corollary}
 
 \begin{proof}
 A hole of either kind is a hole. Conversely, if $I$ has a hole, then by
 \cref{thm:nm-three-cases} one of (1)--(3) holds; in cases (1) and (2) the theorem
-provides a hole with $\len u+\len t<\Lnm(a,b,a',b')$.
+provides a hole with $\len u+\len t\le\Lnm(a,b,a',b')$.
 \end{proof}
 
 The bound $\Lnm$ depends on neither the alphabet nor the self guard. The
@@ -651,13 +651,12 @@ absorbed by the use of $\max(\len{u_0},\len{t_0})$ in
 signatures already contain the states of $B$.
 
 \begin{remark}[When mortal holes cannot occur]\label{rem:nm-nonblocking}
-If no state reachable from $0$ in $\mathcal G_A$ is mortal, for example if
-$\Bad=\varnothing$ and $\len\Sigma\ge1$, then case (3) cannot occur, because
-$A(u)$ is reachable from $0$ in $\mathcal G_A$ for every safe word $u$. Then
-\cref{cor:nm-short-holes} alone decides whether $I$ has a hole.
+Informally, if no state reachable from $0$ in $\mathcal G_A$ is mortal, for
+example if $\Bad=\varnothing$ and $\len\Sigma\ge1$, then case (3) does not
+arise, and only the short holes of \cref{cor:nm-short-holes} matter.
 \end{remark}
 
-\begin{remark}[Condition (FH) is needed]\label{rem:nm-fh}
+\begin{example}[Condition (FH) is needed]\label{ex:nm-fh}
 Let $\Sigma=\{\ell\}$, let $A$, $A'$ and $B$ have the single state $0$, with
 $\Bad=\varnothing$, $\Rej=\{0\}$ and $\Guard=\GuardS=\varnothing$, let $B'$ have
 the states $0$ and $1$, with $B'(0,\ell)=B'(1,\ell)=1$, and let
@@ -667,4 +666,4 @@ $t_0=\eps$, whose only aligned pair $(\len{u_0},0)$ carries the state $0$ of
 $B'$. Since the only state of $A$ is thin, none of the cases (1)--(3) holds.
 Condition (FH) fails: the head $\gamma=\ell$ has $B'(\gamma)=1$, and its proper
 prefix $\eps$ is rejected.
-\end{remark}
+\end{example}

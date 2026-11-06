@@ -15,8 +15,7 @@ are the moves of the signed system $\chi^\pm$, a covariant system, so the
 upper and lower bound automata of covariant systems summarize the parts of a
 pure derivation that pop and push its stack, and every pure derivation splits
 at its lowest point into one part of each kind (\cref{sec:sm-lowest}). With
-them we describe least closures, also of regular sets of seeds
-(\cref{sec:sm-regular}).
+them we describe the least closure of the facts (\cref{sec:sm-regular}).
 
 Two consequences of the signs have no counterpart for a covariant
 constructor. First, the lower automata are the upper automata with all signs
@@ -33,7 +32,10 @@ condition \CondI\ (\cref{prop:sm-decide}). Proofs omitted here are in
 \cref{app:sm}.
 
 \paragraph{Conventions}
-Throughout, $\chi$ is a system over a finite set $V$ of variables, we use the
+By \cref{sec:tc}, it suffices to work over $\BFT$ and arbitrary trees, for
+every arity and variance; we do so in this section and in
+\cref{sec:un,sec:ex,sec:nm,sec:mo}. Throughout, $\chi$ is a system over a
+finite set $V$ of variables, we use the
 notation of \cref{sec:bg,sec:lf} and write $\bar P=\{\bar p:p\in P\}$ for
 $P\subseteq V^\pm$, and for $n=0$, where $\eps$ is the only word, every
 statement below holds trivially.
@@ -47,8 +49,7 @@ gives $(p_i,w)\to(q,iw)$, and a literal $q\le f(p_i)_i$ gives
 $(q,iw)\to(p_i,w)$; and the forbidden roots are the atoms $(q,\eps)$ for the
 roots $q$ of the upper constructor literals of $\chi^\pm$. The extreme
 literals of $\chi^\pm$ give no moves. The \emph{height} of an atom $(p,w)$ is
-$\len w$, and a pure derivation is \emph{above} a word $\sigma$ if every atom
-on it has the form $(p,\eta\sigma)$. The automata below are the bound automata
+$\len w$. The automata below are the bound automata
 of a covariant system~\citep{Zhao26}, for an arbitrary
 arity;\footnote{In the notation of \cref{app:bg-sat}, $D_\chi$ is the closure
 $D^{\mathrm{cov}}_{\chi^\pm}$, with the copy pairs included in the
@@ -91,25 +92,25 @@ write $P^\chi_{p,j}(w)=P^\chi_p(\wpre wj)$ and $Q^\chi_{q,j}(w)=Q^\chi_q(\wpre w
 
 Both automata are deterministic and complete, and they read their word from
 left to right: $P^\chi_p(wi)=\pstep i(P^\chi_p(w))$. They have $4^{\len V}$
-states each, and $D_\chi$ and every transition are computable in time
-polynomial in the size of $\chi$. Every set $P^\chi_p(w)$ is upward closed
+states each, and $D_\chi$ and every transition are computable. Every set $P^\chi_p(w)$ is upward closed
 under $D_\chi$ and every $Q^\chi_q(w)$ is downward closed, the empty set is
 absorbing in both automata, and $\pstep i$ and $\qstep i$ distribute over
 unions.
 
 \begin{lemma}[Pushdown summaries]\label{lem:sm-summaries}
-For all signed variables $a,b,p,q$ and words $w,\beta,\gamma,\sigma$:
+For all signed variables $a,b,p,q$ and words $\beta,\gamma$:
 \begin{enumerate}[label=(\alph*),leftmargin=*]
-\item $D_\chi(a,b)$ iff $(a,w)\to^*_\chi(b,w)$ by a pure derivation above
-  $w$;
-\item $b\in P^\chi_p(\gamma)$ iff $(p,\gamma\sigma)\to^*_\chi(b,\sigma)$ by a
-  pure derivation above $\sigma$;
-\item $a\in Q^\chi_q(\beta)$ iff $(a,\sigma)\to^*_\chi(q,\beta\sigma)$ by a
-  pure derivation above $\sigma$.
+\item $D_\chi(a,b)$ iff $(a,\eps)\to^*_\chi(b,\eps)$;
+\item $b\in P^\chi_p(\gamma)$ iff $(p,\gamma)\to^*_\chi(b,\eps)$;
+\item $a\in Q^\chi_q(\beta)$ iff $(a,\eps)\to^*_\chi(q,\beta)$.
 \end{enumerate}
-In particular, the existence of these derivations does not depend on $w$ or
-$\sigma$.
 \end{lemma}
+
+By \cref{lem:lf-moves}(1), the three derivations lift to every suffix: they
+give $(a,\sigma)\to^*_\chi(b,\sigma)$, $(p,\gamma\sigma)\to^*_\chi(b,\sigma)$
+and $(a,\sigma)\to^*_\chi(q,\beta\sigma)$ for every word $\sigma$. So $D_\chi$
+summarizes the derivations that return to their starting height, the upper
+automaton those that pop a word, and the lower automaton those that push one.
 
 \begin{figure}[tbp]
 \centering
@@ -156,10 +157,14 @@ are cuts $i\le\len w$ and $e\le\len v$ with $\wsuf wi=\wsuf ve$ and
 $P^\chi_{p,i}(w)\cap Q^\chi_{q,e}(v)\ne\varnothing$.
 \end{lemma}
 
-Cut the derivation at its first atom of least height
-(\cref{fig:sm-lowest-point}) and apply \cref{lem:sm-summaries}(b,c) to the two
-parts; the signed variable $r$ at the lowest point may belong to a visible or
-to a hidden variable, with either sign. In the notation of
+The proof (\cref{app:sm}) follows the derivation move by move and keeps a
+split of the current atom $(r',v')$ into a push head $\wpre{v'}e$ above a
+suffix $\wsuf{v'}e=\wsuf wi$ of the start word, with a signed variable in
+$P^\chi_{p,i}(w)\cap Q^\chi_{r',e}(v')$. A copy keeps the split, a push
+extends the push head, and a pop shortens it or, if it is empty, moves the cut
+$i$ one letter to the right. At the end, the cut $i$ marks the first atom of
+least height of the derivation (\cref{fig:sm-lowest-point}); the signed variable $r$ there may belong to a
+visible or to a hidden variable, with either sign. In the notation of
 \cref{fig:sm-lowest-point}, $\gamma$ is the \emph{pop head} and $\beta$ the
 \emph{push head} of the derivation.
 
@@ -175,9 +180,8 @@ For all signed variables $a,b,p,q$ and words $w$:
 \end{enumerate}
 \end{lemma}
 
-Items (1) and (2) reverse pure derivations by duality (\cref{lem:lf-duality}):
-the reversed derivation visits the same words, so it stays above the same
-suffix. By item (2), \cref{lem:sm-lowest-point} can be read with upper
+Items (1) and (2) reverse the derivations of \cref{lem:sm-summaries} by
+duality (\cref{lem:lf-duality}). By item (2), \cref{lem:sm-lowest-point} can be read with upper
 automata only. Item (3) is \emph{sign coherence}, the sign invariant of
 \cref{lem:lf-moves}(2) applied to the derivations of \cref{lem:sm-summaries}.
 
@@ -207,7 +211,7 @@ $(x^0,w)\to^*_\psi(z^0,\eps)$ for every $w$, a pure derivation to the forbidden
 root: $\psi$ forbids leaves $\Top$ in $x$.
 \end{example}
 
-\subsection{Least Closures of Regular Seeds}\label{sec:sm-regular}
+\subsection{The Least Closure}\label{sec:sm-regular}
 
 Let
 \[
@@ -223,37 +227,16 @@ For every signed variable $q$ and word $v$,
  (q,v)\in\mu_\chi\iff Q^\chi_{q,e}(v)\cap\Fup\chi\ne\varnothing
  \text{ for some cut }e\le\len v .
 \]
-The set $\Fup\chi$ is the least set that contains $\upc\chi p$ for every
-fact $(p,\eps)$ and contains $\pstep i(\{r\})$ for each of its
-elements $r$ and each $i\in\Sigma$; it is computable in polynomial time.
+In the definition of $\Fup\chi$ it suffices to consider words $\gamma$ of length
+at most $4^{\len V}$, so $\Fup\chi$ is computable.
 \end{lemma}
 
 A fact $(p,\eps)$ derives $(r,\sigma)$ for every $\sigma$: extend it
 to $(p,\gamma\sigma)$ and pop $\gamma$. So $\mu_\chi$ contains every atom that a
 pure derivation pushing a word reaches from such an $(r,\sigma)$, and
 \cref{lem:lf-ext-first,lem:sm-lowest-point} show that there is nothing else.
-The same argument applies to any regular set of seeds.
-
-\begin{lemma}[Closure of regular seeds]\label{lem:sm-regular-closure}\label{prop:sm-regular-closure}
-Let $S$ be a set of atoms whose slices $S_p=\{w:(p,w)\in S\}$ are regular for
-all $p\in V^\pm$. For signed variables $p,r,q$, put
-$U_{p,r}=\{\gamma:r\in P^\chi_p(\gamma)\}$,
-$V_{r,q}=\{\beta:r\in Q^\chi_q(\beta)\}$, and
-$\mathrm{Res}_{p,r}=\{\sigma:\gamma\sigma\in S_p\Sigma^*\text{ for some }
-\gamma\in U_{p,r}\}$. Then the slice of $H_\chi(S)$ at $q$ is
-\[
- H_\chi(S)_q=\bigcup_{r\in\Fup\chi}V_{r,q}\,\Sigma^*\ \cup\
- \bigcup_{p,r\in V^\pm}V_{r,q}\,\mathrm{Res}_{p,r}.
-\]
-All these languages are regular, and finite automata for them are computable
-from finite automata for the slices of $S$. Consequently, whether $H_\chi(S)$
-is consistent is decidable.
-\end{lemma}
-
-In particular, $\mu_\chi$ (the case $S=\varnothing$) and the closures of one
-or two seeds have regular slices, and their consistency is decidable. The
-lemma does not say that the set of live atoms is regular, which is
-false in general (\cref{ex:sm-arrow}).
+The bound on $\gamma$ holds because the upper automaton of $e$ has $4^{\len V}$
+states.
 
 \subsection{Forbidden Roots and the Pop Bound}\label{sec:sm-cone}
 
@@ -287,7 +270,7 @@ For every signed variable $p$ and all words $w,v$:
 (1) If $b\in\pstep i(P^\chi_p(w))$, some $r\in P^\chi_p(w)$ is the root of an
 upper constructor literal $r\le f(b_j)_j$ of $\chi^\pm$; then
 $(r,\eps)\in\Neg_\chi$ by \cref{sec:lf-clauses}, and
-$(p,w)\to^*_\chi(r,\eps)$ by \cref{lem:sm-summaries}(b) with $\sigma=\eps$.
+$(p,w)\to^*_\chi(r,\eps)$ by \cref{lem:sm-summaries}(b).
 (2) If $P^\chi_{p,j}(w)\ne\varnothing$ with $j>k$, then
 $P^\chi_{p,k+1}(w)\ne\varnothing$, because the empty set is absorbing, and (1)
 applied to $\wpre wk$ and the letter $w[k]$ gives $\DeadU_\chi(p,\wpre wk)$.
@@ -347,8 +330,7 @@ For every signed variable $p$ and all words $w$, $v$:
 \item $\DeadT_\chi(p,w)$ iff $(\bar p,w)\in\mu_\chi$ or
   $P^\chi_p(w)\cap\DeadT^\eps_\chi\ne\varnothing$;
 \item if $\DeadT_\chi(p,wv)$, then $\DeadT_\chi(p,w)$;
-\item the sets $\DeadU^\eps_\chi$ and $\DeadT^\eps_\chi$ are computable in
-  polynomial time.
+\item the sets $\DeadU^\eps_\chi$ and $\DeadT^\eps_\chi$ are computable.
 \end{enumerate}
 \end{lemma}
 
@@ -410,13 +392,12 @@ $(x^0,01)$ is live (\cref{ex:lf-least}).
 \end{example}
 
 \begin{remark}[No self events without mixed parity]\label{rem:sm-parity}
-If $\chi$ has a parity assignment $\pi$ (\cref{rem:ch-parity}), then every
-pure move preserves $\sgn(r)\oplus\pi(r)$, where $\pi(x^\pm)=\pi(x)$, so every
-$r\in P^\chi_p(w)$ has $\sgn(r)\oplus\pi(r)=\sgn(p)\oplus\pi(p)$. Hence no set
-$P^\chi_{p,i}(w)$ meets a flipped set $\overline{P^\chi_{p,j}(w)}$, $\chi$ has no
-self events, deadness in a satisfiable $\chi$ is $\DeadT_\chi$, and the live
-words of each signed variable form a regular language. This is the automaton
-form of \cref{rem:ch-parity}; it includes covariant systems, with $\pi=0$.
+Informally, if $\chi$ has a parity assignment $\pi$ (\cref{rem:ch-parity}),
+then the sets $P^\chi_{p,i}(w)$ consist of signed variables $r$ with the same
+bit $\sgn(r)\oplus\pi(r)$, where $\pi(x^\pm)=\pi(x)$, and no such set meets a
+flipped one. Self events then do not arise, and deadness in a satisfiable
+$\chi$ is deadness by support; this is the automaton form of
+\cref{rem:ch-parity}, and it includes covariant systems, with $\pi=0$.
 \end{remark}
 
 \subsection{Closure Membership}\label{sec:sm-membership}
@@ -482,13 +463,16 @@ of the seed (\cref{lem:ex-fh,lem:ex-head-before-J}).
 \begin{enumerate}[leftmargin=*]
 \item A system $\chi$ is satisfiable iff $\downc\chi m\cap\Fup\chi=\varnothing$
   for every forbidden root $(m,\eps)$ and there are no variable $x$ and word
-  $w$ with $(x^+,w),(x^-,w)\in\mu_\chi$.
+  $w$ with $(x^+,w),(x^-,w)\in\mu_\chi$. If such $x$ and $w$ exist, then they
+  exist with $\len w<2^{4\len V+2}$.
 \item Let $\varphi$ be a system over $X$ and $\psi$ a system over $X\cup Z$.
   Condition \CondI, $\mu_\psi|_X\subseteq\mu_\varphi$, fails iff some
   $q\in X^\pm$ and some word $v$ have $(q,v)\in\mu_\psi$ and
-  $(q,v)\notin\mu_\varphi$.
+  $(q,v)\notin\mu_\varphi$, and then such $q$ and $v$ exist with
+  $\len v<2^{2\len X+2\len{X\cup Z}+2}$.
 \end{enumerate}
-Satisfiability and condition \CondI\ are decidable in polynomial space.
+Satisfiability and condition \CondI\ are decidable, by searches over words of
+these lengths.
 \end{proposition}
 
 \begin{proof}
@@ -496,21 +480,18 @@ Satisfiability and condition \CondI\ are decidable in polynomial space.
 consistent, that is, contains no forbidden root and no exclusion pair. By
 \cref{lem:sm-mu} with $v=\eps$, $(m,\eps)\in\mu_\chi$ iff
 $\downc\chi m\cap\Fup\chi\ne\varnothing$. (2) is the definition of \CondI. For
-the complexity, \cref{lem:sm-mu} reads membership in $\mu_\chi$ at $q$ by the
+the bounds, \cref{lem:sm-mu} reads membership in $\mu_\chi$ at $q$ by the
 lower automaton of $q$ together with a bit that records whether some state
-read so far met $\Fup\chi$. The second condition of (1) is therefore
-reachability, for some $x\in V$, of a state with both bits set in the product
-of the lower automata of $x^+$ and $x^-$, each with its bit; and the condition
-of (2) is reachability, for some $q\in X^\pm$, of a state whose $\psi$-bit is
-set and whose $\varphi$-bit is not, in the product of the lower automata of
-$q$ in $\psi$ and in $\varphi$. A state of these products has a description of
-polynomial size, its successors are computable in polynomial time, and
-reachability is decided by guessing a path state by state, in nondeterministic
-polynomial space, hence in polynomial space. The set $\Fup\chi$ is computable
-in polynomial time by \cref{lem:sm-mu}.
+read so far met $\Fup\chi$; this automaton has $2^{2\len V+1}$ states. The
+second condition of (1) is reachability, for some $x\in V$, of a state with
+both bits set in the product of these automata for $x^+$ and $x^-$; and the
+condition of (2) is reachability, for some $q\in X^\pm$, of a state whose
+$\psi$-bit is set and whose $\varphi$-bit is not, in the product of the
+automata for $q$ in $\psi$ and in $\varphi$. A shortest word that reaches a
+state visits no state twice, so it is shorter than the number of states of the
+product. The set $\Fup\chi$ is computable by \cref{lem:sm-mu}.
 \end{proof}
 
-A shortest witness of the second condition of (1), or of a failure of \CondI,
-is shorter than the number of states of the product automaton. Condition
+Condition
 \CondU\ needs more than reachability, because liveness involves self events; it
 is the subject of \cref{sec:un}.

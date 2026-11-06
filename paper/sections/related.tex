@@ -25,7 +25,7 @@ Restricted entailment (projection inclusion) in a set-based selector domain & co
 Subtyping of constrained types with $\to$, $\Bot$, $\Top$ & regular & posed as open; sound decidable approximation & \citet{TrifonovSmith96} \\
 Subsumption of polar type schemes & extensible algebra & decidable & \citet{Dolan16} \\
 Plain \NSSE, one constructor of any arity and variance & finite, regular, arbitrary & decidable & \citet{Zhao26} \\
-Existential entailment, one constructor of any arity and variance over $\BFT$, and over $\BF$ with $f$ covariant & finite, regular, arbitrary & decidable; in 2-EXPSPACE; PSPACE-hard for each fixed arity $\ge2$, already with $f$ covariant & this paper \\
+Existential entailment, one constructor of any arity and variance over $\BFT$, and over $\BF$ with $f$ covariant & finite, regular, arbitrary & decidable (mechanized); in 2-EXPSPACE and PSPACE-hard for each fixed arity $\ge2$, already with $f$ covariant (not mechanized) & this paper \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -52,8 +52,7 @@ their extension to constrained types is sound but not complete.
 intermediate variables, and cycle collapse in an implemented analysis, and they
 define the comparison of constrained types by a universal-existential
 condition. For constrained types, all these works use sound transformations or
-approximations; the classes of \cref{sec:ap-plain} are cheap complete cases, and
-\cref{thm:as-main} covers the rest.
+approximations; \cref{thm:as-main} gives a complete test.
 
 \citet{FlanaganFelleisen99} decide a closely related problem. Their restricted
 entailment $S_1\entails_E S_2$ is the inclusion $\Sol(S_1)|_E\subseteq\Sol(S_2)|_E$
@@ -128,7 +127,8 @@ reduction to universality of finite automata.
 decided the unary case, and identified the role of word equations in the
 general problem. \citet{HengleinRehof98} proved PSPACE-hardness of
 non-structural entailment for a binary covariant constructor, which
-\cref{thm:cx-hard} extends to every fixed arity at least two, and the theses of
+\cref{thm:cx-hard}, in the part of this paper that is not mechanized, extends
+to every fixed arity at least two, and the theses of
 Priesnitz \citep{Priesnitz00,Priesnitz04} develop the automata approach
 further. \citet{NiehrenPriesnitzSu05} classify the complexity of
 satisfiability over posets and note that their technique does not extend
@@ -165,9 +165,7 @@ account of this inference; MLstruct extends it to a Boolean algebra of
 structural types and does not formally describe its subsumption check
 \citep{ParreauxChau22}; and \citet{ParreauxEtAl24} keep subtyping constraints
 in first-class polymorphic types. Because the semantics differ, decidability
-there does not decide the ground-tree problem; \cref{app:ap-closed} gives a
-correct closed-tree simplification that is not valid in an extensible
-algebra. Semantic subtyping interprets types as sets of values.
+there does not decide the ground-tree problem. Semantic subtyping interprets types as sets of values.
 \citet{CastagnaXu11} decide subtyping between polymorphic regular types in
 EXPTIME, and \citet{GesbertGenevesLayaida15} decide semantic subtyping through
 a logic. For polymorphic application, \citet{CastagnaNguyenXuAbate15} decide
@@ -188,8 +186,7 @@ inclusion of the second. This elementary fact becomes useful because every
 literal then becomes clauses with a single premise. For a covariant
 constructor over $\BF$, solution sets are closed under unions and intersections
 (\cref{rem:ch-one-sign}); in general they are closed under intersections of
-leaf cones, which in the order of trees is the median with $\Omega$
-(\cref{prop:ch-meet}).
+leaf cones (\cref{prop:ch-meet}).
 
 \paragraph{Decidability of Plain Entailment}
 \Citet{Zhao26} decides plain entailment
@@ -199,9 +196,8 @@ through its rejected tail, its depth, and a compression argument. It lists
 existential entailment among the natural extensions that are not decided by
 testing component inequalities independently. We use the results recalled in
 \cref{sec:bg} and \cref{app:bg}. Condition \textup{(U)} is a hole problem of
-exactly the kind solved there, decided by its three bounds, applied to a
-reduced reader whose depth is bounded through a clock on the antecedent
-(\cref{sec:un}); the readers of that paper already compare a root with its own
+exactly the kind solved there, decided by its hole search applied to the unit
+reader (\cref{sec:un}); the readers of that paper already compare a root with its own
 signed copy, the plain counterpart of our self events. For the two-word
 holes of condition \textup{(II)}, the rejected tail of a mortal hole is short
 by definition, so its depth theorem already bounds the depth of

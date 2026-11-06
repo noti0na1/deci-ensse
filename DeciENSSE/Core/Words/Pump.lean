@@ -6,14 +6,19 @@ import DeciENSSE.Core.Words.NonMortalBound
 
 Deleting factors between matching reader states preserves safety, rejection,
 a head witness, and survivor freeness. Periodic suffix comparisons identify cuts
-that can be deleted; `Self.Pump` applies these tools in six cases.
+that can be deleted; `Self.Pump` applies these tools in the four deletions of
+the paper (`lem:nm-four`).
 
 ## Main declarations
 
-- `TwoWordInstance.pumpGood_delete`: preserve the pre-hole pumping invariant.
+- `TwoWordInstance.pumpGood_delete`: preserve the pre-hole pumping invariant
+  (`lem:nm-deletion`).
 - `TwoWordInstance.partner_eq`, `TwoWordInstance.partner_eq_t`: locate matching cuts.
-- `pumpCapacity`, `TwoWordInstance.pumpSize_le`: count deletion signatures.
-- `pumpHoleBound`: the polynomial non-mortal bound.
+- `TwoWordInstance.periodicEnd_lt`: the periodic end of a target is shorter than
+  `|SB| p` (`lem:nm-target-end`).
+- `pumpBound`, `pumpCapacity`, `pumpBound_le_capacity`: the pump bound
+  `2aba'b' + aa'p + bp + aa' + bb'` and its value `Pcap` at `p ≤ a`.
+- `pumpHoleBound`: the polynomial non-mortal bound `Lnm`.
 -/
 
 namespace DeciENSSE.Core.Words
@@ -466,9 +471,37 @@ theorem unpartnered_ext (hp : LeastStreamPeriod ξ p) {v v' : Word α} {r j : �
 
 end TwoWordInstance
 
-/-- Explicit polynomial capacity of the pumping argument. -/
+/-- The bound of the pump (`thm:nm-pump`) for state counts `a, b, c, d` of
+`A, B, A', B'` (the paper's `a, b, a', b'`) and least period `p`:
+`N₁ + N₂ + N₃ + N₄ + b p` with `N₁ = a c p`, `N₂ = 2 a b c d`, `N₃ = a c`,
+`N₄ = b d`. -/
+def pumpBound (a b c d p : ℕ) : ℕ :=
+  2 * a * b * c * d + a * c * p + b * p + a * c + b * d
+
+/-- The capacity `Pcap(a, b, a', b') = 2aba'b' + a²a' + ab + aa' + bb'` of the
+pump, its bound at the period `p = a` (`thm:nm-pump`). -/
 def pumpCapacity (a b c d : ℕ) : ℕ :=
-  2 * a * a * b * c * d + a * a * c + a * b * d + 2 * a * b * c * d + a * c + b * d
+  2 * a * b * c * d + a * a * c + a * b + a * c + b * d
+
+/-- A period at most the spine state count gives the capacity `Pcap`. -/
+theorem pumpBound_le_capacity {a b c d p : ℕ} (hpa : p ≤ a) :
+    pumpBound a b c d p ≤ pumpCapacity a b c d := by
+  unfold pumpBound pumpCapacity
+  have h1 : a * c * p ≤ a * a * c := by
+    rw [show a * a * c = a * c * a by ring]; exact Nat.mul_le_mul_left _ hpa
+  have h2 : b * p ≤ a * b := by
+    rw [Nat.mul_comm a b]; exact Nat.mul_le_mul_left _ hpa
+  omega
+
+/-- The pump bound as the sum of the four signature counts of `lem:nm-four`
+and `|SB| p`. -/
+theorem pumpBound_card (SA SB SA' SB' : Type*) [Fintype SA] [Fintype SB] [Fintype SA']
+    [Fintype SB'] (p : ℕ) :
+    pumpBound (Fintype.card SA) (Fintype.card SB) (Fintype.card SA') (Fintype.card SB') p =
+      Fintype.card (SA × SA' × Fin p) + Fintype.card (SA × SA' × SB × SB' × Bool) +
+        Fintype.card (SA × SA') + Fintype.card (SB × SB') + Fintype.card SB * p := by
+  simp only [Fintype.card_prod, Fintype.card_fin, Fintype.card_bool, pumpBound]
+  ring
 
 namespace TwoWordInstance
 variable {SA SB SA' SB' : Type*} [Fintype SA] [Fintype SB]
@@ -477,26 +510,46 @@ variable {SA SB SA' SB' : Type*} [Fintype SA] [Fintype SB]
 variable (I : TwoWordInstance α SA SB SA' SB')
 variable {ξ : ℕ → α} {p : ℕ}
 
-omit [DecidableEq SA] [DecidableEq SB] [DecidableEq SA'] [DecidableEq SB'] in
-/-- The six signature counts, for a period at most the spine state count. -/
-theorem pumpSize_le {p : ℕ} (hpa : p ≤ Fintype.card SA) :
-    Fintype.card (SA × SA' × SB × SB' × Fin p × Bool) +
-        Fintype.card (SA × SA' × Fin p) + Fintype.card (SB × SB' × Fin p) +
-        Fintype.card (SA × SA' × SB × SB' × Bool) + Fintype.card (SA × SA') +
-        Fintype.card (SB × SB') ≤
-      pumpCapacity (Fintype.card SA) (Fintype.card SB) (Fintype.card SA')
-        (Fintype.card SB') := by
-  simp only [Fintype.card_prod, Fintype.card_fin, Fintype.card_bool, pumpCapacity]
-  generalize Fintype.card SA = a at hpa ⊢
-  generalize Fintype.card SB = b
-  generalize Fintype.card SA' = c
-  generalize Fintype.card SB' = d
-  nlinarith [Nat.mul_le_mul_left (2 * a * b * c * d) hpa, Nat.mul_le_mul_left (a * c) hpa,
-    Nat.mul_le_mul_left (b * d) hpa]
+/-- **Periodic target end** (`lem:nm-target-end`). A target rejected exactly at
+its end has a periodic end shorter than `|SB| p`: two periodic cuts with the
+same target state and end distances congruent modulo `p` are followed by the
+same letters up to the end, so the earlier one would reach the rejected
+endpoint state before the end. -/
+theorem periodicEnd_lt (hp : LeastStreamPeriod ξ p) {t : Word α} {rt : ℕ}
+    (ht : PeriodicSplit ξ p t rt) (hopen : I.TargetOpen t) (hrej : I.B.run t ∈ I.Rej) :
+    t.length - rt < Fintype.card SB * p := by
+  have htl := ht.le_length
+  by_contra hc
+  obtain ⟨d₁, d₂, hlt, hle, hf⟩ := exists_lt_map_eq (t.length - rt)
+    (fun d => (I.B.atCut t (t.length - d), (⟨d % p, Nat.mod_lt _ hp.1⟩ : Fin p)))
+    (by simp only [Fintype.card_prod, Fintype.card_fin]; omega)
+  simp only [Prod.mk.injEq, Fin.mk.injEq] at hf
+  obtain ⟨hfB, hfm⟩ := hf
+  obtain ⟨i, hi⟩ : ∃ i, i = t.length - d₂ := ⟨_, rfl⟩
+  obtain ⟨j, hj⟩ : ∃ j, j = t.length - d₁ := ⟨_, rfl⟩
+  rw [← hi, ← hj] at hfB
+  have heq : prepend (t.drop i) ξ = prepend (t.drop j) ξ := by
+    subst hi hj
+    exact ht.cut_eq hp (by omega) (by omega) (by omega) (by omega) (by
+      rw [show t.length - (t.length - d₂) = d₂ by omega,
+        show t.length - (t.length - d₁) = d₁ by omega]
+      exact hfm.symm)
+  have hjl : (t.drop j).length = d₁ := by simp; omega
+  obtain ⟨hpre, -⟩ := prepend_eq_prepend_le (by simp; omega) heq.symm
+  rw [hjl] at hpre
+  have hcut : I.B.atCut t (i + d₁) = I.B.run t := by
+    calc I.B.atCut t (i + d₁)
+        = I.B.runFrom (I.B.atCut t i) ((t.drop i).take d₁) := by
+          rw [LDFA.atCut, List.take_add, LDFA.run_append]; rfl
+      _ = I.B.runFrom (I.B.atCut t j) (t.drop j) := by rw [← hpre, hfB]
+      _ = I.B.run t := by
+          rw [LDFA.atCut, ← LDFA.run_append, List.take_append_drop]
+  exact hopen (i + d₁) (by omega) (hcut ▸ hrej)
 
 end TwoWordInstance
 
-/-- A polynomial hole bound, from the pumping capacity. -/
+/-- A polynomial hole bound, from the pumping capacity: the paper's
+`Lnm(a, b, a', b') = 4 max(12aba'b', Pcap(a, b, a', b')) + 6a`. -/
 def pumpHoleBound : HoleBound := fun a b c d =>
   4 * max (12 * a * b * c * d) (pumpCapacity a b c d) + 6 * a
 

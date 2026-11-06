@@ -1,4 +1,4 @@
-import DeciENSSE.Core.Horn
+import DeciENSSE.Core.Basic
 import Mathlib.Data.Fintype.Prod
 
 /-! # Saturating covariant variable inequalities
@@ -8,8 +8,9 @@ transitivity, and decomposition of matching constructor bounds. `mem_D_iff`
 proves that the executable saturation produces exactly the pairs derivable by
 these rules. The upper and lower automata use this relation between stack moves.
 
-This is the finite-summary step of the covariant automata construction. Its
-namespace is `DeciENSSE.Core.Automata`, shared by the following automata modules.
+This is the balanced summary of the pushdown moves of `Core.Basic`; the powerset automata of
+`Core/Automata/Powerset` add the unbalanced pops and pushes. The namespace
+`DeciENSSE.Core.Automata` is shared by these modules.
 
 ## Main declarations
 

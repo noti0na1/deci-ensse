@@ -1,7 +1,6 @@
 import DeciENSSE.Core.Mixed.Duality
 import DeciENSSE.Core.Mixed.Signed
 import DeciENSSE.Core.Mixed.Conditions
-import DeciENSSE.Core.AutomataDecide
 import DeciENSSE.Core.Words.LDFA
 
 /-! # Leaf closure membership, deadness, and the shared target reader
@@ -162,27 +161,30 @@ variable (c χ)
 def upperRun (S : Finset (V × Bool)) (w : List (Fin n)) : Finset (V × Bool) :=
   w.foldl (Automata.pstep (signedSys c χ)) S
 
-/-- A summary intersects the negative-unit region. -/
+/-- Some run of the upper automaton from the summary `S` meets `NegDown`, the variables below
+a forbidden root; the runs are searched up to the number of summaries (`negReachS_iff`). -/
 def negReachS (S : Finset (V × Bool)) : Prop :=
   ∃ z ∈ wordsUpTo (α := Fin n) (Fintype.card (Finset (V × Bool))),
     (upperRun c χ S z ∩ NegDown c χ).Nonempty
 
-/-- A summary contains both signs of some variable. -/
+/-- The flipped summary meets `PF`: some signed variable of `S` has its opposite in the
+summaries reachable from positive units. -/
 def flipHitS (S : Finset (V × Bool)) : Prop :=
   (S.map flipEmb ∩ PF c χ).Nonempty
 
-/-- A summary intersects the positive-unit region. -/
+/-- Some run of the upper automaton from the summary `S` reaches a summary whose flip meets
+`PF`; the runs are searched up to the number of summaries (`muReachS_iff`). -/
 def muReachS (S : Finset (V × Bool)) : Prop :=
   ∃ z ∈ wordsUpTo (α := Fin n) (Fintype.card (Finset (V × Bool))),
     flipHitS c χ (upperRun c χ S z)
 
-/-- The finite predicate has a computable decision. -/
+/-- `negReachS` is decidable by its bounded search. -/
 instance (S : Finset (V × Bool)) : Decidable (negReachS c χ S) := by
   unfold negReachS; infer_instance
-/-- The finite predicate has a computable decision. -/
+/-- `flipHitS` is decidable. -/
 instance (S : Finset (V × Bool)) : Decidable (flipHitS c χ S) := by
   unfold flipHitS; infer_instance
-/-- The finite predicate has a computable decision. -/
+/-- `muReachS` is decidable by its bounded search. -/
 instance (S : Finset (V × Bool)) : Decidable (muReachS c χ S) := by
   unfold muReachS; infer_instance
 
@@ -495,10 +497,10 @@ def targetDeadT (S : TargetState X Z) : Prop :=
 /-- Consequent unit deadness tested on a target-reader state. -/
 def targetDeadU (S : TargetState X Z) : Prop := negReachS c ψ S.2.2
 
-/-- The finite predicate has a computable decision. -/
+/-- The antecedent test on target-reader states is decidable. -/
 instance (S : TargetState X Z) : Decidable (targetDeadT c φ S) := by
   unfold targetDeadT; infer_instance
-/-- The finite predicate has a computable decision. -/
+/-- The consequent test on target-reader states is decidable. -/
 instance (S : TargetState X Z) : Decidable (targetDeadU c ψ S) := by
   unfold targetDeadU; infer_instance
 

@@ -1,14 +1,15 @@
+import Mathlib.Data.Set.Finite.List
 import DeciNSSE.Constraints.Signed
 import DeciNSSE.Satisfiability.LeastShape
 import DeciNSSE.Satisfiability.Cycle
+import DeciNSSE.Semantics.Characterization
 
 /-! # Tree medians and finite realization
 
 Constant leaf extensions embed tree order into pointwise label order. Pruning
-the pointwise median gives a tree and preserves constructors and duality.
-
-Recursion on the sum of three finite heights computes the tree median.
-Normalization and duality also preserve finite presentation.
+the pointwise median gives a tree and preserves constructors and duality
+(`lem:tc-median`). Beyond the depth of three finite trees their extensions
+carry extreme labels only, so the median of three finite trees is finite.
 
 ## Main declarations
 
@@ -18,9 +19,8 @@ Normalization and duality also preserve finite presentation.
 - `treeMedian_mono`
 - `treeMedian_node`
 - `d_treeMedian`
+- `finite_treeMedian`, `exists_ftree_treeMedian`
 - `Median.finD`
-- `Median.finiteMedian`
-- `Median.finiteMedian_toTree`
 -/
 
 namespace DeciENSSE.Support.Median
@@ -59,6 +59,20 @@ theorem ext_of_fn {t : DeciNSSE.Tree n} {w : List (Fin n)} {s : Sym}
     · simp at h
     · simp at h
     · rw [ext_node_cons]; exact ih (by simpa using h)
+
+/-- The constant extension has the constructor label exactly at the
+constructor positions of the tree. -/
+theorem ext_eq_f_iff (t : DeciNSSE.Tree n) (w : List (Fin n)) :
+    ext t w = .f ↔ t.fn w = some .f := by
+  refine ⟨fun h => ?_, ext_of_fn⟩
+  induction w generalizing t with
+  | nil =>
+    rcases t.eq_bot_or_eq_top_or_node with rfl | rfl | ⟨a, rfl⟩ <;> simp_all
+  | cons i w ih =>
+    rcases t.eq_bot_or_eq_top_or_node with rfl | rfl | ⟨a, rfl⟩
+    · simp at h
+    · simp at h
+    · simpa using ih (a i) (by simpa using h)
 
 /-- One trace step uses the next label or retains the preceding extreme label. -/
 theorem ext_step (t : DeciNSSE.Tree n) (w : List (Fin n)) (i : Fin n) :
@@ -155,6 +169,12 @@ theorem medianSym_absorb (a b c a' b' c' : Sym)
     (h : medianSym a b c ≠ .f) : medianSym a' b' c' = medianSym a b c := by
   cases a <;> cases b <;> cases c <;> simp_all [medianSym]
 
+/-- A constructor median needs a constructor input. -/
+theorem medianSym_eq_f {a b c : Sym} (h : medianSym a b c = .f) :
+    a = .f ∨ b = .f ∨ c = .f := by
+  revert h
+  cases a <;> cases b <;> cases c <;> decide
+
 /-! ## Pruning an absorbing label map -/
 
 /-- Prune at the first extreme label. -/
@@ -243,6 +263,50 @@ theorem d_treeMedian (a b c : DeciNSSE.Tree n) :
       treeMedian (DeciNSSE.Tree.dual a) (DeciNSSE.Tree.dual b) (DeciNSSE.Tree.dual c) := by
   apply ext_injective; funext w; simp [medianSym_flip]
 
+/-- **Median** (3) (`lem:tc-median`(3)). The median of three finite trees is
+finite. Let `h` bound the lengths of their positions. At a word of length
+`h + 1` the constant extensions of all three trees are extreme labels, so is
+their median, and the median has no constructor there; since every proper
+prefix of a position is a constructor, the positions of the median have length
+at most `h + 1`. -/
+theorem finite_treeMedian {a b c : DeciNSSE.Tree n}
+    (ha : (Characterization.domain a).Finite) (hb : (Characterization.domain b).Finite)
+    (hc : (Characterization.domain c).Finite) :
+    (Characterization.domain (treeMedian a b c)).Finite := by
+  obtain ⟨h, hh⟩ := ((ha.union (hb.union hc)).image List.length).bddAbove
+  have hdeep : ∀ t : DeciNSSE.Tree n,
+      Characterization.domain t ⊆
+        Characterization.domain a ∪ (Characterization.domain b ∪ Characterization.domain c) →
+      ∀ w : List (Fin n), h < w.length → ext t w ≠ .f := by
+    intro t ht w hw hf
+    have hmem : w ∈ Characterization.domain t := by
+      simp [Characterization.domain, (ext_eq_f_iff t w).mp hf]
+    have := hh ⟨w, ht hmem, rfl⟩
+    omega
+  apply (List.finite_length_le (Fin n) (h + 1)).subset
+  intro π hπ
+  show π.length ≤ h + 1
+  by_contra hlen
+  have hne : π.take (h + 1) ≠ π := fun he => by
+    have := congrArg List.length he
+    simp at this
+    omega
+  have hf := (ext_eq_f_iff _ _).mpr
+    ((treeMedian a b c).label_eq_f_of_proper_prefix (List.take_prefix _ _) hne hπ)
+  rw [ext_treeMedian] at hf
+  have hlt : h < (π.take (h + 1)).length := by simp; omega
+  rcases medianSym_eq_f hf with hf | hf | hf
+  · exact hdeep a (fun _ hw => Or.inl hw) _ hlt hf
+  · exact hdeep b (fun _ hw => Or.inr (Or.inl hw)) _ hlt hf
+  · exact hdeep c (fun _ hw => Or.inr (Or.inr hw)) _ hlt hf
+
+/-- The median of three finite terms is presented by a finite term. -/
+theorem exists_ftree_treeMedian (a b c : FTree n) :
+    ∃ m : FTree n, m.toTree = treeMedian a.toTree b.toTree c.toTree :=
+  (Characterization.toTree_range_iff _).mpr
+    (finite_treeMedian (Characterization.domain_toTree_finite a)
+      (Characterization.domain_toTree_finite b) (Characterization.domain_toTree_finite c))
+
 end DeciENSSE.Support.Median
 
 namespace DeciENSSE.Support.Median
@@ -260,140 +324,5 @@ def finD (t : FTree n) : FTree n := FTree.normalize (fun _ => false) true t
 /-- Finite duality presents tree duality. -/
 @[simp] theorem finD_toTree (t : FTree n) : (finD t).toTree = DeciNSSE.Tree.dual t.toTree :=
   FTree.normalize_toTree _ _ _
-
-/-! ## The finite median -/
-
-/-- The root symbol of a finite tree. -/
-def rootSym : FTree n → Sym
-  | .bot => .bot
-  | .top => .top
-  | .node _ => .f
-
-/-- The `i`-th child of a node; a leaf is its own child (constant extension). -/
-def child : FTree n → Fin n → FTree n
-  | .node a, i => a i
-  | .bot, _ => .bot
-  | .top, _ => .top
-
-/-- The root symbol of bottom is bottom. -/
-@[simp] theorem rootSym_bot : rootSym (.bot : FTree n) = .bot := rfl
-/-- The root symbol of top is top. -/
-@[simp] theorem rootSym_top : rootSym (.top : FTree n) = .top := rfl
-/-- The root symbol of a constructor is the constructor label. -/
-@[simp] theorem rootSym_node (a : Fin n → FTree n) : rootSym (.node a) = .f := rfl
-/-- Descending from bottom retains bottom. -/
-@[simp] theorem child_bot (i : Fin n) : child (.bot : FTree n) i = .bot := rfl
-/-- Descending from top retains top. -/
-@[simp] theorem child_top (i : Fin n) : child (.top : FTree n) i = .top := rfl
-/-- Descending from a constructor selects its child. -/
-@[simp] theorem child_node (a : Fin n → FTree n) (i : Fin n) : child (.node a) i = a i := rfl
-
-/-- Descending does not increase finite height. -/
-theorem height_child_le (t : FTree n) (i : Fin n) : (child t i).height ≤ t.height := by
-  cases t with
-  | bot => simp
-  | top => simp
-  | node a => exact (FTree.height_child_lt a i).le
-
-/-- Descending from a constructor strictly decreases finite height. -/
-theorem height_child_lt_of_root {t : FTree n} (h : rootSym t = .f) (i : Fin n) :
-    (child t i).height < t.height := by
-  cases t with
-  | bot => simp at h
-  | top => simp at h
-  | node a => exact FTree.height_child_lt a i
-
-/-- A constructor median needs a constructor input. -/
-theorem medianSym_eq_f {a b c : Sym} (h : medianSym a b c = .f) :
-    a = .f ∨ b = .f ∨ c = .f := by
-  revert h
-  cases a <;> cases b <;> cases c <;> decide
-
-/-- A constructor median step strictly decreases the sum of the three heights. -/
-theorem finiteMedian_decreasing {a b c : FTree n}
-    (h : medianSym (rootSym a) (rootSym b) (rootSym c) = .f) (i : Fin n) :
-    (child a i).height + (child b i).height + (child c i).height <
-      a.height + b.height + c.height := by
-  have ha := height_child_le a i
-  have hb := height_child_le b i
-  have hc := height_child_le c i
-  rcases medianSym_eq_f h with h | h | h
-  · have := height_child_lt_of_root h i; omega
-  · have := height_child_lt_of_root h i; omega
-  · have := height_child_lt_of_root h i; omega
-
-/-- The median of three finite trees, computed root by root. The hypothesis `_h`
-is used by the termination proof. -/
-def finiteMedian (a b c : FTree n) : FTree n :=
-  if _h : medianSym (rootSym a) (rootSym b) (rootSym c) = .f then
-    .node fun i => finiteMedian (child a i) (child b i) (child c i)
-  else if medianSym (rootSym a) (rootSym b) (rootSym c) = .bot then .bot else .top
-termination_by a.height + b.height + c.height
-decreasing_by exact finiteMedian_decreasing _h i
-
-/-- A bottom root median produces the finite bottom tree. -/
-theorem finiteMedian_of_bot {a b c : FTree n}
-    (h : medianSym (rootSym a) (rootSym b) (rootSym c) = .bot) : finiteMedian a b c = .bot := by
-  rw [finiteMedian]; simp [h]
-
-/-- A top root median produces the finite top tree. -/
-theorem finiteMedian_of_top {a b c : FTree n}
-    (h : medianSym (rootSym a) (rootSym b) (rootSym c) = .top) : finiteMedian a b c = .top := by
-  rw [finiteMedian]; simp [h]
-
-/-- A constructor root median recurses on the three selected children. -/
-theorem finiteMedian_of_f {a b c : FTree n}
-    (h : medianSym (rootSym a) (rootSym b) (rootSym c) = .f) :
-    finiteMedian a b c = .node fun i => finiteMedian (child a i) (child b i) (child c i) := by
-  rw [finiteMedian]; simp [h]
-
-/-- The constant extension at the root equals the finite root symbol. -/
-@[simp] theorem ext_toTree_nil (t : FTree n) : ext t.toTree [] = rootSym t := by
-  cases t <;> rfl
-
-/-- The constant extension follows the finite child operation. -/
-theorem ext_toTree_cons (t : FTree n) (i : Fin n) (w : List (Fin n)) :
-    ext t.toTree (i :: w) = ext (child t i).toTree w := by
-  cases t <;> simp
-
-/-- The finite median is pointwise on constant extensions. -/
-theorem ext_finiteMedian (a b c : FTree n) (w : List (Fin n)) :
-    ext (finiteMedian a b c).toTree w =
-      medianSym (ext a.toTree w) (ext b.toTree w) (ext c.toTree w) := by
-  induction w generalizing a b c with
-  | nil =>
-    simp only [ext_toTree_nil]
-    cases hm : medianSym (rootSym a) (rootSym b) (rootSym c)
-    · rw [finiteMedian_of_bot hm]; rfl
-    · rw [finiteMedian_of_f hm]; rfl
-    · rw [finiteMedian_of_top hm]; rfl
-  | cons i w ih =>
-    have habs : ∀ t : FTree n, rootSym t ≠ .f →
-        ext t.toTree (i :: w) = rootSym t := fun t ht => by
-      have h := ext_absorb t.toTree [] (i :: w) (by simpa using ht)
-      simpa using h
-    cases hm : medianSym (rootSym a) (rootSym b) (rootSym c) with
-    | bot =>
-      rw [finiteMedian_of_bot hm]
-      have h := medianSym_absorb (rootSym a) (rootSym b) (rootSym c)
-        (ext a.toTree (i :: w)) (ext b.toTree (i :: w)) (ext c.toTree (i :: w))
-        (habs a) (habs b) (habs c) (by rw [hm]; decide)
-      rw [h, hm]; simp
-    | top =>
-      rw [finiteMedian_of_top hm]
-      have h := medianSym_absorb (rootSym a) (rootSym b) (rootSym c)
-        (ext a.toTree (i :: w)) (ext b.toTree (i :: w)) (ext c.toTree (i :: w))
-        (habs a) (habs b) (habs c) (by rw [hm]; decide)
-      rw [h, hm]; simp
-    | f =>
-      rw [finiteMedian_of_f hm, ext_toTree_cons, child_node, ih, ext_toTree_cons a,
-        ext_toTree_cons b, ext_toTree_cons c]
-
-/-- `finite_med`: the median of three finite trees is the finite tree `finiteMedian`. -/
-@[simp] theorem finiteMedian_toTree (a b c : FTree n) :
-    (finiteMedian a b c).toTree = treeMedian a.toTree b.toTree c.toTree := by
-  apply ext_injective
-  funext w
-  rw [ext_finiteMedian, ext_treeMedian]
 
 end DeciENSSE.Support.Median

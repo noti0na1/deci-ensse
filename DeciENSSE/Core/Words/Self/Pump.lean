@@ -3,13 +3,18 @@ import DeciENSSE.Core.Words.Pump
 
 /-! # Pumping with target self guards
 
-The six periodic deletion cases also preserve self-survivor freeness and
-the spine endpoint, with the same polynomial capacity.
+The four deletions of the pump (`lem:nm-four`) also preserve
+self-survivor freeness and the spine endpoint. Counting the cuts that none of
+them applies to (`lem:nm-count`) gives the pump (`thm:nm-pump`).
 
 ## Main declarations
 
 - `SelfTwoWordInstance.selfGuardFree_delete`
-- `SelfTwoWordInstance.pumpGood_short`
+- `SelfTwoWordInstance.shrink_spineEnd`, `SelfTwoWordInstance.shrink_restSync`,
+  `SelfTwoWordInstance.shrink_restU`, `SelfTwoWordInstance.shrink_restT`: the
+  four deletions
+- `SelfTwoWordInstance.pump_step`: the count
+- `SelfTwoWordInstance.pump`: the pump
 - `purelyPeriodicShortPreHole_capacity`
 -/
 
@@ -47,7 +52,7 @@ theorem selfSurvivorFree_iff [Inhabited α] {t : Word α} {ξ : ℕ → α}
 def PumpGood (ξ : ℕ → α) (u t : Word α) : Prop :=
   I.toTwoWordInstance.PumpGood ξ u t ∧ I.SelfGuardFree ξ t
 
-/-- The self-aware pumping invariant retains both survivor conditions. -/
+/-- The pumping invariant with self events retains both survivor conditions. -/
 theorem pumpGood_iff [Inhabited α] (ξ : ℕ → α) (u t : Word α) :
     I.PumpGood ξ u t ↔
       I.IsPreHole u t ∧ I.SurvivorFree u t ξ ∧ I.SelfSurvivorFree t ξ := by
@@ -94,19 +99,6 @@ theorem selfGuardFree_delete {ξ : ℕ → α} {x' w' y' : Word α}
         (by rw [drop_delete_right, drop_delete_right]; exact hsuf)
       rwa [I.B.atCut_delete y' hB l, I.B.atCut_delete y' hB k]
 
-/-- An absorbed factor lifts both kinds of deep self comparison. -/
-theorem self_delete_absorbed {ξ : ℕ → α} {w' y' : Word α}
-    (hW' : prepend w' (prepend y' ξ) = prepend y' ξ) (x' : Word α) :
-    (∀ e₁ e₂, e₁ < e₂ → e₂ < x'.length →
-      prepend (x'.drop e₁ ++ y') ξ = prepend (x'.drop e₂ ++ y') ξ →
-      prepend (x'.drop e₁ ++ w' ++ y') ξ = prepend (x'.drop e₂ ++ w' ++ y') ξ) ∧
-    (∀ e < x'.length, ∀ k ≤ y'.length,
-      prepend (x'.drop e ++ y') ξ = prepend (y'.drop k) ξ →
-      prepend (x'.drop e ++ w' ++ y') ξ = prepend (y'.drop k) ξ) := by
-  constructor
-  · intro e₁ e₂ _ _ h; simpa only [prepend_mid hW'] using h
-  · intro e _ k _ h; simpa only [prepend_mid hW'] using h
-
 /-- Both deep comparison premises contradict non-self-similarity. -/
 theorem self_delete_rest {ξ : ℕ → α} {y' : Word α}
     (hX : NonSelfSimilar (prepend y' ξ)) (x' w' : Word α) :
@@ -126,15 +118,6 @@ theorem self_delete_rest {ξ : ℕ → α} {y' : Word α}
     exfalso
     rw [prepend_assoc, ← prepend_shift _ ξ hk] at h
     exact hX.ne_shift (List.ne_nil_of_length_pos (by simp; omega)) k h
-
-/-- Deletion with the absorbed-factor discharger. -/
-theorem selfGuardFree_delete_absorbed {ξ : ℕ → α} {x' w' y' : Word α}
-    (hg : I.SelfGuardFree ξ (x' ++ w' ++ y'))
-    (hB : I.B.runFrom (I.B.run x') w' = I.B.run x')
-    (hW' : prepend w' (prepend y' ξ) = prepend y' ξ) :
-    I.SelfGuardFree ξ (x' ++ y') :=
-  I.selfGuardFree_delete hg hB (self_delete_absorbed hW' x').1
-    (self_delete_absorbed hW' x').2
 
 /-- Deletion with the non-self-similar rest discharger. -/
 theorem selfGuardFree_delete_rest {ξ : ℕ → α} {x' w' y' : Word α}
@@ -189,78 +172,10 @@ theorem shrink_of_delete {ξ : ℕ → α} {u t x w y x' w' y' : Word α}
 
 variable {ξ : ℕ → α} {p : ℕ}
 
-/-- Joint deletion in the periodic ends preserves the self-aware invariant. -/
-theorem shrink_joint (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ}
-    (hg : I.PumpGood ξ u t) (hu : PeriodicSplit ξ p u ru) (ht : PeriodicSplit ξ p t rt)
-    (h : Fintype.card (SA × SA' × SB × SB' × Fin p × Bool) ≤ u.length - ru)
-    (h' : Fintype.card (SA × SA' × SB × SB' × Fin p × Bool) ≤ t.length - rt) :
-    I.Shrinks ξ u t := by
-  obtain ⟨hg, hself⟩ := hg
-  classical
-  have hul := hu.le_length
-  have htl := ht.le_length
-  obtain ⟨d₁, d₂, hlt, hle, hf⟩ := exists_lt_map_eq _
-    (fun d => (I.A.atCut u (u.length - d), I.A'.atCut u (u.length - d),
-      I.B.atCut t (t.length - d), I.B'.atCut t (t.length - d),
-      (⟨d % p, Nat.mod_lt _ hp.1⟩ : Fin p), decide (I.HeadFrom u t (u.length - d)))) le_rfl
-  simp only [Prod.mk.injEq, Fin.mk.injEq, decide_eq_decide] at hf
-  obtain ⟨hfA, hfA', hfB, hfB', hfm, hfh⟩ := hf
-  obtain ⟨x, w, hu', hxl, hwl⟩ := exists_split3 u (i := u.length - d₂)
-    (j := u.length - d₁) (by omega) (by omega)
-  obtain ⟨x', w', ht', hxl', hwl'⟩ := exists_split3 t (i := t.length - d₂)
-    (j := t.length - d₁) (by omega) (by omega)
-  have hyl : (u.drop (u.length - d₁)).length = d₁ := by simp; omega
-  have hyl' : (t.drop (t.length - d₁)).length = d₁ := by simp; omega
-  have hW : prepend w (prepend (u.drop (u.length - d₁)) ξ) =
-      prepend (u.drop (u.length - d₁)) ξ := by
-    rw [← prepend_assoc, ← drop_mid_eq hu', hxl]
-    exact hu.cut_eq hp (by omega) (by omega) (by omega) (by omega) (by
-      rw [show u.length - (u.length - d₂) = d₂ by omega,
-        show u.length - (u.length - d₁) = d₁ by omega]
-      exact hfm.symm)
-  have hW' : prepend w' (prepend (t.drop (t.length - d₁)) ξ) =
-      prepend (t.drop (t.length - d₁)) ξ := by
-    rw [← prepend_assoc, ← drop_mid_eq ht', hxl']
-    exact ht.cut_eq hp (by omega) (by omega) (by omega) (by omega) (by
-      rw [show t.length - (t.length - d₂) = d₂ by omega,
-        show t.length - (t.length - d₁) = d₁ by omega]
-      exact hfm.symm)
-  refine I.shrink_of_delete hu' ht' (Or.inl (List.ne_nil_of_length_pos (by omega))) ?_ hg ?_ ?_
-    ?_ ?_ ?_ ?_ ?_ ?_
-  · apply I.selfGuardFree_delete_absorbed (by rwa [ht'])
-    · exact I.B.runFrom_of_atCut ht' hxl' (by omega) hfB.symm
-    · exact hW'
-  · exact I.A.runFrom_of_atCut hu' hxl (by omega) hfA.symm
-  · exact I.A'.runFrom_of_atCut hu' hxl (by omega) hfA'.symm
-  · exact I.B.runFrom_of_atCut ht' hxl' (by omega) hfB.symm
-  · exact I.B'.runFrom_of_atCut ht' hxl' (by omega) hfB'.symm
-  · intro s _ e _ hdep hsuf
-    refine ⟨by omega, ?_⟩
-    rw [prepend_mid hW, prepend_mid hW']
-    exact hsuf
-  · intro s _ k _ _ hsuf
-    rw [prepend_mid hW]
-    exact hsuf
-  · intro k _ e he hdep
-    exfalso
-    omega
-  · obtain ⟨s₀, -, e₀, -, hev₀⟩ := hg.2.2.2.1
-    by_cases hH : I.HeadFrom u t (u.length - d₁)
-    · obtain ⟨s, e, hs, hev⟩ := hH
-      have hd := aligned_depth hev.1
-      have := hev.1.1
-      have := hev.1.2.1
-      exact ⟨s, e, hev, Or.inl ⟨by omega, by omega⟩⟩
-    · have hs₀ : s₀ < u.length - d₂ := by
-        by_contra hc
-        exact hH (hfh.mpr ⟨s₀, e₀, by omega, hev₀⟩)
-      have hd := aligned_depth hev₀.1
-      have := hev₀.1.1
-      have := hev₀.1.2.1
-      exact ⟨s₀, e₀, hev₀, Or.inr ⟨by omega, by omega, by omega, by omega⟩⟩
-
-/-- The spine's periodic end is much longer: delete a factor of it alone. -/
-theorem shrink_soloU (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ}
+/-- **Deletion 1, spine end** (`lem:nm-four`(1)). If `T_u ≥ T_t + N₁`, delete
+a factor of the periodic end of the spine alone, at end distance at least `T_t`;
+it is absorbed. -/
+theorem shrink_spineEnd (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ}
     (hg : I.PumpGood ξ u t) (hu : PeriodicSplit ξ p u ru) (ht : PeriodicSplit ξ p t rt)
     (h : t.length - rt + Fintype.card (SA × SA' × Fin p) ≤ u.length - ru) :
     I.Shrinks ξ u t := by
@@ -301,63 +216,9 @@ theorem shrink_soloU (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ}
     have := hev₀.1.1
     exact ⟨s₀, e₀, hev₀, Or.inl ⟨by omega, by simp⟩⟩
 
-/-- The target's periodic end is much longer: delete a factor of it alone,
-strictly beyond the spine's periodic end. -/
-theorem shrink_soloT (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ}
-    (hg : I.PumpGood ξ u t) (hu : PeriodicSplit ξ p u ru) (ht : PeriodicSplit ξ p t rt)
-    (h : u.length - ru + 1 + Fintype.card (SB × SB' × Fin p) ≤ t.length - rt) :
-    I.Shrinks ξ u t := by
-  obtain ⟨hg, hself⟩ := hg
-  have hul := hu.le_length
-  have htl := ht.le_length
-  obtain ⟨d₁, d₂, hlt, hle, hf⟩ := exists_lt_map_eq _
-    (fun d => (I.B.atCut t (t.length - (u.length - ru + 1 + d)),
-      I.B'.atCut t (t.length - (u.length - ru + 1 + d)),
-      (⟨(u.length - ru + 1 + d) % p, Nat.mod_lt _ hp.1⟩ : Fin p))) le_rfl
-  simp only [Prod.mk.injEq, Fin.mk.injEq] at hf
-  obtain ⟨hfB, hfB', hfm⟩ := hf
-  obtain ⟨x', w', ht', hxl', hwl'⟩ := exists_split3 t
-    (i := t.length - (u.length - ru + 1 + d₂)) (j := t.length - (u.length - ru + 1 + d₁))
-    (by omega) (by omega)
-  have hyl' : (t.drop (t.length - (u.length - ru + 1 + d₁))).length =
-      u.length - ru + 1 + d₁ := by simp; omega
-  have hW' : prepend w' (prepend (t.drop (t.length - (u.length - ru + 1 + d₁))) ξ) =
-      prepend (t.drop (t.length - (u.length - ru + 1 + d₁))) ξ := by
-    rw [← prepend_assoc, ← drop_mid_eq ht', hxl']
-    exact ht.cut_eq hp (by omega) (by omega) (by omega) (by omega) (by
-      rw [show t.length - (t.length - (u.length - ru + 1 + d₂)) = u.length - ru + 1 + d₂ by
-          omega,
-        show t.length - (t.length - (u.length - ru + 1 + d₁)) = u.length - ru + 1 + d₁ by
-          omega]
-      exact hfm.symm)
-  refine I.shrink_of_delete (x := []) (w := []) (y := u) (by simp) ht'
-    (Or.inr (List.ne_nil_of_length_pos (by omega))) ?_ hg ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
-  · apply I.selfGuardFree_delete_absorbed (by rwa [ht'])
-    · exact I.B.runFrom_of_atCut ht' hxl' (by omega) hfB.symm
-    · exact hW'
-  · rfl
-  · rfl
-  · exact I.B.runFrom_of_atCut ht' hxl' (by omega) hfB.symm
-  · exact I.B'.runFrom_of_atCut ht' hxl' (by omega) hfB'.symm
-  · intro s hs; simp at hs
-  · intro s hs; simp at hs
-  · intro k hk e he hdep hsuf
-    exfalso
-    have hel : e ≤ t.length := by omega
-    have hsuf' : prepend (u.drop k) ξ = prepend (t.drop e) ξ := by
-      rw [hsuf, ← prepend_mid hW', ← drop_delete_left w' _ he.le, ht']
-    by_cases hk' : ru ≤ k
-    · omega
-    · obtain ⟨her, hrl⟩ := partner_eq hu ht (by omega : k < ru) hel hsuf'
-      omega
-  · obtain ⟨s₀, -, e₀, -, hev₀⟩ := hg.2.2.2.1
-    have hm := aligned_le_min hp hu ht (by omega) hev₀.1
-    have hd := aligned_depth hev₀.1
-    have := hev₀.1.1
-    have := hev₀.1.2.1
-    exact ⟨s₀, e₀, hev₀, Or.inl ⟨by simp, by omega⟩⟩
-
-/-- Many partnered rest cuts: delete a factor of the common rest suffix. -/
+/-- **Deletion 2, synchronous rest** (`lem:nm-four`(2)). If more than `N₂`
+rest cuts of the spine are partnered, delete the factor between two of them
+together with the factor between their partners. -/
 theorem shrink_restSync (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : ℕ}
     (hg : I.PumpGood ξ u t) (hu : PeriodicSplit ξ p u ru) (ht : PeriodicSplit ξ p t rt)
     (P : Finset ℕ)
@@ -439,7 +300,8 @@ theorem shrink_restSync (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru rt : �
       have hd := aligned_depth hev₀.1
       exact ⟨s₀, e₀, hev₀, Or.inr ⟨by omega, by omega, by omega, by omega⟩⟩
 
-/-- Many unpartnered spine rest cuts: delete a factor of the spine alone. -/
+/-- **Deletion 3, spine rest** (`lem:nm-four`(3)). If more than `N₃` rest
+cuts of the spine are unpartnered, delete the factor between two of them. -/
 theorem shrink_restU (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru : ℕ}
     (hg : I.PumpGood ξ u t) (hu : PeriodicSplit ξ p u ru) (P : Finset ℕ)
     (hP : ∀ j ∈ P, j < ru ∧ ∀ e ≤ t.length, prepend (u.drop j) ξ ≠ prepend (t.drop e) ξ)
@@ -471,7 +333,8 @@ theorem shrink_restU (hp : LeastStreamPeriod ξ p) {u t : Word α} {ru : ℕ}
       exact hun _ hle (by rw [hdr])
     exact ⟨s₀, e₀, hev₀, Or.inl ⟨by omega, by simp⟩⟩
 
-/-- Many unpartnered target rest cuts: delete a factor of the target alone. -/
+/-- **Deletion 4, target rest** (`lem:nm-four`(4)). If more than `N₄` rest
+cuts of the target are unpartnered, delete the factor between two of them. -/
 theorem shrink_restT (hp : LeastStreamPeriod ξ p) {u t : Word α} {rt : ℕ}
     (hg : I.PumpGood ξ u t) (ht : PeriodicSplit ξ p t rt) (P : Finset ℕ)
     (hP : ∀ e ∈ P, e < rt ∧ ∀ s ≤ u.length, prepend (t.drop e) ξ ≠ prepend (u.drop s) ξ)
@@ -505,45 +368,44 @@ theorem shrink_restT (hp : LeastStreamPeriod ξ p) {u t : Word α} {rt : ℕ}
       exact hun _ hle (by rw [hdr])
     exact ⟨s₀, e₀, hev₀, Or.inl ⟨by simp, by omega⟩⟩
 
-/-! ## Pigeonhole over the six cases and the induction -/
+/-! ## Counting and the induction -/
 
-/-- One deletion applies to every survivor-free pre-hole with a long word. -/
+/-- **Counting** (`lem:nm-count`). A good pair one of whose words is at least
+the pump bound `N₁ + N₂ + N₃ + N₄ + b p` admits one of the four deletions:
+otherwise the rests are short, the periodic end of the target is shorter than
+`b p` (`lem:nm-target-end`), and the periodic end of the spine is shorter than
+`T_t + N₁`. -/
 theorem pump_step (hp : LeastStreamPeriod ξ p) {u t : Word α} (hg : I.PumpGood ξ u t)
-    (hlong : Fintype.card (SA × SA' × SB × SB' × Fin p × Bool) +
-        Fintype.card (SA × SA' × Fin p) + Fintype.card (SB × SB' × Fin p) +
-        Fintype.card (SA × SA' × SB × SB' × Bool) + Fintype.card (SA × SA') +
-        Fintype.card (SB × SB') ≤ max u.length t.length) :
+    (hlong : pumpBound (Fintype.card SA) (Fintype.card SB) (Fintype.card SA')
+        (Fintype.card SB') p ≤ max u.length t.length) :
     I.Shrinks ξ u t := by
   classical
+  rw [pumpBound_card] at hlong
   obtain ⟨ru, hu⟩ := periodicSplit_exists hp.2.1 u
   obtain ⟨rt, ht⟩ := periodicSplit_exists hp.2.1 t
   have hul := hu.le_length
   have htl := ht.le_length
-  by_cases h1 : Fintype.card (SA × SA' × SB × SB' × Fin p × Bool) ≤ u.length - ru ∧
-      Fintype.card (SA × SA' × SB × SB' × Fin p × Bool) ≤ t.length - rt
-  · exact I.shrink_joint hp hg hu ht h1.1 h1.2
-  by_cases h2 : t.length - rt + Fintype.card (SA × SA' × Fin p) ≤ u.length - ru
-  · exact I.shrink_soloU hp hg hu ht h2
-  by_cases h3 : u.length - ru + 1 + Fintype.card (SB × SB' × Fin p) ≤ t.length - rt
-  · exact I.shrink_soloT hp hg hu ht h3
+  have hend := I.toTwoWordInstance.periodicEnd_lt hp ht hg.1.2.1 hg.1.2.2.1
+  by_cases h1 : t.length - rt + Fintype.card (SA × SA' × Fin p) ≤ u.length - ru
+  · exact I.shrink_spineEnd hp hg hu ht h1
   set Pu := (Finset.range ru).filter
     (fun j => ∃ e ≤ t.length, prepend (u.drop j) ξ = prepend (t.drop e) ξ) with hPu
-  by_cases h4 : Fintype.card (SA × SA' × SB × SB' × Bool) < Pu.card
-  · refine I.shrink_restSync hp hg hu ht Pu (fun j hj => ?_) h4
+  by_cases h2 : Fintype.card (SA × SA' × SB × SB' × Bool) < Pu.card
+  · refine I.shrink_restSync hp hg hu ht Pu (fun j hj => ?_) h2
     simp only [hPu, Finset.mem_filter, Finset.mem_range] at hj
     exact hj
   set Uu := (Finset.range ru).filter
     (fun j => ¬ ∃ e ≤ t.length, prepend (u.drop j) ξ = prepend (t.drop e) ξ) with hUu
-  by_cases h5 : Fintype.card (SA × SA') < Uu.card
-  · refine I.shrink_restU hp hg hu Uu (fun j hj => ?_) h5
+  by_cases h3 : Fintype.card (SA × SA') < Uu.card
+  · refine I.shrink_restU hp hg hu Uu (fun j hj => ?_) h3
     simp only [hUu, Finset.mem_filter, Finset.mem_range, not_exists, not_and] at hj
     exact ⟨hj.1, fun e he heq => hj.2 e he heq⟩
   set Pt := (Finset.range rt).filter
     (fun e => ∃ s ≤ u.length, prepend (t.drop e) ξ = prepend (u.drop s) ξ) with hPt
   set Ut := (Finset.range rt).filter
     (fun e => ¬ ∃ s ≤ u.length, prepend (t.drop e) ξ = prepend (u.drop s) ξ) with hUt
-  by_cases h6 : Fintype.card (SB × SB') < Ut.card
-  · refine I.shrink_restT hp hg ht Ut (fun e he => ?_) h6
+  by_cases h4 : Fintype.card (SB × SB') < Ut.card
+  · refine I.shrink_restT hp hg ht Ut (fun e he => ?_) h4
     simp only [hUt, Finset.mem_filter, Finset.mem_range, not_exists, not_and] at he
     exact ⟨he.1, fun s hs heq => he.2 s hs heq⟩
   exfalso
@@ -551,6 +413,7 @@ theorem pump_step (hp : LeastStreamPeriod ξ p) {u t : Word α} (hg : I.PumpGood
     rw [hPu, hUu, Finset.card_filter_add_card_filter_not, Finset.card_range]
   have hrt : Pt.card + Ut.card = rt := by
     rw [hPt, hUt, Finset.card_filter_add_card_filter_not, Finset.card_range]
+  -- partners inject the partnered rest cuts of `t` into those of `u`
   have hPtu : Pt.card ≤ Pu.card := by
     apply Finset.card_le_card_of_injOn (fun e => ru - (rt - e))
     · intro e he
@@ -568,49 +431,70 @@ theorem pump_step (hp : LeastStreamPeriod ξ p) {u t : Word α} (hg : I.PumpGood
       have := partner_eq_t hu ht her₂ hs₂ heq₂
       simp only at heq
       omega
-  rw [not_and_or] at h1
   omega
 
 /-- Repeated deletion, by induction on the total length. -/
-theorem pumpGood_short (hp : LeastStreamPeriod ξ p) {K : ℕ}
-    (hK : Fintype.card (SA × SA' × SB × SB' × Fin p × Bool) +
-        Fintype.card (SA × SA' × Fin p) + Fintype.card (SB × SB' × Fin p) +
-        Fintype.card (SA × SA' × SB × SB' × Bool) + Fintype.card (SA × SA') +
-        Fintype.card (SB × SB') ≤ K) :
+theorem pumpGood_short (hp : LeastStreamPeriod ξ p) :
     ∀ N, ∀ u t : Word α, u.length + t.length ≤ N → I.PumpGood ξ u t →
       ∃ u' t', I.PumpGood ξ u' t' ∧ I.A.run u' = I.A.run u ∧
-        u'.length < K ∧ t'.length < K := by
+        u'.length < pumpBound (Fintype.card SA) (Fintype.card SB) (Fintype.card SA')
+          (Fintype.card SB') p ∧
+        t'.length < pumpBound (Fintype.card SA) (Fintype.card SB) (Fintype.card SA')
+          (Fintype.card SB') p := by
   intro N
   induction N with
   | zero =>
     intro u t hN hg
-    by_cases hs : u.length < K ∧ t.length < K
+    by_cases hs : u.length < pumpBound (Fintype.card SA) (Fintype.card SB)
+        (Fintype.card SA') (Fintype.card SB') p ∧
+      t.length < pumpBound (Fintype.card SA) (Fintype.card SB) (Fintype.card SA')
+        (Fintype.card SB') p
     · exact ⟨u, t, hg, rfl, hs⟩
     · rw [not_and_or] at hs
       obtain ⟨u', t', -, -, hlt⟩ := I.pump_step hp hg (by omega)
       omega
   | succ N ih =>
     intro u t hN hg
-    by_cases hs : u.length < K ∧ t.length < K
+    by_cases hs : u.length < pumpBound (Fintype.card SA) (Fintype.card SB)
+        (Fintype.card SA') (Fintype.card SB') p ∧
+      t.length < pumpBound (Fintype.card SA) (Fintype.card SB) (Fintype.card SA')
+        (Fintype.card SB') p
     · exact ⟨u, t, hg, rfl, hs⟩
     · rw [not_and_or] at hs
       obtain ⟨u', t', hg', hrun, hlt⟩ := I.pump_step hp hg (by omega)
       obtain ⟨u'', t'', hg'', hrun', hl⟩ := ih u' t' (by omega) hg'
       exact ⟨u'', t'', hg'', hrun'.trans hrun, hl⟩
 
-/-- Self guards preserve the polynomial capacity of the deletion toolkit. -/
+/-- **Pump** (`thm:nm-pump`). Let `ξ` be purely periodic with least period `p`,
+and let `(u, t)` be a pre-hole for which `ξ` is survivor-free (no event and no
+self event survives `ξ`). Then some pre-hole `(u', t')` for which `ξ` is
+survivor-free has the same spine endpoint and
+`|u'|, |t'| < 2aba'b' + aa'p + bp + aa' + bb'`. -/
+theorem pump [Inhabited α] (hp : LeastStreamPeriod ξ p) {u t : Word α}
+    (hph : I.IsPreHole u t) (hsf : I.SurvivorFree u t ξ) (hself : I.SelfSurvivorFree t ξ) :
+    ∃ u' t', I.IsPreHole u' t' ∧ I.SurvivorFree u' t' ξ ∧ I.SelfSurvivorFree t' ξ ∧
+      I.A.run u' = I.A.run u ∧
+      u'.length < pumpBound (Fintype.card SA) (Fintype.card SB) (Fintype.card SA')
+        (Fintype.card SB') p ∧
+      t'.length < pumpBound (Fintype.card SA) (Fintype.card SB) (Fintype.card SA')
+        (Fintype.card SB') p := by
+  obtain ⟨u', t', hg, hrun, hu', ht'⟩ :=
+    I.pumpGood_short hp _ u t le_rfl ((I.pumpGood_iff ξ u t).mpr ⟨hph, hsf, hself⟩)
+  obtain ⟨hph', hsf', hself'⟩ := (I.pumpGood_iff ξ u' t').mp hg
+  exact ⟨u', t', hph', hsf', hself', hrun, hu', ht'⟩
+
+/-- The pump at a lasso: its least period is at most `|SA|`, so the capacity
+`Pcap` bounds both words (`thm:nm-pump`, second claim). -/
 theorem purelyPeriodicShortPreHole_pump [Inhabited α] :
     I.PurelyPeriodicShortPreHole
       (pumpCapacity (Fintype.card SA) (Fintype.card SB) (Fintype.card SA')
         (Fintype.card SB')) := by
   rintro q ξ - hl hper ⟨u, t, hph, hq, hsf, hself⟩
   obtain ⟨p, hp⟩ := leastPeriod_exists hper
-  have hpa := I.toTwoWordInstance.lasso_leastPeriod_le hl hp
-  obtain ⟨u', t', hg, hrun, hu', ht'⟩ :=
-    I.pumpGood_short hp (TwoWordInstance.pumpSize_le hpa) _ u t le_rfl
-      ((I.pumpGood_iff ξ u t).mpr ⟨hph, hsf, hself⟩)
-  obtain ⟨hph', hsf', hself'⟩ := (I.pumpGood_iff ξ u' t').mp hg
-  exact ⟨u', t', hph', hrun.trans hq, hsf', hself', hu', ht'⟩
+  have hK := pumpBound_le_capacity (b := Fintype.card SB) (c := Fintype.card SA')
+    (d := Fintype.card SB') (I.toTwoWordInstance.lasso_leastPeriod_le hl hp)
+  obtain ⟨u', t', hph', hsf', hself', hrun, hu', ht'⟩ := I.pump hp hph hsf hself
+  exact ⟨u', t', hph', hrun.trans hq, hsf', hself', hu'.trans_le hK, ht'.trans_le hK⟩
 
 end DeciENSSE.Core.Words.Self.SelfTwoWordInstance
 

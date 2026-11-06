@@ -20,8 +20,9 @@ polarity $\parity(w)$, the order $\le_c$, the normalizations $\nu_s$, the dual
 $t^\partial$ and the full constructor tree $\Omega$, and we put
 $\Sigma^+=\Sigma^*\setminus\{\eps\}$.
 In this section and the next, all trees are trees over $\BFT$, and
-assignments range over arbitrary trees; regular and finite trees are treated
-in \cref{sec:tc}. Proofs omitted here are in \cref{app:lf}.
+assignments range over arbitrary trees; \cref{sec:tc}, right after the
+characterization, shows that regular and finite trees and the signature $\BF$
+reduce to this setting. Proofs omitted here are in \cref{app:lf}.
 
 The positions of a tree $t$ labeled $\Bot$ or $\Top$ are its \emph{leaves}. We
 use the \emph{chain property}: for every tree $t$ and every word $w$, at most
@@ -79,10 +80,6 @@ $L^s_{\rho(v)}$ is the top-leaf cone of the covariant tree $\rho^\pm(v^s)$.
   \]
   In particular, $\eps\in L^0_t$ iff $t=\Top$, and $\eps\in L^1_t$ iff
   $t=\Bot$.
-\item The positions of $t$ labeled $f$ are exactly the words outside
-  $L^0_t\cup L^1_t$. Hence $t$ is finite iff
-  $\Sigma^*\setminus(L^0_t\cup L^1_t)$ is finite, and $t$ is regular iff
-  $L^0_t$ and $L^1_t$ are regular languages.
 \end{enumerate}
 \end{theorem}
 
@@ -262,7 +259,7 @@ set of live atoms. Every rule has a single premise, so every atom $b$ of
 $H_\chi(A)$ has a \emph{seed}: an atom $x\in\Fact_\chi\cup A$ with
 $b\in \Reach_\chi(x)$.
 
-\begin{lemma}[Least closures]\label{lem:lf-closure}\label{lem:lf-least}
+\begin{lemma}[Least closures]\label{lem:lf-closure}
 Let $\chi$ be a system over $V$ and $A\subseteq\Conf_V$.
 \begin{enumerate}[leftmargin=*]
 \item $H_\chi(A)$ is the least set of atoms that contains $\Fact_\chi\cup A$
@@ -280,10 +277,9 @@ Let $\chi$ be a system over $V$ and $A\subseteq\Conf_V$.
   $(p,u\alpha)\in \Reach_\chi(p,u)$; hence
   $\Cl_\chi(p,u\alpha)\subseteq\Cl_\chi(p,u)$, and if $(p,u)$ is live, then
   so is $(p,u\alpha)$.
-\item Let $V=X\cup Z$ with $X\cap Z=\varnothing$, and let $S\subseteq\Conf_X$
-  be extension closed and without exclusion pairs. Then $S=T|_X$ for some
-  model $T$ of $\chi$ iff $H_\chi(S)$ is consistent and $H_\chi(S)|_X=S$; in
-  this case $H_\chi(S)$ is the least such model.
+\item Let $V=X\cup Z$ with $X\cap Z=\varnothing$, and let $S\subseteq\Conf_X$.
+  Then $S=T|_X$ for some model $T$ of $\chi$ iff $H_\chi(S)$ is consistent and
+  $H_\chi(S)|_X=S$; in this case $H_\chi(S)$ is the least such model.
 \end{enumerate}
 \end{lemma}
 
@@ -386,11 +382,10 @@ $(p,u\alpha)\to^*_\chi(\bar p,u\delta)$ for some words $\alpha$ and $\delta$.
 Causes (a) and (b) make the atom dead by support (\cref{def:sm-dead}).
 Cause (c), a \emph{self-collision}, may occur without such support: in
 \cref{ex:lf-least}, $(x^0,0)$ is dead by $(x^0,00)\to(x^1,0)$, which is (c)
-with $\alpha=0$ and $\delta=\eps$. By the sign invariant, (c) requires
-$\parity(\alpha)\ne\parity(\delta)$, so self-collisions occur only through
-contravariant directions; in the covariant case every rule keeps the
-sign, and only (a) and (b) remain (\cref{rem:ch-parity}). The causes may
-overlap: for unary contravariant $f$ and $\chi=\{x\le f(x)\}$, the atom
+with $\alpha=0$ and $\delta=\eps$. Intuitively, a self-collision has to change
+the sign, which the sign invariant ties to the polarities of the words, so it
+needs contravariant directions; in the covariant case every rule keeps the
+sign (\cref{rem:ch-parity}). The causes may overlap: for unary contravariant $f$ and $\chi=\{x\le f(x)\}$, the atom
 $(x^0,\eps)$ is a forbidden root, and also $(x^0,0)\to(x^1,\eps)$. \Cref{sec:sm}
 expresses (a)--(c) by finite automata and reduces a self-collision of an
 atom that is not already dead by support to a \emph{self event}

@@ -10,7 +10,7 @@ arbitrary trees, regular graph unfoldings, or finite terms.
 - `LitT`, `HoldsT`, `SatT`: syntax and satisfaction.
 - `ExistsEntailsTIn`: entailment with both tuples restricted to a tree class.
 - `ExistsEntailsT`, `ExistsEntailsTReg`, `ExistsEntailsTFin`: the three semantics.
-- `satT_map`, `satT_append`: renaming and conjunction.
+- `satT_map`, `satT_append`, `satT_flatMap`: renaming and conjunction.
 -/
 
 namespace DeciENSSE.Core.Full
@@ -62,6 +62,13 @@ def SatT {V : Type*} (c : Fin n → Bool) (ρ : V → Tree n)
 @[simp] theorem satT_append {V : Type*} (c : Fin n → Bool) (ρ : V → Tree n)
     (χ ψ : List (LitT n V)) : SatT c ρ (χ ++ ψ) ↔ SatT c ρ χ ∧ SatT c ρ ψ := by
   simp [SatT, or_imp, forall_and]
+
+/-- Satisfaction of a union of conjunctions is satisfaction of each of them. -/
+@[simp] theorem satT_flatMap {V W : Type*} (c : Fin n → Bool) (ρ : V → Tree n)
+    (xs : List W) (f : W → List (LitT n V)) :
+    SatT c ρ (xs.flatMap f) ↔ ∀ x ∈ xs, SatT c ρ (f x) := by
+  simp only [SatT, List.mem_flatMap]
+  exact ⟨fun h x hx l hl => h l ⟨x, hx, hl⟩, fun h l ⟨x, hx, hl⟩ => h x hx l hl⟩
 
 /-- Existence of a solution in a tree class, with the specified variance. -/
 def SatisfiableIn {V : Type*} (C : Tree n → Prop) (c : Fin n → Bool)

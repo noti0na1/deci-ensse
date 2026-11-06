@@ -11,6 +11,7 @@ preserves self-event exclusion and the head witness while shortening mortal hole
 - `Self.mortal_depth`
 - `Self.exists_short_mortalHole`
 - `mortalShortHoleBoundSelf`
+- `Self.decideHasMortalHole`: mortal holes are decidable (`cor:mo-decidable`)
 -/
 
 namespace DeciENSSE.Core.Words.Self
@@ -126,7 +127,8 @@ def PiHole (w : List (Option α)) : Prop :=
   IsReaderHole (reader I.toTwoWordInstance) (Adm I) (Rej I.toTwoWordInstance) w ∧ HasPi
     I.toTwoWordInstance w
 
-/-- A separated reader hole with a head witness is exactly a mortal self-aware hole. -/
+/-- The separator word `u ♯ t` is a reader hole with a head witness exactly when `(u, t)` is a
+mortal hole with self events. -/
 theorem piHole_sep_iff (u t : Word α) :
     PiHole I (sepWord u t) ↔ I.IsMortalHole u t := by
   rw [I.isMortalHole_iff]
@@ -146,7 +148,7 @@ theorem piHole_sep_iff (u t : Word α) :
     intro s e hse he hp
     exact (no_admitted_iff I hs hm hj').mpr ⟨hne, hn⟩ s e ⟨hse, he, hp⟩
 
-/-- Reader holes with a head witness decode into mortal self-aware word pairs. -/
+/-- Reader holes with a head witness decode into mortal holes with self events. -/
 theorem piReader_iff (w : List (Option α)) :
     PiHole I w ↔ ∃ u t, w = sepWord u t ∧ I.IsMortalHole u t := by
   constructor
@@ -253,14 +255,34 @@ theorem exists_short_mortalHole {u t : Word α} (h : I.IsMortalHole u t) :
   simpa only [mortalHoleBound, card_state, length_sepWord, Nat.add_assoc,
     Nat.add_left_comm, Nat.add_comm] using hlen
 
-/-- The mortal-bound statement retains the forced target heads premise, though local
-compression does not require it. -/
+/-- **Short mortal holes** (`thm:mo-short`) for indexed state types; (FH) is
+not needed. -/
 theorem mortalShortHoleBoundSelf : MortalShortHoleBoundSelf α mortalHoleBound := by
-  intro a b c d I _ h
+  intro a b c d I h
   obtain ⟨u, t, hm⟩ := h
   obtain ⟨u', t', hm', hlen⟩ := Self.exists_short_mortalHole I hm
   refine ⟨u', t', hm', ?_⟩
   simp only [Fintype.card_fin] at hlen
   omega
+
+/-- A mortal hole exists iff one exists among the pairs of words within the
+bound of `exists_short_mortalHole`. -/
+theorem hasMortalHole_iff_bounded :
+    I.HasMortalHole ↔
+      ∃ u ∈ wordsUpTo (mortalHoleBound (Fintype.card SA) (Fintype.card SB)
+          (Fintype.card SA') (Fintype.card SB')),
+        ∃ t ∈ wordsUpTo (mortalHoleBound (Fintype.card SA) (Fintype.card SB)
+          (Fintype.card SA') (Fintype.card SB')), I.IsMortalHole u t := by
+  constructor
+  · rintro ⟨u, t, h⟩
+    obtain ⟨u', t', h', hlen⟩ := Self.exists_short_mortalHole I h
+    exact ⟨u', by simp only [mem_wordsUpTo]; omega, t', by simp only [mem_wordsUpTo]; omega, h'⟩
+  · rintro ⟨u, -, t, -, h⟩
+    exact ⟨u, t, h⟩
+
+/-- **Mortal holes are decidable** (`cor:mo-decidable`): test every pair of words
+within the bound of `thm:mo-short`. -/
+def decideHasMortalHole : Decidable I.HasMortalHole :=
+  decidable_of_iff _ (hasMortalHole_iff_bounded I).symm
 
 end DeciENSSE.Core.Words.Self

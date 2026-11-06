@@ -1,5 +1,6 @@
 import DeciENSSE.Core.Full.AC
 import DeciENSSE.Core.Full.Basic
+import DeciENSSE.Support.Normalization
 
 /-! # Signed leaf coordinates for arbitrary variance
 
@@ -10,7 +11,7 @@ information operation used to combine solutions.
 
 ## Main declarations
 
-- `leaf`, `LeafPair`, `treeLe_iff_leaf`,
+- `leaf`, `LeafPair`, `treeLe_iff_leaf`, `leaf_dual`,
   `infoInter`, `leaf_infoInter`.
 -/
 
@@ -25,11 +26,17 @@ def leaf (c : Fin n → Bool) (t : Tree n) (s : Bool) : Set (List (Fin n)) :=
 
 /-- The negative cone complements the normalized non-bottom observation. -/
 theorem leaf_minus (c : Fin n → Bool) (t : Tree n) (w : List (Fin n)) :
-    w ∈ leaf c t true ↔ w ∉ (AC.cobs (DeciNSSE.Tree.normalize c false t)).K := by
+    w ∈ leaf c t true ↔ w ∉ (AC.cobs (DeciNSSE.Tree.normalize c false t)).carrier := by
   classical
   rw [leaf, Set.mem_ofPred, normalize_true]
   have h := AC.cobs_dual (DeciNSSE.Tree.dual (DeciNSSE.Tree.normalize c false t)) w
   simpa using h.not.symm
+
+/-- **Leaf representation** (3), duality of cones (`thm:lf-representation`(3)):
+`L^s_{t∂} = L^{1-s}_t`. -/
+theorem leaf_dual (c : Fin n → Bool) (t : Tree n) (s : Bool) :
+    leaf c (DeciNSSE.Tree.dual t) s = leaf c t (!s) := by
+  simp only [leaf, Support.normalize_dual]
 
 /-- Membership persists under arbitrary right extensions. -/
 def ExtensionClosed (A : Set (List (Fin n))) : Prop := ∀ u v, u ∈ A → u ++ v ∈ A
@@ -62,7 +69,7 @@ theorem leaf_disjoint (c : Fin n → Bool) (t : Tree n) (w : List (Fin n)) :
 def leafPair (c : Fin n → Bool) (t : Tree n) : LeafPair n :=
   ⟨leaf c t, leaf_extension c t, leaf_disjoint c t⟩
 
-/-- Complementing the two cones gives the existing A/C representation. -/
+/-- Complementing the two cones gives the A/C representation of `Core.Full.AC`. -/
 def LeafPair.toAC (p : LeafPair n) : AC.Pair n where
   c := ⟨(p.cone true)ᶜ, fun u v h hu => h (p.extension true u v hu)⟩
   n := ⟨(p.cone false)ᶜ, fun u v h hu => h (p.extension false u v hu)⟩

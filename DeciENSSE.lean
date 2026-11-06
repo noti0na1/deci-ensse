@@ -4,22 +4,16 @@ import DeciENSSE.Anchored.Columns
 import DeciENSSE.Anchored.Desubstitution
 import DeciENSSE.Anchored.ElementaryBound
 import DeciENSSE.Anchored.Estimate
+import DeciENSSE.Anchored.Types
 import DeciENSSE.Anchored.NormalForm
 import DeciENSSE.Anchored.Unary
-import DeciENSSE.Core.Automata
 import DeciENSSE.Core.Automata.Moves
 import DeciENSSE.Core.Automata.Powerset
 import DeciENSSE.Core.Automata.Saturation
-import DeciENSSE.Core.AutomataDecide
 import DeciENSSE.Core.Basic
-import DeciENSSE.Core.Classes
-import DeciENSSE.Core.ClassesLanguage
-import DeciENSSE.Core.Decide
-import DeciENSSE.Core.Final
 import DeciENSSE.Core.Full.AC
 import DeciENSSE.Core.Full.ACPins
 import DeciENSSE.Core.Full.Basic
-import DeciENSSE.Core.Full.Bridge
 import DeciENSSE.Core.Full.Classes
 import DeciENSSE.Core.Full.Flatten
 import DeciENSSE.Core.Full.Observations
@@ -28,7 +22,6 @@ import DeciENSSE.Core.Full.PinningGround
 import DeciENSSE.Core.Full.PinningSpines
 import DeciENSSE.Core.Full.Signed
 import DeciENSSE.Core.Full.TopGraphs
-import DeciENSSE.Core.Horn
 import DeciENSSE.Core.Main
 import DeciENSSE.Core.Mixed.ClassTransfer
 import DeciENSSE.Core.Mixed.CondI0
@@ -36,6 +29,7 @@ import DeciENSSE.Core.Mixed.Conditions
 import DeciENSSE.Core.Mixed.Decide
 import DeciENSSE.Core.Mixed.Duality
 import DeciENSSE.Core.Mixed.Extract
+import DeciENSSE.Core.Mixed.ExtractModel
 import DeciENSSE.Core.Mixed.Final
 import DeciENSSE.Core.Mixed.Finite
 import DeciENSSE.Core.Mixed.FinitePinning
@@ -48,8 +42,6 @@ import DeciENSSE.Core.Mixed.Sat
 import DeciENSSE.Core.Mixed.Signed
 import DeciENSSE.Core.Mixed.Units
 import DeciENSSE.Core.Nullary
-import DeciENSSE.Core.Reduction
-import DeciENSSE.Core.Words.Bound
 import DeciENSSE.Core.Words.LDFA
 import DeciENSSE.Core.Words.Mortal.Bound
 import DeciENSSE.Core.Words.Mortal.Depth
@@ -65,25 +57,40 @@ import DeciENSSE.Core.Words.Self.Bound
 import DeciENSSE.Core.Words.Self.Mortal
 import DeciENSSE.Core.Words.Self.NonMortal
 import DeciENSSE.Core.Words.Self.Pump
-import DeciENSSE.Core.Words.Statements
 import DeciENSSE.Core.Words.Streams
 import DeciENSSE.Core.Words.Transport
 import DeciENSSE.Core.Words.TwoWordInstance
-import DeciENSSE.Examples.Covariant
 import DeciENSSE.Examples.Fixtures
+import DeciENSSE.Examples.FiniteTests
 import DeciENSSE.Examples.Full
 import DeciENSSE.Examples.Mixed
 import DeciENSSE.Examples.Public
 import DeciENSSE.Examples.Self
+import DeciENSSE.Examples.ShiftClosure
+import DeciENSSE.Examples.Subsumption
 import DeciENSSE.Examples.Words
+import DeciENSSE.Flattening
+import DeciENSSE.Certificate
 import DeciENSSE.Main
 import DeciENSSE.NSSE
+import DeciENSSE.Paper
 import DeciENSSE.Semantics
+import DeciENSSE.Subsumption
+import DeciENSSE.Terms
+import DeciENSSE.TopFree
 import DeciENSSE.Support.Graphs
 import DeciENSSE.Support.Median
 import DeciENSSE.Support.Nullary
 import DeciENSSE.Support.RankedExtension
 import DeciENSSE.Support.Spines
+import DeciENSSE.Support.Normalization
+import DeciENSSE.Anchored.Monotone
+import DeciENSSE.Bounds
+import DeciENSSE.Bounds.Estimates
+import DeciENSSE.Bounds.States
+import DeciENSSE.Bounds.Tower
+import DeciENSSE.Counterexamples
+import DeciENSSE.Plain
 
 /-! # Existential non-structural subtype entailment
 
@@ -92,5 +99,10 @@ conjunctions of subtype constraints over one constructor of arbitrary finite
 arity, over arbitrary, regular and finite trees: for bottom, the constructor
 and top with any variance, and for bottom and a covariant constructor. Plain
 subtype entailment `φ ⊨ x ≤ y` follows as the instance with no hidden
-variables (`DeciENSSE.NSSE`).
+variables (`DeciENSSE.NSSE`). Constraints between arbitrary type expressions
+reduce to flat ones by flattening (`DeciENSSE.Terms`, `DeciENSSE.Flattening`),
+and subsumption of constrained type schemes is an existential entailment
+between them, hence decidable (`DeciENSSE.Subsumption`). Failures have short
+counterexample words and countermodels (`DeciENSSE.Counterexamples`), and the
+modules `DeciENSSE.Paper` state the numbered results of the accompanying paper.
 -/

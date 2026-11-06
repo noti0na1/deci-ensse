@@ -105,13 +105,10 @@ theorem bound_median (b : GroundBound n V) {A A' D : V → DeciNSSE.Tree n}
 
 /-- Median symmetrization preserves every paired signed pin. -/
 theorem symmetrize_pins {c : Fin n → Bool} {B : List (GroundBound n V)}
-    {A : V × Bool → FTree n} (D : V → FTree n)
-    (h : ∀ p ∈ pins c B, p.Holds (fun _ => false) (FTree.toTree ∘ A)) :
-    ∀ p ∈ pins c B, p.Holds (fun _ => false) (FTree.toTree ∘ symmetrize c A D) := by
-  intro p hp
-  have hh := bound_median (D := normalize c (FTree.toTree ∘ D)) p
-    (h p hp) (pins_signDual h p hp)
-  simpa only [Function.comp_def, symmetrize_toTree] using hh
+    {A : V × Bool → DeciNSSE.Tree n} (D : V → DeciNSSE.Tree n)
+    (h : ∀ p ∈ pins c B, p.Holds (fun _ => false) A) :
+    ∀ p ∈ pins c B, p.Holds (fun _ => false) (symmetrize c A D) := fun p hp =>
+  bound_median (D := normalize c D) p (h p hp) (pins_signDual h p hp)
 
 /-- Decoding a symmetric assignment satisfying the pins preserves the mixed bounds. -/
 theorem pins_decode {c : Fin n → Bool} {B : List (GroundBound n V)}
@@ -130,33 +127,21 @@ theorem exists_finite_sat_groundBounds [NeZero n] {V : Type*} (c : Fin n → Boo
     (B : List (GroundBound n V))
     (hs : ∃ ρ, SatT c ρ χ ∧ ∀ b ∈ B, b.Holds c ρ) :
     ∃ τ, (∀ v, FiniteTop (τ v)) ∧ SatT c τ χ ∧ ∀ b ∈ B, b.Holds c τ := by
-  classical
   obtain ⟨δ, hδfin, hδ⟩ := hf
-  choose D hD using hδfin
-  have hDeq : FTree.toTree ∘ D = δ := funext hD
-  have hf' : SatisfiableIn FiniteTop (fun _ => false) (Full.signed c χ) := by
-    refine ⟨FinitePinning.normalize c δ, ?_,
+  have hf' : SatisfiableIn FiniteTop (fun _ => false) (Full.signed c χ) :=
+    ⟨FinitePinning.normalize c δ,
+      (FinitePinning.normalize_class_iff (finiteTop_normalize_iff c) δ).mpr hδfin,
       (FinitePinning.sat_normalize_iff c δ χ).mpr hδ⟩
-    intro z
-    exact ⟨FTree.normalize c z.2 (D z.1), by simp [FinitePinning.normalize, hD]⟩
   obtain ⟨ρ, hρ, hB⟩ := hs
   obtain ⟨β, hβfin, hβ, hβB⟩ := Full.finiteBoundPinning
     (Full.signed c χ) hf' (FinitePinning.pins c B)
     ⟨FinitePinning.normalize c ρ, (FinitePinning.sat_normalize_iff c ρ χ).mpr hρ,
       (FinitePinning.pins_normalize_iff c B ρ).mpr hB⟩
-  choose A hA using hβfin
-  have hAeq : FTree.toTree ∘ A = β := funext hA
-  have hAsat : SatT (fun _ => false) (FTree.toTree ∘ A)
-      (Full.signed c χ) := hAeq.symm ▸ hβ
-  have hApins : ∀ p ∈ FinitePinning.pins c B, p.Holds (fun _ => false) (FTree.toTree ∘ A) :=
-    hAeq.symm ▸ hβB
-  let M := FinitePinning.symmetrize c A D
-  have hfixed := FinitePinning.symmetrize_fixed c A D
-  refine ⟨FinitePinning.decode c (FTree.toTree ∘ M), ?_, ?_, ?_⟩
-  · intro v
-    exact ⟨FTree.normalize c false (M (v, false)), by simp [FinitePinning.decode]⟩
-  · exact FinitePinning.sat_decode c
-      (FinitePinning.symmetrize_sat hAsat (hDeq.symm ▸ hδ)) hfixed
-  · exact FinitePinning.pins_decode hfixed (FinitePinning.symmetrize_pins D hApins)
+  have hfixed := FinitePinning.symmetrize_fixed c β δ
+  refine ⟨FinitePinning.decode c (FinitePinning.symmetrize c β δ), ?_, ?_, ?_⟩
+  · exact FinitePinning.decode_class (finiteTop_normalize_iff c)
+      (FinitePinning.symmetrize_finite c hβfin hδfin)
+  · exact FinitePinning.sat_decode c (FinitePinning.symmetrize_sat hβ hδ) hfixed
+  · exact FinitePinning.pins_decode hfixed (FinitePinning.symmetrize_pins δ hβB)
 
 end DeciENSSE.Core.Mixed

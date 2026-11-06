@@ -33,8 +33,8 @@ def aobs (t : DeciNSSE.Tree n) (w : List (Fin n)) : Prop :=
   Safety.HasLabel t w Sym.top
 
 /-- The nonbottom observation C: paths with no bottom-labeled prefix. -/
-def cobs (t : DeciNSSE.Tree n) : BFTree n where
-  K := {w | ¬ Safety.HasLabel t w Sym.bot}
+def cobs (t : DeciNSSE.Tree n) : PrefixSet n where
+  carrier := {w | ¬ Safety.HasLabel t w Sym.bot}
   prefix_closed := by
     rintro u v h ⟨p, ⟨s, hs⟩, hp⟩
     apply h
@@ -42,27 +42,27 @@ def cobs (t : DeciNSSE.Tree n) : BFTree n where
 
 /-- Constructor-observation membership means no prefix is labeled bottom. -/
 @[simp] theorem cobs_mem (t : DeciNSSE.Tree n) (w : List (Fin n)) :
-    w ∈ (cobs t).K ↔ ¬ Safety.HasLabel t w Sym.bot := Iff.rfl
+    w ∈ (cobs t).carrier ↔ ¬ Safety.HasLabel t w Sym.bot := Iff.rfl
 
 /-- Bottom has no positive top observation. -/
 @[simp] theorem aobs_bot (w : List (Fin n)) : ¬ aobs DeciNSSE.Tree.bot w := by simp [aobs]
 /-- Top satisfies every positive top observation. -/
 @[simp] theorem aobs_top (w : List (Fin n)) : aobs DeciNSSE.Tree.top w := by simp [aobs]
 /-- The constructor observation of bottom is empty. -/
-@[simp] theorem cobs_bot : cobs (DeciNSSE.Tree.bot : DeciNSSE.Tree n) = BFTree.bot := by
+@[simp] theorem cobs_bot : cobs (DeciNSSE.Tree.bot : DeciNSSE.Tree n) = PrefixSet.bot := by
   ext w
   simp
 
 /-- The prefix-closed set of all paths. -/
-def full : BFTree n := ⟨Set.univ, by simp⟩
+def full : PrefixSet n := ⟨Set.univ, by simp⟩
 /-- Every path belongs to the full prefix-closed set. -/
-@[simp] theorem mem_full (w : List (Fin n)) : w ∈ full.K := trivial
+@[simp] theorem mem_full (w : List (Fin n)) : w ∈ full.carrier := trivial
 /-- The constructor observation of top contains every path. -/
 @[simp] theorem cobs_top : cobs (DeciNSSE.Tree.top : DeciNSSE.Tree n) = full := by ext w; simp
 
 /-- Constructor observation commutes with every constructor child. -/
 @[simp] theorem cobs_node (a : Fin n → DeciNSSE.Tree n) :
-    cobs (DeciNSSE.Tree.node a) = BFTree.node (cobs ∘ a) := by
+    cobs (DeciNSSE.Tree.node a) = PrefixSet.node (cobs ∘ a) := by
   ext w
   cases w with
   | nil => simp [Safety.HasLabel]
@@ -71,7 +71,7 @@ def full : BFTree n := ⟨Set.univ, by simp⟩
 
 /-- Every positive top observation belongs to the constructor observation. -/
 theorem aobs_subset_cobs (t : DeciNSSE.Tree n) (w : List (Fin n)) :
-    aobs t w → w ∈ (cobs t).K := by
+    aobs t w → w ∈ (cobs t).carrier := by
   intro ha hc
   have ht := (Safety.trace_eq_top_iff _ _).mpr ha
   have hb := (Safety.trace_eq_bot_iff _ _).mpr hc
@@ -90,7 +90,7 @@ theorem hasLabel_dual (t : DeciNSSE.Tree n) (w : List (Fin n)) :
 
 /-- The constructor observation of the dual is the complement of the top observation. -/
 @[simp] theorem cobs_dual (t : DeciNSSE.Tree n) (w : List (Fin n)) :
-    w ∈ (cobs (DeciNSSE.Tree.dual t)).K ↔ ¬ aobs t w := hasLabel_dual t _ |>.not
+    w ∈ (cobs (DeciNSSE.Tree.dual t)).carrier ↔ ¬ aobs t w := hasLabel_dual t _ |>.not
 
 /-- Covariant tree order is inclusion of both observations, reversing the dual one. -/
 theorem order_iff (t u : DeciNSSE.Tree n) :
@@ -115,9 +115,9 @@ theorem order_iff (t u : DeciNSSE.Tree n) :
 
 /-- Store C and the complement of A, both prefix closed. -/
 structure Pair (n : ℕ) where
-  c : BFTree n
-  n : BFTree n
-  cover : ∀ w, w ∈ c.K ∨ w ∈ n.K
+  c : PrefixSet n
+  n : PrefixSet n
+  cover : ∀ w, w ∈ c.carrier ∨ w ∈ n.carrier
 
 /-- Store the constructor observation and the complement of the top observation. -/
 def ofTree (t : DeciNSSE.Tree n) : Pair n :=
@@ -134,9 +134,9 @@ def Pair.child (p : Pair n) (b : Fin n) : Pair n :=
 attribute [local instance] Classical.propDecidable
 
 private noncomputable def pairFn (p : Pair n) : List (Fin n) → Option Sym
-  | [] => if [] ∉ p.c.K then some Sym.bot else
-      if [] ∉ p.n.K then some Sym.top else some Sym.f
-  | b :: w => if [] ∈ p.c.K ∧ [] ∈ p.n.K then pairFn (p.child b) w else none
+  | [] => if [] ∉ p.c.carrier then some Sym.bot else
+      if [] ∉ p.n.carrier then some Sym.top else some Sym.f
+  | b :: w => if [] ∈ p.c.carrier ∧ [] ∈ p.n.carrier then pairFn (p.child b) w else none
 
 private theorem pairFn_child (p : Pair n) (w : List (Fin n)) (b : Fin n) :
     (pairFn p (w ++ [b])).isSome ↔ pairFn p w = some Sym.f := by
@@ -158,20 +158,20 @@ noncomputable def realize (p : Pair n) : DeciNSSE.Tree n where
     · exact pairFn_child p
 
 /-- Absence of the empty constructor observation forces bottom. -/
-theorem realize_bot (p : Pair n) (h : [] ∉ p.c.K) : realize p = DeciNSSE.Tree.bot := by
+theorem realize_bot (p : Pair n) (h : [] ∉ p.c.carrier) : realize p = DeciNSSE.Tree.bot := by
   classical
   apply (DeciNSSE.Tree.root_eq_bot_iff _).mp
   simp [realize, pairFn, h]
 
 /-- Absence of the empty dual-constructor observation forces top. -/
-theorem realize_top (p : Pair n) (h : [] ∉ p.n.K) : realize p = DeciNSSE.Tree.top := by
+theorem realize_top (p : Pair n) (h : [] ∉ p.n.carrier) : realize p = DeciNSSE.Tree.top := by
   classical
-  have hc : [] ∈ p.c.K := (p.cover []).resolve_right h
+  have hc : [] ∈ p.c.carrier := (p.cover []).resolve_right h
   apply (DeciNSSE.Tree.root_eq_top_iff _).mp
   simp [realize, pairFn, h, hc]
 
 /-- Two present root observations yield a constructor of the child realizations. -/
-theorem realize_node (p : Pair n) (hc : [] ∈ p.c.K) (hn : [] ∈ p.n.K) :
+theorem realize_node (p : Pair n) (hc : [] ∈ p.c.carrier) (hn : [] ∈ p.n.carrier) :
     realize p = DeciNSSE.Tree.node (fun i => realize (p.child i)) := by
   classical
   apply DeciNSSE.Tree.ext
@@ -182,31 +182,31 @@ theorem realize_node (p : Pair n) (hc : [] ∈ p.c.K) (hn : [] ∈ p.n.K) :
 
 /-- The realized tree has exactly the specified observations. -/
 theorem realize_observations (p : Pair n) (w : List (Fin n)) :
-    (w ∈ (cobs (realize p)).K ↔ w ∈ p.c.K) ∧
-    (aobs (realize p) w ↔ w ∉ p.n.K) := by
+    (w ∈ (cobs (realize p)).carrier ↔ w ∈ p.c.carrier) ∧
+    (aobs (realize p) w ↔ w ∉ p.n.carrier) := by
   classical
   induction w generalizing p with
   | nil =>
-    by_cases hc : [] ∈ p.c.K
-    · by_cases hn : [] ∈ p.n.K
+    by_cases hc : [] ∈ p.c.carrier
+    · by_cases hn : [] ∈ p.n.carrier
       · rw [realize_node p hc hn]
         simp [aobs, hc, hn]
       · rw [realize_top p hn]; simp [hc, hn]
     · have hn := (p.cover []).resolve_left hc
       rw [realize_bot p hc]; simp [hc, hn]
   | cons b w ih =>
-    by_cases hc : [] ∈ p.c.K
-    · by_cases hn : [] ∈ p.n.K
+    by_cases hc : [] ∈ p.c.carrier
+    · by_cases hn : [] ∈ p.n.carrier
       · rw [realize_node p hc hn]
         have hh := ih (p.child b)
         simpa [cobs_node, aobs,
           Safety.hasLabel_node_cons _ _ _ Sym.bot (by decide),
         Safety.hasLabel_node_cons _ _ _ Sym.top (by decide), Pair.child,
-          BFTree.subtree, BFTree.residual] using hh
-      · have hn' : b :: w ∉ p.n.K := fun h => hn (p.n.prefix_closed [] _ h)
+          PrefixSet.subtree, PrefixSet.residual] using hh
+      · have hn' : b :: w ∉ p.n.carrier := fun h => hn (p.n.prefix_closed [] _ h)
         have hc' := (p.cover (b :: w)).resolve_right hn'
         rw [realize_top p hn]; simp [hc', hn']
-    · have hc' : b :: w ∉ p.c.K := fun h => hc (p.c.prefix_closed [] _ h)
+    · have hc' : b :: w ∉ p.c.carrier := fun h => hc (p.c.prefix_closed [] _ h)
       have hn' := (p.cover (b :: w)).resolve_left hc'
       rw [realize_bot p hc]; simp [hc', hn']
 

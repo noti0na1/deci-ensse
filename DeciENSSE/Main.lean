@@ -1,7 +1,7 @@
 import Mathlib.Logic.Equiv.Fin.Basic
 import DeciENSSE.Core.Main
 import DeciENSSE.Semantics
-import DeciENSSE.Core.Full.Bridge
+import DeciENSSE.TopFree
 
 /-! # Decidable existential subtype entailment
 
@@ -23,13 +23,12 @@ the proofs listed below.
 
 ## Proof map
 
-Each decider converts its constraints to the core syntax over the visible carrier `Fin k`
-and the combined carrier `Fin k ⊕ Fin h` (`toCoreFull`, `splitFull`, `toCoreBF`, `splitBF`
-and the `_iff_core` theorems of this module) and calls the arity dispatch `Core.Main`. At
-arity zero `Core.Nullary` enumerates root labels. At positive arity the two signatures have
-separate proofs.
+Each decider converts its constraints to the core syntax and calls the arity dispatch
+`Core.Main`, which enumerates root labels at arity zero (`Core.Nullary`) and runs the
+variance proof of `Core/Mixed` at positive arity. Both signatures use this one proof.
 
-The full signature, in `Core/Mixed`:
+The full signature: the visible carrier is `Fin k` and the combined carrier `Fin k ⊕ Fin h`
+(`toCoreFull`, `splitFull`, `existsEntails_iff_core` and its two variants).
 - `Core.Mixed.decideExistsEntails` (`Mixed/Final`) runs the bounded search
   `Core.Mixed.decideExistsEntailsOfShortHoles` (`Mixed/Decide`) with the length bound
   `Core.Words.Self.selfHoleBound`. The search tests satisfiability of both sides,
@@ -50,21 +49,18 @@ The full signature, in `Core/Mixed`:
   no finite solution, or the consequent has one and arbitrary entailment holds) gives
   `Core.Mixed.decideExistsEntailsFin`.
 
-The covariant signature, in `Core`:
-- `Core.decideExistsEntailsTopFree` (`Core/Final`) runs the bounded search
-  `Core.decideExistsEntailsTopFreeOfShortHoles` (`Core/Decide`) with the length bound
-  `Core.Words.twoWordHoleBound`. It is exact by `Core.existsEntails_iff_bounded`, which
-  combines `Core.ss2_reduction` (`Core/Reduction`: under `Core.CondI0` and `Core.CondLive`,
-  the closure condition `Core.CondII` fails exactly when an extracted two-word instance has a
-  hole) and `Core.three_conditions` (`Core/Horn`) with the short-hole theorem
-  `Core.Words.shortHoleBound` (`Words/Bound`), the case of
-  `Core.Words.Self.shortHoleBoundSelf` without self events.
-- Regular and finite trees: `Core.existsEntailsReg_iff` and `Core.existsEntailsFin_iff`
-  give `Core.decideExistsEntailsTopFreeReg` and `Core.decideExistsEntailsTopFreeFin`
-  (`Core/Classes`).
-- The covariant core describes a tree by its set of constructor positions;
-  `Core.Full.existsEntailsIn_bridge` (`Full/Bridge`) identifies these sets with top-free
-  trees, which `existsEntailsTopFree_iff_core` uses.
+The signature `{⊥, f}` reduces to the full signature at the covariant variance by the
+top-freeness gadget of `DeciENSSE.TopFree`:
+- `toCoreTopFree` and `splitTopFree` embed the literals (`BFLit.toELit`) and add
+  `v ≤ y_v ∧ y_v ≤ f(y_v, …, y_v)` for every visible and every hidden variable `v`, over the
+  carriers `Fin k ⊕ Fin k` and `Fin h ⊕ Fin h`.
+- `TopFree.existsEntailsTIn_iff_gadget` proves the reduction in every tree class whose
+  top-free trees have gadget witnesses (`TopFree.HasWitnesses`): `Ω` over arbitrary and
+  regular trees, the full finite tree `T_{h(t)+1}` over finite trees.
+- `existsEntailsTopFree_iff_core` and its two variants instantiate it; the three deciders for
+  `{⊥, f}` are the full-signature deciders of `Core.Main` on the translated systems, and
+  `existsEntailsTopFreeReg_iff` carries `Core.Mixed.existsEntailsTReg_iff_mixed` over to
+  `{⊥, f}`.
 
 ## Main declarations
 
@@ -74,8 +70,10 @@ The covariant signature, in `Core`:
   `decideExistsEntailsTopFreeFin` and their `_correct` theorems: the covariant signature.
 - `toCoreFull`, `splitFull`, `existsEntails_iff_core`, `existsEntailsReg_iff_core`,
   `existsEntailsFin_iff_core`: conversion of the full signature to the core.
-- `toCoreBF`, `splitBF`, `existsEntailsTopFree_iff_core`, `existsEntailsTopFreeReg_iff_core`,
-  `existsEntailsTopFreeFin_iff_core`: conversion of the covariant signature to the core.
+- `toCoreTopFree`, `splitTopFree`, `existsEntailsTopFree_iff_core`,
+  `existsEntailsTopFreeReg_iff_core`, `existsEntailsTopFreeFin_iff_core`: conversion of the
+  covariant signature to the full-signature core, through the gadget.
+- `existsEntailsTopFreeReg_iff`: over `{⊥, f}`, regular and arbitrary entailment agree.
 -/
 
 namespace DeciENSSE
@@ -143,40 +141,25 @@ theorem existsEntailsFin_iff_core {n k h : ℕ} (c : Fin n → Bool)
       Core.Full.ExistsEntailsTFin c (φ.map toCoreFull) (splitFull ψ) := by
   simp [ExistsEntailsFin, Core.Full.ExistsEntailsTFin]
 
-/-! ## Conversion of the covariant signature -/
+/-! ## Conversion of the covariant signature
 
-/-- Convert a bottom–constructor literal to the core syntax. -/
-def toCoreBF {n k : ℕ} : BFLit n k → Core.Lit n (Fin k)
-  | .le x y => .le x y
-  | .leF x a => .lef x a
-  | .fLe a x => .fle a x
-  | .eqBot x => .bot x
+A bottom–constructor literal is a full-signature literal (`BFLit.toELit`), and covariant
+satisfaction is full-signature satisfaction at the covariant variance. The top-freeness gadget
+of `DeciENSSE.TopFree` adds `v ≤ y_v ∧ y_v ≤ f(y_v, …, y_v)` for every visible and every
+hidden variable `v`; the visible carrier becomes `Fin k ⊕ Fin k` and the hidden one
+`Fin h ⊕ Fin h`, the right copies holding the variables `y_v`. -/
 
-/-- Separate the visible and hidden indices of a bottom–constructor consequent. -/
-def splitBF {n k h : ℕ} (ψ : BFConstraint n (k + h)) :
-    List (Core.Lit n (Fin k ⊕ Fin h)) :=
-  ψ.map fun l => (toCoreBF l).map finSumFinEquiv.symm
+/-- A bottom–constructor antecedent in the core syntax, with the gadget on every visible
+variable. -/
+def toCoreTopFree {n k : ℕ} (φ : BFConstraint n k) :
+    List (Core.Full.LitT n (Fin k ⊕ Fin k)) :=
+  TopFree.gadgetAnte (List.finRange k) ((φ.map BFLit.toELit).map toCoreFull)
 
-private theorem holds_toCoreBF {n k : ℕ} (ρ : V k → Tree n) (l : BFLit n k) :
-    Core.Full.HoldsT (fun _ => false) ρ (Core.Full.ofLit (toCoreBF l)) ↔
-      l.toELit.holds (fun _ => false) ρ := by
-  cases l <;> rfl
-
-private theorem ofLit_map {n : ℕ} {A B : Type*} (f : A → B) (l : Core.Lit n A) :
-    Core.Full.ofLit (l.map f) = (Core.Full.ofLit l).map f := by
-  cases l <;> rfl
-
-private theorem sat_toCoreBF {n k : ℕ} (ρ : V k → Tree n) (φ : BFConstraint n k) :
-    Core.Full.SatT (fun _ => false) ρ ((φ.map toCoreBF).map Core.Full.ofLit) ↔
-      BFSat ρ φ := by
-  simp [Core.Full.SatT, BFSat, ESat, holds_toCoreBF]
-
-private theorem sat_splitBF {n k h : ℕ} (ρ : V k → Tree n) (σ : V h → Tree n)
-    (ψ : BFConstraint n (k + h)) :
-    Core.Full.SatT (fun _ => false) (Sum.elim ρ σ)
-      ((splitBF ψ).map Core.Full.ofLit) ↔ BFSat (join ρ σ) ψ := by
-  simp [Core.Full.SatT, splitBF, ofLit_map, sumElim_comp_finSumFinEquiv,
-    holds_toCoreBF, BFSat, ESat]
+/-- A bottom–constructor consequent in the core syntax, with split indices and the gadget on
+every hidden variable. -/
+def splitTopFree {n k h : ℕ} (ψ : BFConstraint n (k + h)) :
+    List (Core.Full.LitT n ((Fin k ⊕ Fin k) ⊕ (Fin h ⊕ Fin h))) :=
+  TopFree.gadgetCons (List.finRange h) (splitFull (ψ.map BFLit.toELit))
 
 /-- Quantifying presentations that satisfy `P` is restricting to the image where `P` holds. -/
 private theorem restricted_range_iff {n : ℕ} {X Z D : Type*} (f : D → Tree n)
@@ -199,33 +182,46 @@ private theorem restricted_range_iff {n : ℕ} {X Z D : Type*} (f : D → Tree n
     obtain ⟨σ, hσ, ht⟩ := H τ (fun x => (hτ x).symm ▸ (hp x).1) (he.symm ▸ hs)
     exact ⟨f ∘ σ, fun z => ⟨hσ z, σ z, rfl⟩, he ▸ ht⟩
 
-/-- Public top-free semantics agree with the constructor-set core. -/
+/-- Public top-free entailment is full-signature entailment after the gadget, over arbitrary
+trees. -/
 theorem existsEntailsTopFree_iff_core {n k h : ℕ} (φ : BFConstraint n k)
     (ψ : BFConstraint n (k + h)) :
-    ExistsEntailsTopFree φ ψ ↔ Core.ExistsEntailsTopFree (φ.map toCoreBF) (splitBF ψ) := by
-  rw [Core.Full.existsEntails_topFree_iff]
-  simp only [ExistsEntailsTopFree, Core.Full.ExistsEntailsTopFree, Core.Full.ExistsEntailsTIn,
-    sat_toCoreBF, sat_splitBF]
+    ExistsEntailsTopFree φ ψ ↔
+      Core.Full.ExistsEntailsT (fun _ => false) (toCoreTopFree φ) (splitTopFree ψ) := by
+  rw [toCoreTopFree, splitTopFree,
+    ← TopFree.existsEntailsT_iff_gadget List.mem_finRange List.mem_finRange]
+  simp only [ExistsEntailsTopFree, Core.Full.ExistsEntailsTIn, BFSat, sat_toCoreFull,
+    sat_splitFull]
 
-/-- The top-free bridge preserves both regular assignments. -/
+/-- Public top-free entailment is full-signature entailment after the gadget, over regular
+trees. -/
 theorem existsEntailsTopFreeReg_iff_core {n k h : ℕ} (φ : BFConstraint n k)
     (ψ : BFConstraint n (k + h)) :
     ExistsEntailsTopFreeReg φ ψ ↔
-      Core.ExistsEntailsIn Core.IsRegularTree (φ.map toCoreBF) (splitBF ψ) := by
-  rw [Core.Full.existsEntailsReg_topFree_iff]
-  unfold Core.Full.ExistsEntailsTopFreeReg
-  rw [restricted_range_iff]
-  simp only [ExistsEntailsTopFreeReg, sat_toCoreBF, sat_splitBF]
+      Core.Full.ExistsEntailsTReg (fun _ => false) (toCoreTopFree φ) (splitTopFree ψ) := by
+  rw [toCoreTopFree, splitTopFree,
+    ← TopFree.existsEntailsTReg_iff_gadget List.mem_finRange List.mem_finRange,
+    restricted_range_iff]
+  simp only [ExistsEntailsTopFreeReg, BFSat, sat_toCoreFull, sat_splitFull]
 
-/-- The top-free bridge preserves both finite assignments. -/
+/-- Public top-free entailment is full-signature entailment after the gadget, over finite
+trees. -/
 theorem existsEntailsTopFreeFin_iff_core {n k h : ℕ} (φ : BFConstraint n k)
     (ψ : BFConstraint n (k + h)) :
     ExistsEntailsTopFreeFin φ ψ ↔
-      Core.ExistsEntailsIn Core.IsFiniteTree (φ.map toCoreBF) (splitBF ψ) := by
-  rw [Core.Full.existsEntailsFin_topFree_iff]
-  unfold Core.Full.ExistsEntailsTopFreeFin
-  rw [restricted_range_iff]
-  simp only [ExistsEntailsTopFreeFin, sat_toCoreBF, sat_splitBF]
+      Core.Full.ExistsEntailsTFin (fun _ => false) (toCoreTopFree φ) (splitTopFree ψ) := by
+  rw [toCoreTopFree, splitTopFree,
+    ← TopFree.existsEntailsTFin_iff_gadget List.mem_finRange List.mem_finRange,
+    restricted_range_iff]
+  simp only [ExistsEntailsTopFreeFin, BFSat, sat_toCoreFull, sat_splitFull]
+
+/-- Over `{⊥, f}`, as over `{⊥, f, ⊤}`, regular and arbitrary entailment agree: the gadget
+reduces both to the full signature, where `Core.Mixed.existsEntailsTReg_iff_mixed` applies. -/
+theorem existsEntailsTopFreeReg_iff {n k h : ℕ} (φ : BFConstraint n k)
+    (ψ : BFConstraint n (k + h)) :
+    ExistsEntailsTopFreeReg φ ψ ↔ ExistsEntailsTopFree φ ψ := by
+  rw [existsEntailsTopFreeReg_iff_core, existsEntailsTopFree_iff_core]
+  exact Core.Mixed.existsEntailsTReg_iff_mixed _ _ _
 
 /-! ## The full signature -/
 
@@ -276,7 +272,7 @@ theorem decideExistsEntailsFin_correct {n k h : ℕ} (c : Fin n → Bool)
 /-- Decide top-free covariant existential entailment over arbitrary trees. -/
 @[instance_reducible] def decideExistsEntailsTopFree {n k h : ℕ} (φ : BFConstraint n k)
     (ψ : BFConstraint n (k + h)) : Decidable (ExistsEntailsTopFree φ ψ) := by
-  letI := Core.Main.decideExistsEntailsTopFree (φ.map toCoreBF) (splitBF ψ)
+  letI := Core.Main.decideExistsEntails (fun _ => false) (toCoreTopFree φ) (splitTopFree ψ)
   exact decidable_of_iff _ (existsEntailsTopFree_iff_core φ ψ).symm
 
 /-- The decision returns true exactly when arbitrary-tree entailment holds. -/
@@ -288,7 +284,7 @@ theorem decideExistsEntailsTopFree_correct {n k h : ℕ} (φ : BFConstraint n k)
 /-- Decide top-free covariant existential entailment over regular trees. -/
 @[instance_reducible] def decideExistsEntailsTopFreeReg {n k h : ℕ} (φ : BFConstraint n k)
     (ψ : BFConstraint n (k + h)) : Decidable (ExistsEntailsTopFreeReg φ ψ) := by
-  letI := Core.Main.decideExistsEntailsTopFreeReg (φ.map toCoreBF) (splitBF ψ)
+  letI := Core.Main.decideExistsEntailsReg (fun _ => false) (toCoreTopFree φ) (splitTopFree ψ)
   exact decidable_of_iff _ (existsEntailsTopFreeReg_iff_core φ ψ).symm
 
 /-- The decision returns true exactly when regular-tree entailment holds. -/
@@ -300,7 +296,7 @@ theorem decideExistsEntailsTopFreeReg_correct {n k h : ℕ} (φ : BFConstraint n
 /-- Decide top-free covariant existential entailment over finite trees. -/
 @[instance_reducible] def decideExistsEntailsTopFreeFin {n k h : ℕ} (φ : BFConstraint n k)
     (ψ : BFConstraint n (k + h)) : Decidable (ExistsEntailsTopFreeFin φ ψ) := by
-  letI := Core.Main.decideExistsEntailsTopFreeFin (φ.map toCoreBF) (splitBF ψ)
+  letI := Core.Main.decideExistsEntailsFin (fun _ => false) (toCoreTopFree φ) (splitTopFree ψ)
   exact decidable_of_iff _ (existsEntailsTopFreeFin_iff_core φ ψ).symm
 
 /-- The decision returns true exactly when finite-tree entailment holds. -/

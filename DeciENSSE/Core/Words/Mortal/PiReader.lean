@@ -136,15 +136,15 @@ def Pi : State (SA := SA) (SB := SB) (SA' := SA') (SB' := SB') →
   | _, _ => False
 
 /-- Admissions are decidable. -/
-instance : DecidableRel (Adm I) := by
+instance instDecidableAdm : DecidableRel (Adm I) := by
   intro p q; cases p <;> cases q <;> unfold Adm <;> infer_instance
 /-- Rejection is decidable. -/
-instance : DecidablePred (· ∈ Rej I) := by
+instance instDecidableRej : DecidablePred (· ∈ Rej I) := by
   intro q
   change Decidable (Rej I q)
   cases q <;> dsimp [Rej] <;> infer_instance
 /-- The anchored relation is decidable. -/
-instance : DecidableRel (Pi I) := by
+instance instDecidablePi : DecidableRel (Pi I) := by
   intro p q; cases p <;> cases q <;> unfold Pi <;> infer_instance
 
 /-- The word has one separator and an anchored comparison at it in `Pi`. -/
