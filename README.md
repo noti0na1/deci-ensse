@@ -50,9 +50,14 @@ The library `DeciNSSE` is shared with deci-nsse and keeps its names: trees,
 constraints, satisfiability, readers, holes, the block hierarchy, the
 elementary hole bound and the rejected-tail decision. Its NSSE-only parts
 (monitor deciders, solver, certificates, countermodels, complexity) remain in
-deci-nsse. The existential proof is the library `DeciENSSE`. A paper with the
-mathematical proof, its complexity bounds and applications is in preparation;
-the formal proof follows its route except for the signature `{⊥, f}`.
+deci-nsse. The existential proof is the library `DeciENSSE`.
+
+The paper
+[*Existential Subtype Entailment Is Decidable for Non-Structural Subtyping*](paper/main.pdf)
+explains the mathematical proof in detail, with its complexity bounds and
+applications. It is an unpolished write-up; its LaTeX sources are in
+[paper](paper). The formal proof follows its route except for the signature
+`{⊥, f}`.
 
 ## The problem
 
@@ -493,6 +498,8 @@ their library. The counts include comments and docstrings; the 7 example
 modules under `DeciENSSE/Examples/` account for 3,604 of the lines.
 Namespaces are relative to `DeciNSSE` or `DeciENSSE`; "top level" means the
 root namespace itself.
+The folder [paper](paper) holds the LaTeX sources of the write-up and the
+compiled [main.pdf](paper/main.pdf); build it with `make` in that folder.
 
 ### `DeciNSSE/`: the shared library
 
